@@ -1,0 +1,12 @@
+^CLAUDE\.md$
+^PACKAGE_PLAN\.md$
+^STOP_CONDITION_REPORT\.md$
+^PHASE[0-9]+_REPORT\.md$
+^RELEASE_CHECKLIST\.md$
+^LICENSE\.md$
+^tools$
+^\.git$
+^\.gitignore$
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.github$
