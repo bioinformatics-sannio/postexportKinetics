@@ -8,8 +8,16 @@
 
 FROZEN_COMMIT <- "65c3b7368fb7686bfde3dab857f98c393bb534c5"
 
+# POSTEXPORT_FIXTURE_DIR may point to fixtures regenerated on the current
+# platform by tools/frozen/make_fixtures.R (used by CI); by default the
+# committed fixtures are used.
+fixture_dir <- function() {
+  d <- Sys.getenv("POSTEXPORT_FIXTURE_DIR", "")
+  if (nzchar(d)) d else testthat::test_path("fixtures")
+}
+
 read_fixture <- function(name) {
-  path <- testthat::test_path("fixtures", paste0(name, ".rds"))
+  path <- file.path(fixture_dir(), paste0(name, ".rds"))
   fx <- readRDS(path)
   stopifnot(identical(fx$provenance$frozen_commit, FROZEN_COMMIT))
   fx

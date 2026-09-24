@@ -1,0 +1,124 @@
+# Linux validation of the ported numerical core.
+#
+# package:           install, deterministic regression tests against the
+#                    committed fixtures, R CMD check.
+# frozen-reference:  regenerate fixtures on Linux from the frozen tag
+#                    (read-only), compare them with the committed fixtures,
+#                    run the package tests against the Linux fixtures, and
+#                    verify that the frozen repository was not modified.
+#
+# Bootstrap-draw comparisons keep their provenance guard: against the
+# committed (macOS) fixtures they skip with an explicit reason on Linux.
+
+name: linux-regression
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FROZEN_REPO_URL: https://github.com/bioinformatics-sannio/postexport-kinetics.git
+  FROZEN_TAG: manuscript-revision-v1.0
+  FROZEN_COMMIT: 65c3b7368fb7686bfde3dab857f98c393bb534c5
+  R_KEEP_PKG_SOURCE: yes
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck, any::testthat, any::expm
+          needs: check
+
+      - name: Session and linear-algebra provenance
+        run: |
+          Rscript -e 'print(sessionInfo()); print(La_library()); print(La_version()); print(extSoftVersion()["BLAS"]); print(RNGkind())'
+
+      - name: Install package
+        run: R CMD INSTALL .
+
+      - name: Deterministic regression tests (committed fixtures)
+        run: |
+          Rscript -e '
+            library(testthat); library(postexportKinetics)
+            res <- as.data.frame(test_dir("tests/testthat", package = "postexportKinetics",
+                                          load_package = "installed", reporter = "summary",
+                                          stop_on_failure = FALSE))
+            print(aggregate(cbind(expectations = nb, failed, skipped, error) ~ file, res, sum))
+            if (sum(res$failed) > 0 || any(res$error)) quit(status = 1)
+          '
+
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          args: 'c("--no-manual", "--as-cran")'
+          error-on: '"warning"'
+          upload-snapshots: false
+
+  frozen-reference:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::testthat, any::expm, any::data.table, any::deSolve
+
+      - name: Clone frozen manuscript repository (read-only use)
+        run: |
+          git clone --quiet "$FROZEN_REPO_URL" "$RUNNER_TEMP/postexport-kinetics"
+          cd "$RUNNER_TEMP/postexport-kinetics"
+          test "$(git rev-parse "$FROZEN_TAG^{commit}")" = "$FROZEN_COMMIT"
+          git rev-parse HEAD > "$RUNNER_TEMP/frozen_head_before"
+          git status --porcelain --ignored > "$RUNNER_TEMP/frozen_status_before"
+          git show-ref > "$RUNNER_TEMP/frozen_refs_before"
+
+      - name: Export frozen tag and regenerate fixtures on Linux
+        run: |
+          FROZEN=$(sh tools/frozen/export_frozen.sh "$RUNNER_TEMP/postexport-kinetics" "$RUNNER_TEMP/frozen-export")
+          Rscript tools/frozen/make_fixtures.R "$FROZEN" "$RUNNER_TEMP/fixtures-linux"
+
+      - name: Compare Linux frozen fixtures with committed fixtures
+        run: Rscript tools/frozen/compare_fixtures.R tests/testthat/fixtures "$RUNNER_TEMP/fixtures-linux"
+
+      - name: Install package
+        run: R CMD INSTALL .
+
+      - name: Package vs frozen on Linux (including bootstrap draws)
+        env:
+          POSTEXPORT_FIXTURE_DIR: ${{ runner.temp }}/fixtures-linux
+        run: |
+          Rscript -e '
+            library(testthat); library(postexportKinetics)
+            res <- as.data.frame(test_dir("tests/testthat", package = "postexportKinetics",
+                                          load_package = "installed", reporter = "summary",
+                                          stop_on_failure = FALSE))
+            print(aggregate(cbind(expectations = nb, failed, skipped, error) ~ file, res, sum))
+            if (sum(res$failed) > 0 || any(res$error)) quit(status = 1)
+          '
+
+      - name: Verify frozen repository was not modified
+        run: |
+          cd "$RUNNER_TEMP/postexport-kinetics"
+          git rev-parse HEAD | diff - "$RUNNER_TEMP/frozen_head_before"
+          git status --porcelain --ignored | diff - "$RUNNER_TEMP/frozen_status_before"
+          git show-ref | diff - "$RUNNER_TEMP/frozen_refs_before"
+          echo "Frozen repository unchanged."
