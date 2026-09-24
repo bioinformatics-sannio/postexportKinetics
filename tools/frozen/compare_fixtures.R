@@ -123,6 +123,16 @@ if (nrow(info) > 0L) {
 if (nrow(bad) > 0L) {
   cat("\nDETERMINISTIC DIFFERENCES BEYOND TOLERANCE:\n")
   print(utils::head(bad, 50), row.names = FALSE)
+  if (identical(Sys.getenv("GITHUB_ACTIONS"), "true")) {
+    esc <- function(x) gsub("\n", "%0A", gsub("%", "%25", x, fixed = TRUE),
+                            fixed = TRUE)
+    for (grp in split(bad, paste(bad$fixture, bad$part))) {
+      body <- paste(utils::head(sprintf("%s: %s", grp$case, grp$detail), 12),
+                    collapse = "\n")
+      cat(sprintf("::error title=%s %s (%d cases beyond tolerance)::%s\n",
+                  grp$fixture[1], grp$part[1], nrow(grp), esc(body)))
+    }
+  }
   quit(status = 1L)
 }
 

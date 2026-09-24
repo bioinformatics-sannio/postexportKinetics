@@ -52,17 +52,10 @@ jobs:
         run: R CMD INSTALL .
 
       - name: Deterministic regression tests (committed fixtures)
-        run: |
-          Rscript -e '
-            library(testthat); library(postexportKinetics)
-            res <- as.data.frame(test_dir("tests/testthat", package = "postexportKinetics",
-                                          load_package = "installed", reporter = "summary",
-                                          stop_on_failure = FALSE))
-            print(aggregate(cbind(expectations = nb, failed, skipped, error) ~ file, res, sum))
-            if (sum(res$failed) > 0 || any(res$error)) quit(status = 1)
-          '
+        run: Rscript tools/ci/run_tests_ci.R
 
       - uses: r-lib/actions/check-r-package@v2
+        if: always()
         with:
           args: 'c("--no-manual", "--as-cran")'
           error-on: '"warning"'
@@ -97,6 +90,8 @@ jobs:
           Rscript tools/frozen/make_fixtures.R "$FROZEN" "$RUNNER_TEMP/fixtures-linux"
 
       - name: Compare Linux frozen fixtures with committed fixtures
+        id: compare
+        continue-on-error: true
         run: Rscript tools/frozen/compare_fixtures.R tests/testthat/fixtures "$RUNNER_TEMP/fixtures-linux"
 
       - name: Install package
@@ -105,20 +100,19 @@ jobs:
       - name: Package vs frozen on Linux (including bootstrap draws)
         env:
           POSTEXPORT_FIXTURE_DIR: ${{ runner.temp }}/fixtures-linux
-        run: |
-          Rscript -e '
-            library(testthat); library(postexportKinetics)
-            res <- as.data.frame(test_dir("tests/testthat", package = "postexportKinetics",
-                                          load_package = "installed", reporter = "summary",
-                                          stop_on_failure = FALSE))
-            print(aggregate(cbind(expectations = nb, failed, skipped, error) ~ file, res, sum))
-            if (sum(res$failed) > 0 || any(res$error)) quit(status = 1)
-          '
+        run: Rscript tools/ci/run_tests_ci.R
 
       - name: Verify frozen repository was not modified
+        if: always()
         run: |
           cd "$RUNNER_TEMP/postexport-kinetics"
           git rev-parse HEAD | diff - "$RUNNER_TEMP/frozen_head_before"
           git status --porcelain --ignored | diff - "$RUNNER_TEMP/frozen_status_before"
           git show-ref | diff - "$RUNNER_TEMP/frozen_refs_before"
           echo "Frozen repository unchanged."
+
+      - name: Fail if the frozen fixture comparison failed
+        if: steps.compare.outcome == 'failure'
+        run: |
+          echo "::error::Frozen fixtures regenerated on Linux differ from the committed fixtures beyond tolerance (see the comparison step)."
+          exit 1
