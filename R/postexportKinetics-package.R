@@ -20,9 +20,21 @@
 #' `65c3b7368fb7686bfde3dab857f98c393bb534c5`) and is regression-tested
 #' against fixtures generated from that tag.
 #'
+#' @section Main functions:
+#' \itemize{
+#'   \item [postexport_data()] and [validate_postexport_data()]: validated
+#'     input data;
+#'   \item [postexport_control()]: numerical and inferential settings
+#'     (frozen defaults);
+#'   \item [fit_postexport_model()]: full and `sigma_c = 0` null fits
+#'     without bootstrap;
+#'   \item [test_postexport_conversion()]: bootstrap test of the null
+#'     `sigma_c = 0` against `sigma_c > 0`.
+#' }
+#'
 #' @section Development status:
-#' Phase 1: internal numerical core and regression infrastructure only. No
-#' user-facing functions are exported yet.
+#' Development version. Simulation, operational-domain diagnostics,
+#' exploratory ranking, plotting and batch execution are not yet available.
 #'
 #' @keywords internal
 "_PACKAGE"

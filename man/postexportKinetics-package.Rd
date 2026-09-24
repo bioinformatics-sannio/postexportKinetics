@@ -30,10 +30,24 @@ implementation (tag \code{manuscript-revision-v1.0}, commit
 against fixtures generated from that tag.
 }
 
+\section{Main functions}{
+
+\itemize{
+\item \code{\link[=postexport_data]{postexport_data()}} and \code{\link[=validate_postexport_data]{validate_postexport_data()}}: validated
+input data;
+\item \code{\link[=postexport_control]{postexport_control()}}: numerical and inferential settings
+(frozen defaults);
+\item \code{\link[=fit_postexport_model]{fit_postexport_model()}}: full and \code{sigma_c = 0} null fits
+without bootstrap;
+\item \code{\link[=test_postexport_conversion]{test_postexport_conversion()}}: bootstrap test of the null
+\code{sigma_c = 0} against \code{sigma_c > 0}.
+}
+}
+
 \section{Development status}{
 
-Phase 1: internal numerical core and regression infrastructure only. No
-user-facing functions are exported yet.
+Development version. Simulation, operational-domain diagnostics,
+exploratory ranking, plotting and batch execution are not yet available.
 }
 
 \seealso{
