@@ -378,3 +378,64 @@ No package code (`R/`) and no committed fixture was changed.
   | Nsd1 `sigma_c` +1e-8 | **blocking** | fail |
   | `rank1` inverse square root ×(1+1e-3) | **blocking** (inconsistent with conditioning) | fail |
   | bootstrap `T*` and p changed | reported by `compare_fixtures.R`; the fixture self-consistency tests (add-one rule, B = 19 prefix) still reject the hand-corrupted fixture | fail |
+
+---
+
+## 10. Final Linux CI status: GREEN
+
+Run **36055110238** on commit `4e85a3e` (branch `phase1-core`, `ubuntu-latest`,
+R release, `actions/checkout@v5`). Conclusion: **success** for both jobs.
+
+| Job | Step | Result |
+|---|---|---|
+| `package` | install package | success |
+| `package` | package tests vs committed macOS fixtures (level B/C) | success |
+| `package` | `R CMD check --as-cran --no-manual` (`error-on: warning`) | success: 0 ERRORs, 0 WARNINGs |
+| `frozen-reference` | clone; tag resolves to `65c3b7368fb7686bfde3dab857f98c393bb534c5` | success |
+| `frozen-reference` | export tag; recompute frozen outputs on the committed inputs | success |
+| `frozen-reference` | **same-platform package vs frozen, strict, including bootstrap draws (level A)** | success |
+| `frozen-reference` | cross-platform frozen comparison (level B/C) | success: no blocking failures |
+| `frozen-reference` | diagnostics | success (reported only) |
+| `frozen-reference` | frozen repository unchanged (HEAD, status incl. ignored, refs) | success |
+
+`R CMD check` NOTEs on Linux: the check passed with `error-on: warning`, so
+there are no ERRORs or WARNINGs. The individual NOTEs cannot be read here,
+because raw job logs need repository admin rights and NOTEs are not
+annotated. Locally on macOS there are 2 NOTEs: new submission / development
+version, and `pandoc` unavailable. The pandoc NOTE should not occur on Linux,
+where pandoc is installed.
+
+**Reported, non-blocking cross-platform differences** (from the `package` job's
+tests):
+
+| Item | Difference | Assessment |
+|---|---|---|
+| `simulate_destructive_null` draws (17 cases) | max scaled 0.399 | bootstrap draws; platform-dependent via `MASS::mvrnorm` |
+| composed bootstrap `T*` (9 cases) | max scaled 0.726 | same |
+| `fit_nnls_nested_once/basic/t_star=15/lambda=none` | 1.67e-8 ≤ 100·κ·ε = 1.27e-5 (κ = 5.7e8) | consistent with conditioning |
+| `fit_nnls_nested_once/malformed/indefinite_Sigma` | 7.63e-6 ≤ 7.21e-5 (κ = 3.3e9) | consistent with conditioning |
+| `inverse_sqrt_matrix/zero_diag` | 1.25e-9 ≤ 2.22e-6 (κ = 1e8) | consistent with conditioning |
+| `inverse_sqrt_matrix/rank1` | 2.09e-8 ≤ 1.02e-5 (κ = 4.6e8) | consistent with conditioning |
+
+The frozen-vs-frozen comparison (`frozen-reference` job) reported the same
+categories: bootstrap draws in 16 cases, the 2 extreme `fx_fit` cases, the 2
+extreme `fx_matrix` cases, and draw-dependent fields in 9 full-test cases.
+Every other difference was absorbed by the scale-aware rules: near-zero
+`Sigma_b` entries at normwise ≤ 3.0e-15, and boundary `T` within the RSS-scale
+bound. **No boundary classification changed**, and all realistic scientific
+outputs passed:
+
+- coefficients, `sigma_c`, RSS, IR and T;
+- ranks;
+- the 28 mESC targets;
+- Ppp1r36dn and Nsd1.
+
+Summary:
+
+- The port reproduces the frozen implementation bitwise on macOS and within
+  the strict tiers on Linux (same-platform).
+- Across platforms, the frozen implementation and the package agree on all
+  scientific outputs under the approved scale-aware policy.
+- Bootstrap draws differ across LAPACK/BLAS builds, as documented.
+
+Phase 2 has not been started. `main` has not been merged.
