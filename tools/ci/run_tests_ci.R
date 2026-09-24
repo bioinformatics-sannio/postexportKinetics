@@ -7,13 +7,22 @@
 # Prints per-file counts and, on GitHub Actions, emits one ::error::
 # annotation per failing test file containing the first failure messages, so
 # that details are visible without access to raw job logs. Skips are listed
-# with their reasons. Exits with status 1 on any failure or error.
+# with their reasons. Non-blocking cross-platform differences recorded by the
+# tests (POSTEXPORT_PLATFORM_NOTES) are printed and summarised in a ::notice::
+# annotation. Exits with status 1 on any failure or error.
 # =============================================================================
 
 suppressPackageStartupMessages({
   library(testthat)
   library(postexportKinetics)
 })
+
+notes_file <- Sys.getenv("POSTEXPORT_PLATFORM_NOTES", "")
+if (!nzchar(notes_file)) {
+  notes_file <- tempfile("platform-notes-", fileext = ".txt")
+  Sys.setenv(POSTEXPORT_PLATFORM_NOTES = notes_file)
+}
+if (file.exists(notes_file)) unlink(notes_file)
 
 res <- test_dir(
   "tests/testthat",
@@ -53,6 +62,16 @@ for (t in res) {
 if (length(skips)) {
   cat("\nSkipped tests:\n")
   cat(paste0("  ", unique(skips)), sep = "\n")
+}
+
+notes <- if (file.exists(notes_file)) readLines(notes_file) else character()
+if (length(notes)) {
+  cat("\nReported (non-blocking) cross-platform differences:\n")
+  cat(paste0("  ", notes), sep = "\n")
+  if (on_gha) {
+    cat(sprintf("::notice title=Cross-platform differences reported (%d, non-blocking)::%s\n",
+                length(notes), gha_escape(paste(utils::head(notes, 20), collapse = "\n"))))
+  }
 }
 
 if (length(failures)) {

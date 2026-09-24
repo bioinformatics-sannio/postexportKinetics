@@ -12,7 +12,8 @@ tier_for <- function(key) {
 test_that("covariance components match the frozen core", {
   for (key in names(fx$cases)) {
     case <- fx$cases[[key]]
-    expect_case(run_case(case), case$output, tier_for(key), key)
+    expect_regression(run_case(case), case$output, tier_for(key), key,
+                      fx$provenance, case)
   }
 })
 

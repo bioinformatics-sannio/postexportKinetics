@@ -7,7 +7,8 @@ fx <- read_fixture("fx_fit")
 test_that("fit_nnls_nested_once() matches the frozen core", {
   for (key in names(fx$cases)) {
     case <- fx$cases[[key]]
-    expect_case(run_case(case), case$output, TOL_T2, key)
+    expect_regression(run_case(case), case$output, TOL_T2, key,
+                      fx$provenance, case)
   }
 })
 

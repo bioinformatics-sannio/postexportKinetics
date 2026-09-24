@@ -31,7 +31,8 @@ test_that("fixture contains all 28 FDR < 0.10 mESC events, 15 samples each", {
 test_that("observed fits match the frozen core for every event", {
   for (key in names(fx$cases)) {
     case <- fx$cases[[key]]
-    expect_close(fit_event(case$input$data), case$output$value, TOL_T2, key)
+    expect_regression(list(value = fit_event(case$input$data)), case$output,
+                      TOL_T2, key, fx$provenance, case)
   }
 })
 

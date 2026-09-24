@@ -6,7 +6,8 @@ fx <- read_fixture("fx_interval_balance")
 test_that("build_Ab_fullcov() matches the frozen core", {
   for (key in names(fx$cases)) {
     case <- fx$cases[[key]]
-    expect_case(run_case(case), case$output, TOL_T2, key)
+    expect_regression(run_case(case), case$output, TOL_T2, key,
+                      fx$provenance, case)
   }
 })
 

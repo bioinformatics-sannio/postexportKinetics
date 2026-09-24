@@ -7,7 +7,8 @@ fx <- read_fixture("fx_crank_nicolson")
 test_that("Crank-Nicolson components match the frozen core", {
   for (key in names(fx$cases)) {
     case <- fx$cases[[key]]
-    expect_case(run_case(case), case$output, TOL_T1, key)
+    expect_regression(run_case(case), case$output, TOL_T1, key,
+                      fx$provenance, case)
   }
 })
 

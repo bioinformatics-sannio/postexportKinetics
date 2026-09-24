@@ -58,8 +58,30 @@ compose_frozen_test <- function(d, t_star, B_n, seed, lambda_time = 0.5,
        failure.rate = mean(!valid))
 }
 
+draw_difference_summary <- function() {
+  d <- vapply(names(fx_boot$cases), function(key) {
+    case <- fx_boot$cases[[key]]
+    set.seed(case$input$seed)
+    f <- pkg_fun("simulate_destructive_null")
+    got <- if (case$input$n_calls == 2L) {
+      list(first = capture(do.call(f, case$input$args)),
+           second = capture(do.call(f, case$input$args)))
+    } else {
+      capture(do.call(f, case$input$args))
+    }
+    ref <- if (case$input$n_calls == 2L) case$output$value else case$output
+    max_scaled_diff(got, ref)
+  }, numeric(1))
+  sprintf("max scaled difference of draws over %d cases: %.3g", length(d),
+          max(d))
+}
+
 test_that("simulate_destructive_null() reproduces frozen draws", {
-  skip_if_platform_differs(fx_boot$provenance)
+  if (!identical(regression_level(fx_boot$provenance), "same-platform")) {
+    summary <- draw_difference_summary()
+    record_platform_notes("simulate_destructive_null draws", summary)
+    skip_bootstrap_across_platforms(fx_boot$provenance, summary)
+  }
   for (key in names(fx_boot$cases)) {
     case <- fx_boot$cases[[key]]
     set.seed(case$input$seed)
@@ -98,20 +120,28 @@ test_that("composed primitives reproduce the deterministic frozen fit", {
     frozen <- case$output$value
     got <- compose_frozen_test(case$input$data, case$input$t_star,
                                B_n = 0L, seed = case$input$seed)
-    expect_close(got$T.obs, frozen$T.obs, TOL_T2, paste(key, "T.obs"))
-    expect_close(got$RSS0, frozen$RSS0, TOL_T2, paste(key, "RSS0"))
-    expect_close(got$RSS1, frozen$RSS1, TOL_T2, paste(key, "RSS1"))
-    expect_close(got$coef_full, frozen$coef_full, TOL_T2, paste(key, "coef_full"))
-    expect_close(got$coef_null, frozen$coef_null, TOL_T2, paste(key, "coef_null"))
-    expect_close(got$null.means, frozen$null.means, TOL_T2,
-                 paste(key, "null.means"))
-    expect_close(got$boundary.tolerance, frozen$boundary.tolerance, TOL_T2,
-                 paste(key, "tolerance"))
+    fields <- c("T.obs", "RSS0", "RSS1", "coef_full", "coef_null",
+                "null.means", "boundary.tolerance")
+    expect_regression(list(value = got[fields]),
+                      list(value = frozen[fields]),
+                      TOL_T2, paste(key, "deterministic fit"),
+                      fx_test$provenance, case)
   }
 })
 
 test_that("composed primitives reproduce frozen bootstrap statistics and p-values", {
-  skip_if_platform_differs(fx_test$provenance)
+  if (!identical(regression_level(fx_test$provenance), "same-platform")) {
+    d <- vapply(names(ok_cases), function(key) {
+      case <- ok_cases[[key]]
+      got <- compose_frozen_test(case$input$data, case$input$t_star,
+                                 B_n = case$input$B_n, seed = case$input$seed)
+      max_scaled_diff(got$T.boot, case$output$value$T.boot)
+    }, numeric(1))
+    summary <- sprintf("max scaled difference of T* over %d cases: %.3g",
+                       length(d), max(d))
+    record_platform_notes("composed bootstrap T*", summary)
+    skip_bootstrap_across_platforms(fx_test$provenance, summary)
+  }
   for (key in names(ok_cases)) {
     case <- ok_cases[[key]]
     frozen <- case$output$value

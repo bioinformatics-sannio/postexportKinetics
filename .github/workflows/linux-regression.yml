@@ -1,14 +1,18 @@
 # Linux validation of the ported numerical core.
 #
-# package:           install, deterministic regression tests against the
-#                    committed fixtures, R CMD check.
-# frozen-reference:  regenerate fixtures on Linux from the frozen tag
-#                    (read-only), compare them with the committed fixtures,
-#                    run the package tests against the Linux fixtures, and
-#                    verify that the frozen repository was not modified.
+# Regression levels (tools/frozen/README.md):
+#   A. same-platform package vs frozen: strict, blocking;
+#   B. cross-platform scientific regression: scale-aware, blocking;
+#   C. extreme-conditioning fixtures and bootstrap draws across platforms:
+#      reported, not blocking.
 #
-# Bootstrap-draw comparisons keep their provenance guard: against the
-# committed (macOS) fixtures they skip with an explicit reason on Linux.
+# package:           install; package tests against the committed fixtures
+#                    (level B/C on Linux); R CMD check.
+# frozen-reference:  verify the tag; export it (read-only); recompute frozen
+#                    outputs on the COMMITTED inputs (no deSolve
+#                    regeneration); package tests against them (level A);
+#                    cross-platform frozen comparison (level B/C);
+#                    diagnostics; verify the frozen clone is unchanged.
 
 name: linux-regression
 
@@ -30,7 +34,7 @@ jobs:
   package:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: r-lib/actions/setup-pandoc@v2
 
@@ -64,7 +68,7 @@ jobs:
   frozen-reference:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: r-lib/actions/setup-r@v2
         with:
@@ -84,27 +88,26 @@ jobs:
           git status --porcelain --ignored > "$RUNNER_TEMP/frozen_status_before"
           git show-ref > "$RUNNER_TEMP/frozen_refs_before"
 
-      - name: Export frozen tag and regenerate fixtures on Linux
+      - name: Export frozen tag and recompute frozen outputs on the committed inputs
         run: |
           FROZEN=$(sh tools/frozen/export_frozen.sh "$RUNNER_TEMP/postexport-kinetics" "$RUNNER_TEMP/frozen-export")
-          Rscript tools/frozen/make_fixtures.R "$FROZEN" "$RUNNER_TEMP/fixtures-linux"
+          Rscript tools/frozen/recompute_fixtures.R "$FROZEN" tests/testthat/fixtures "$RUNNER_TEMP/fixtures-linux"
 
-      - name: Compare Linux frozen fixtures with committed fixtures
-        id: compare
-        continue-on-error: true
+      - name: Install package
+        run: R CMD INSTALL .
+
+      - name: Same-platform package vs frozen (strict, including bootstrap draws)
+        env:
+          POSTEXPORT_FIXTURE_DIR: ${{ runner.temp }}/fixtures-linux
+        run: Rscript tools/ci/run_tests_ci.R
+
+      - name: Cross-platform frozen comparison (scientific policy)
+        if: always()
         run: Rscript tools/frozen/compare_fixtures.R tests/testthat/fixtures "$RUNNER_TEMP/fixtures-linux"
 
       - name: Characterise cross-platform differences (diagnostic)
         if: always()
         run: Rscript tools/ci/diagnose_platform_diffs.R tests/testthat/fixtures "$RUNNER_TEMP/fixtures-linux"
-
-      - name: Install package
-        run: R CMD INSTALL .
-
-      - name: Package vs frozen on Linux (including bootstrap draws)
-        env:
-          POSTEXPORT_FIXTURE_DIR: ${{ runner.temp }}/fixtures-linux
-        run: Rscript tools/ci/run_tests_ci.R
 
       - name: Verify frozen repository was not modified
         if: always()
@@ -114,9 +117,3 @@ jobs:
           git status --porcelain --ignored | diff - "$RUNNER_TEMP/frozen_status_before"
           git show-ref | diff - "$RUNNER_TEMP/frozen_refs_before"
           echo "Frozen repository unchanged."
-
-      - name: Fail if the frozen fixture comparison failed
-        if: steps.compare.outcome == 'failure'
-        run: |
-          echo "::error::Frozen fixtures regenerated on Linux differ from the committed fixtures beyond tolerance (see the comparison step)."
-          exit 1

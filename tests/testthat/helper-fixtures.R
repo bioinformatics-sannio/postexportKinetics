@@ -57,8 +57,9 @@ expect_case <- function(actual, expected, tol, label) {
 }
 
 # Bootstrap draws use MASS::mvrnorm(), which relies on eigen(); results can
-# differ across LAPACK/BLAS builds. Exact bootstrap comparisons are therefore
-# run only on a platform matching the one that generated the fixtures.
+# differ across LAPACK/BLAS builds even under the same R seed. Same-platform
+# comparisons (strict, including draws) apply only when the fixture
+# provenance matches the current platform exactly.
 fixture_platform_matches <- function(prov) {
   identical(prov$La_library, La_library()) &&
     identical(prov$La_version, La_version()) &&
@@ -72,11 +73,61 @@ fixture_platform_matches <- function(prov) {
     identical(prov$RNGkind, RNGkind())
 }
 
-skip_if_platform_differs <- function(prov) {
-  if (!fixture_platform_matches(prov)) {
-    testthat::skip(paste(
-      "Platform differs from fixture platform; bootstrap draws depend on",
-      "LAPACK/BLAS through MASS::mvrnorm(). See PACKAGE_PLAN.md section 9.2."
-    ))
+# =============================================================================
+# Regression level selection (PACKAGE_PLAN.md section 9.2; policy approved in
+# review of PHASE1_5_REPORT.md):
+#
+#   A. same-platform (fixture provenance matches the current platform):
+#      strict tiers via expect_case(); blocking; unchanged.
+#   B. cross-platform (provenance differs): scale-aware scientific policy via
+#      assess_cross(); blocking for scientific invariants.
+#   C. deliberately extreme-conditioning fixtures across platforms: differences
+#      consistent with conditioning are reported, not blocking; boundary
+#      decisions remain blocking.
+#
+# POSTEXPORT_FORCE_CROSS_PLATFORM=true forces level B/C even when provenance
+# matches; it exists only to exercise the cross-platform policy locally and is
+# never set in CI.
+# =============================================================================
+
+regression_level <- function(prov) {
+  if (identical(Sys.getenv("POSTEXPORT_FORCE_CROSS_PLATFORM"), "true")) {
+    return("cross-platform")
   }
+  if (fixture_platform_matches(prov)) "same-platform" else "cross-platform"
+}
+
+# Non-blocking cross-platform notes are appended to the file named by
+# POSTEXPORT_PLATFORM_NOTES (CI prints it); otherwise they are discarded.
+record_platform_notes <- function(label, notes) {
+  f <- Sys.getenv("POSTEXPORT_PLATFORM_NOTES", "")
+  if (!length(notes) || !nzchar(f)) return(invisible())
+  cat(paste0(label, ": ", notes, "\n"), file = f, append = TRUE, sep = "")
+  invisible()
+}
+
+expect_regression <- function(actual, expected, tol, label, prov, case = NULL) {
+  if (identical(regression_level(prov), "same-platform")) {
+    return(expect_case(actual, expected, tol, label))
+  }
+  res <- assess_cross(actual, expected, label, case)
+  record_platform_notes(label, res$notes)
+  testthat::expect(
+    length(res$blocking) == 0L,
+    paste0(label, " [cross-platform scientific policy]\n",
+           paste(utils::head(res$blocking, 20), collapse = "\n"))
+  )
+}
+
+# Bootstrap draws: blocking only at the same-platform level. Across platforms
+# the draws are compared for the record and the test is skipped with the
+# measured difference in the reason.
+skip_bootstrap_across_platforms <- function(prov, summary = NULL) {
+  if (identical(regression_level(prov), "same-platform")) return(invisible())
+  testthat::skip(paste0(
+    "Cross-platform: bootstrap draws depend on LAPACK/BLAS through ",
+    "MASS::mvrnorm(); compared only against same-platform fixtures",
+    if (!is.null(summary)) paste0(" (", summary, ")") else "",
+    "."
+  ))
 }

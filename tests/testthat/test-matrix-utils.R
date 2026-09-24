@@ -6,7 +6,8 @@ fx <- read_fixture("fx_matrix")
 test_that("make_spd() and inverse_sqrt_matrix() match the frozen core", {
   for (key in names(fx$cases)) {
     case <- fx$cases[[key]]
-    expect_case(run_case(case), case$output, TOL_T2, key)
+    expect_regression(run_case(case), case$output, TOL_T2, key,
+                      fx$provenance, case)
   }
 })
 

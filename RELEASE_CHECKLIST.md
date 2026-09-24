@@ -13,9 +13,25 @@ time; nothing below is claimed as done until it has been run.
 - [ ] `tests/testthat` pass, including verbatim-port checks.
 - [ ] `tools/frozen/compare_report.R` run; identity / maximum differences
       recorded in the release notes.
-- [ ] Bootstrap-draw comparisons run on the fixture platform (they are skipped
-      on other LAPACK/BLAS builds; see `PACKAGE_PLAN.md` §9.2).
+- [ ] **Level A (same-platform, strict, blocking):** package vs frozen on the
+      fixture platform, and on Linux CI against frozen outputs recomputed
+      from the committed inputs (`tools/frozen/recompute_fixtures.R`).
+      This includes bootstrap draws and add-one p-values.
+- [ ] **Level B (cross-platform scientific, scale-aware, blocking):**
+      committed fixtures checked on Linux (tests and `R CMD check`) and
+      `tools/frozen/compare_fixtures.R`. Coefficients, `sigma_c`, RSS, IR, T,
+      ranks, boundary classification, mESC targets, Ppp1r36dn/Nsd1 all pass.
+- [ ] **Level C (reported, not blocking):** cross-platform differences of the
+      extreme-conditioning fixtures and of bootstrap draws reviewed in the CI
+      annotations; none changes a boundary decision
+      (`tools/frozen/README.md`).
 - [ ] `tools/validate_against_manuscript.R` run (from Phase 5 onward).
+- [ ] Release notes state the reproducibility guarantees:
+      - scientific equivalence with the frozen algorithm;
+      - bitwise reproducibility only within a matched numerical environment;
+      - Monte-Carlo (bootstrap-draw) reproducibility under a fixed seed only
+        within a matched numerical environment, because `MASS::mvrnorm()`
+        depends on LAPACK/BLAS.
 
 ### Known provenance discrepancies of the frozen tag (record, do not "fix")
 
