@@ -102,7 +102,7 @@ run_frozen_real <- function(d) {
 
 recompute_case <- function(fixture, case) {
   inp <- case$input
-  if (fixture == "fx_source") {
+  if (startsWith(fixture, "fx_source")) {
     return(list(text = core_lines[inp$lines[1]:inp$lines[2]]))
   }
   if (fixture == "fx_test_sigma_nested") {
@@ -121,6 +121,9 @@ recompute_case <- function(fixture, case) {
     }
     return(capture(do.call(f, inp$args)))
   }
+  # Phase 2 orchestration cases: the frozen call used seed = NULL after
+  # set.seed(pre_seed) on the global RNG.
+  if (!is.null(inp$pre_seed)) set.seed(inp$pre_seed)
   capture(do.call(f, inp$args))
 }
 

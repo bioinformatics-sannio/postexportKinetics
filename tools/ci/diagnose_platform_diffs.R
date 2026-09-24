@@ -23,7 +23,8 @@ cand_dir <- args[2]
 tiers <- list(
   fx_matrix = TOL_T2, fx_covariance = TOL_T2, fx_interval_balance = TOL_T2,
   fx_fit = TOL_T2, fx_crank_nicolson = TOL_T1, fx_real_mesc = TOL_T2,
-  fx_test_sigma_nested = TOL_T2, fx_bootstrap = TOL_T2
+  fx_test_sigma_nested = TOL_T2, fx_bootstrap = TOL_T2,
+  fx_orchestrator = TOL_T2
 )
 
 leaves <- function(x, path = "") {
@@ -85,8 +86,8 @@ for (f in sort(list.files(ref_dir, pattern = "\\.rds$"))) {
     # Boundary decision agreement for fits.
     rv <- ref$cases[[key]]$output$value
     cv <- cand$cases[[key]]$output$value
-    fit_r <- if (fixture == "fx_real_mesc") rv$fit else if (fixture == "fx_fit") rv else if (fixture == "fx_test_sigma_nested") rv else NULL
-    fit_c <- if (fixture == "fx_real_mesc") cv$fit else if (fixture == "fx_fit") cv else if (fixture == "fx_test_sigma_nested") cv else NULL
+    fit_r <- if (fixture == "fx_real_mesc") rv$fit else if (fixture == "fx_fit") rv else if (fixture %in% c("fx_test_sigma_nested", "fx_orchestrator")) rv else NULL
+    fit_c <- if (fixture == "fx_real_mesc") cv$fit else if (fixture == "fx_fit") cv else if (fixture %in% c("fx_test_sigma_nested", "fx_orchestrator")) cv else NULL
     if (!is.null(fit_r) && !is.null(fit_c)) {
       gT <- function(z) if (!is.null(z$T)) z$T else z$T.obs
       if (!is.null(gT(fit_r)) && !is.null(gT(fit_c)) && !is.null(fit_r$RSS0)) {

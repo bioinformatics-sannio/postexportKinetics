@@ -3,8 +3,11 @@
 # parsed and deparsed in the current R session without source references, so
 # comments and whitespace do not matter but every expression does.
 
+# deparse() wraps lines by width, so namespace prefixes can move line breaks;
+# the comparison is therefore made on the whitespace-collapsed token stream.
 normalise <- function(x) {
-  gsub("stats::", "", x, fixed = TRUE)
+  x <- gsub("stats::", "", x, fixed = TRUE)
+  gsub("\\s+", " ", paste(x, collapse = " "))
 }
 
 deparse_plain <- function(x) {
@@ -13,6 +16,8 @@ deparse_plain <- function(x) {
 }
 
 fx <- read_fixture("fx_source")
+fx_orch <- read_fixture("fx_source_orchestrator")
+fx$cases <- c(fx$cases, fx_orch$cases)
 
 test_that("fixture covers every ported object", {
   expect_setequal(
@@ -21,7 +26,7 @@ test_that("fixture covers every ported object", {
       "time_summary_cov_shrink", "build_sigma_means",
       "build_difference_matrix", "build_Ab_fullcov", "fit_nnls_nested_once",
       "kinetic_matrix", "cn_interval", "predict_null_cn",
-      "simulate_destructive_null")
+      "simulate_destructive_null", "test_sigma_nested")
   )
 })
 
@@ -52,7 +57,9 @@ for (nm in names(fx$cases)) {
 test_that("only the documented mechanical edits differ from the frozen text", {
   qualified <- list(
     make_spd = c("stats::median(positive_d)", "stats::median(positive_entries)"),
-    time_summary_cov_shrink = "stats::complete.cases(sub)"
+    time_summary_cov_shrink = "stats::complete.cases(sub)",
+    test_sigma_nested = c("stats::median(", "stats::quantile(",
+                          "stats::setNames(")
   )
   for (nm in names(fx$cases)) {
     pkg_obj <- get(nm, envir = asNamespace("postexportKinetics"))
