@@ -94,6 +94,10 @@ jobs:
         continue-on-error: true
         run: Rscript tools/frozen/compare_fixtures.R tests/testthat/fixtures "$RUNNER_TEMP/fixtures-linux"
 
+      - name: Characterise cross-platform differences (diagnostic)
+        if: always()
+        run: Rscript tools/ci/diagnose_platform_diffs.R tests/testthat/fixtures "$RUNNER_TEMP/fixtures-linux"
+
       - name: Install package
         run: R CMD INSTALL .
 

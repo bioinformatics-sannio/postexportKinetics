@@ -37,7 +37,8 @@ tiers <- list(
 )
 
 platform_dependent <- c("fx_bootstrap")
-boot_fields <- c("T.boot", "p.value", "atom.zero", "bootstrap.failure.rate",
+boot_fields <- c("T.boot", "bootstrap.condition", "bootstrap.rank",
+                 "p.value", "atom.zero", "bootstrap.failure.rate",
                  "n.bootstrap.valid", "bootstrap.condition.median",
                  "bootstrap.condition.q95", "bootstrap.condition.max",
                  "bootstrap.rank.deficient.fraction")
