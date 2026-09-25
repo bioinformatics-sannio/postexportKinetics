@@ -1,10 +1,9 @@
 # Phase 5 Report: user-facing development package
 
-Status: **Phase 5 is implemented on branch `phase5-docs` and stopped for
-review.**
+Status: **Phase 5 is approved. The approved decisions (§12) are
+implemented.**
 
-- Not merged to `main`.
-- Version unchanged (`0.0.0.9000`).
+- Version unchanged (`0.0.0.9000`); no release has been tagged.
 - No Bioconductor submission preparation.
 
 **Baseline and reference:**
@@ -22,7 +21,9 @@ Commits on `phase5-docs`:
 | `c2792a3` | Add task-oriented vignette |
 | `dae2361` | Add README, NEWS, CITATION.cff and inst/CITATION |
 | `0572127` | Add `tools/validate_against_manuscript.R` |
-| this commit | `PHASE5_REPORT.md` |
+| `bafeb24` | `PHASE5_REPORT.md` for review |
+| `f6a2165` | Apply the approved Phase 5 documentation and metadata decisions |
+| this commit | report updated with the approved decisions and final results |
 
 **No scientific or numerical code changed.**
 
@@ -235,8 +236,8 @@ clone that contains the tag.
 | Suggests | adds `knitr` and `rmarkdown` |
 | VignetteBuilder | `knitr` (new) |
 | LazyData | `false` (explicit `data()`) |
-| biocViews | adds `Visualization` |
-| unchanged | Title, Version `0.0.0.9000`, Authors@R (no ORCID), License `MIT + file LICENSE`, URL, BugReports, Encoding `UTF-8`, Imports, `Depends: R (>= 4.1.0)` |
+| biocViews | adds `MultipleComparison` (approved; public multiple-testing API) and `Visualization` |
+| unchanged | Title, Version `0.0.0.9000`, Authors@R (no ORCID), License `MIT + file LICENSE`, URL, BugReports, Encoding `UTF-8`, Imports, `Depends: R (>= 4.1.0)` (kept provisionally, decision 3) |
 
 `.Rbuildignore` now also excludes `CITATION.cff` and rendered vignette
 HTML. The `PHASE` pattern is corrected to `^PHASE[0-9_]+_REPORT\.md$`; see
@@ -290,8 +291,8 @@ HTML. The `PHASE` pattern is corrected to `^PHASE[0-9_]+_REPORT\.md$`; see
 
 ## 9. R CMD check results
 
-Final committed state, macOS arm64, R 4.6.0, pandoc 3.11 from a scratch
-directory (the system was not modified):
+Final committed state (`f6a2165`), macOS arm64, R 4.6.0, pandoc 3.11 from a
+scratch directory (the system was not modified):
 
 - `R CMD build`: OK, with the vignette built.
 - `R CMD check --as-cran`, including the manual: **0 ERRORs, 0 WARNINGs,
@@ -309,12 +310,13 @@ as the Phase 3 and Phase 4 reports stated. The `.Rbuildignore` fix removes
 it. `PROJECT_STATE.md` §9 will be corrected when Phase 5 is merged.
 
 **Test suite:** 16 files, **3,677 expectations, 0 failures, 0 errors, 0
-warnings, 0 skipped** (Phase 4: 3,654; +23 from `test-example-data.R`).
+warnings, 0 skipped** (Phase 4: 3,654; +23 from `test-example-data.R`). The
+approved changes are documentation-only, so the counts are unchanged.
 
 ## 10. BiocCheck results
 
-BiocCheck 1.48.1, final tarball: **2 ERRORs, 2 WARNINGs, 11 NOTEs**
-(Phase 4: 3 / 2 / 12).
+BiocCheck 1.48.1, final tarball (`f6a2165`): **2 ERRORs, 2 WARNINGs, 10
+NOTEs** (Phase 4: 3 / 2 / 12; review draft: 2 / 2 / 11).
 
 | Finding | Type | Status |
 |---|---|---|
@@ -324,12 +326,16 @@ BiocCheck 1.48.1, final tarball: **2 ERRORs, 2 WARNINGs, 11 NOTEs**
 | no Bioconductor dependencies | WARNING | open; see §8 (defer) |
 | `set.seed` (2: frozen orchestrator, public simulator) | WARNING | frozen behaviour / documented seed policy |
 | NEWS | NOTE | **resolved** |
-| R version (4.1.0 → suggests 4.6.0) | NOTE | open decision (§12) |
-| biocViews: suggests `MultipleComparison` | NOTE | open decision (§12) |
+| R version (4.1.0 → suggests 4.6.0) | NOTE | kept by decision 3, provisionally, pending compatibility CI before 0.1.0 |
+| biocViews: suggests `MultipleComparison` | NOTE | **resolved** (added) |
 | ORCID, `fnd` role, bioc-devel subscription | NOTE | metadata; no ORCID invented |
 | `=`, `paste` in conditions, `<<-`, function length (25), long lines (6, all in frozen `ode.R`), indentation (21%) | NOTE | frozen code style, preserved by decision; new code uses 4 spaces and ≤ 80 characters |
 
 ## 11. Linux CI
+
+- **Final Phase 5 code** (`f6a2165`): run `36106757736`, both jobs
+  (`package` and `frozen-reference`) succeeded, with every step successful.
+- **Review state** (`0572127`): run `36104965575`, details below.
 
 Run `36104965575` on `0572127` (`ubuntu-latest`, R release): **both jobs
 succeeded, with every step successful.**
@@ -365,39 +371,66 @@ recorded here and in `RELEASE_CHECKLIST.md` §3a: after the migration,
 confirm that the level A/B/C results are unchanged and record the new
 LAPACK/BLAS provenance.
 
-## 12. Unresolved decisions
+## 12. Approved decisions (review of this report)
 
-1. **Example design.** The example uses the calibrated benchmark design with
-   the highest power (0.24). Only one of four simulated alternatives is
-   detected. This is deliberately honest, but it is a modest demonstration.
-   The alternative would be a higher-power design, which in the benchmark
-   is anti-conservative. Recommendation: keep.
-2. **Vignette and example `B`.** The vignette uses `B = 499` (about 10 s);
-   examples use `B = 49`/`99`, with explicit comments. OK?
-3. **`Depends: R (>= 4.1.0)`.** It is untested below the current release.
-   BiocCheck suggests 4.6.0. Keep 4.1.0 for GitHub users, or raise it to the
-   tested version?
-4. **biocViews.** `Visualization` was added. Add BiocCheck's suggestion
-   `MultipleComparison`?
-5. **SummarizedExperiment.** The recommendation is to defer (§8). This also
-   means the "no Bioconductor dependencies" WARNING stays until a decision.
-6. **Citation entries.** The manuscript appears as
-   Unpublished/`type: manuscript` "submitted". Update on acceptance; add a
-   package DOI only after a Zenodo release.
-7. **Release version.** The next public GitHub release could be tagged
-   `0.1.0`, with `0.99.0` reserved for Bioconductor submission
-   (`RELEASE_CHECKLIST.md` §4). Decision pending.
-8. **Earlier NOTE attribution.** Correct `PROJECT_STATE.md` §9 at merge
-   (§9 above).
+1. **Example dataset:** keep the calibrated, modest-power design. Its
+   documentation (`?postexport_example`, the vignette and
+   `data-raw/postexport_example.R`) now states that:
+   - the design was selected from the benchmark table before data
+     generation;
+   - the seed was fixed a priori;
+   - there was no seed search;
+   - benchmark power is about 0.24.
+2. **Bootstrap counts:** `B = 499` in the vignette and `B = 49`/`99` in the
+   examples, as before.
+   - The vignette states the floor `1/(B+1)`, here 0.002.
+   - Every executable example with a small `B`, and the README batch
+     example, now says that it is used only for speed and is not
+     recommended for final scientific analysis.
+3. **R version:** `Depends: R (>= 4.1.0)` is kept provisionally.
+   - The README states that the package is tested only with the current
+     release and that older releases have not been checked.
+   - Before 0.1.0, a compatibility CI job on at least one older supported
+     R release is required (`RELEASE_CHECKLIST.md` §4).
+   - A concrete incompatibility would be reported before `DESCRIPTION` is
+     changed.
+4. **biocViews:** `MultipleComparison` is added and `Visualization` kept.
+5. **SummarizedExperiment:** deferred from v0.1. No Bioconductor dependency
+   is added merely to remove the BiocCheck warning.
+   - Layout A (four state assays) is a possible future thin converter.
+   - Layout B needs pairing, normalisation and mapping decisions.
+   - Revisit during Bioconductor submission preparation.
+6. **Citation metadata:** the manuscript stays unpublished/submitted, and
+   there is no package DOI. `10.5281/zenodo.22944109` is the frozen
+   manuscript implementation. A package DOI will be added only after the
+   first GitHub release is archived on Zenodo.
+7. **Release version:** the first public GitHub release will be `0.1.0`;
+   the Bioconductor line `0.99.0` comes later and is not used for the
+   GitHub release (`RELEASE_CHECKLIST.md` §4). No release has been created
+   or tagged.
 
 ## 13. Recommended next steps
 
+**Next: a separate release-candidate plan for `0.1.0`** (after merge and
+documentation). It should cover:
+
+- the version bump to `0.1.0`;
+- compatibility CI on an older R release;
+- macOS/Linux/Windows checks where feasible;
+- full manuscript validation;
+- README/CITATION/NEWS synchronisation;
+- release tarball inspection;
+- GitHub release preparation;
+- Zenodo archival planning.
+
+The outline below remains the reference.
+
 **Toward a first public GitHub release:**
 
-1. Review and merge Phase 5 (`--no-ff`).
-2. Resolve the decisions in §12, in particular 3, 4 and 7.
-3. Decide the release version (for example `0.1.0`) and update
-   `DESCRIPTION`, `NEWS.md`, `CITATION.cff` and `inst/CITATION`.
+1. Merge Phase 5 (`--no-ff`); done after approval.
+2. Add compatibility CI on an older R release (decision 3).
+3. Bump the version to `0.1.0` (decision 7) and synchronise `DESCRIPTION`,
+   `NEWS.md`, `CITATION.cff` and `inst/CITATION`.
 4. Run `RELEASE_CHECKLIST.md` §1–3a:
    - full `tools/validate_against_manuscript.R`;
    - `R CMD check` on macOS and Linux, and Windows if possible;
