@@ -21,6 +21,7 @@ License: MIT + file LICENSE
 URL: https://github.com/bioinformatics-sannio/postexportKinetics
 BugReports: https://github.com/bioinformatics-sannio/postexportKinetics/issues
 Encoding: UTF-8
+LazyData: false
 Depends:
     R (>= 4.1.0)
 Imports:
