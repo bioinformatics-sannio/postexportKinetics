@@ -24,6 +24,9 @@
 #' \itemize{
 #'   \item [postexport_data()] and [validate_postexport_data()]: validated
 #'     input data;
+#'   \item [postexport_data_from_se()]: input from an already state-resolved
+#'     `SummarizedExperiment` (layout A: events by destructive samples, four
+#'     state assays);
 #'   \item [postexport_control()]: numerical and inferential settings
 #'     (frozen defaults);
 #'   \item [fit_postexport_model()]: full and `sigma_c = 0` null fits

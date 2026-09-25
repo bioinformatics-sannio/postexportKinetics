@@ -6,6 +6,16 @@ unchanged). The package has no DOI.
 
 * Version 0.99.0, the pre-release version required for a first
   Bioconductor submission.
+* New `postexport_data_from_se()`: converts an already state-resolved
+  `SummarizedExperiment` into a `postexport_data` object, exactly as
+  `postexport_data()` would for the equivalent wide table.
+  * Layout A: events as rows, destructive samples as columns, `time` and
+    `replicate` in `colData`, and four assays `N`, `N_s`, `C`, `C_s`.
+  * It does not pair libraries, normalise, convert rMATS output or infer
+    inclusion/skipping.
+  * SummarizedExperiment is now in Imports.
+* Vignette: "Introduction" and "Installation" sections, and a short
+  SummarizedExperiment input section.
 
 # postexportKinetics 0.1.0
 

@@ -35,6 +35,9 @@ against fixtures generated from that tag.
 \itemize{
 \item \code{\link[=postexport_data]{postexport_data()}} and \code{\link[=validate_postexport_data]{validate_postexport_data()}}: validated
 input data;
+\item \code{\link[=postexport_data_from_se]{postexport_data_from_se()}}: input from an already state-resolved
+\code{SummarizedExperiment} (layout A: events by destructive samples, four
+state assays);
 \item \code{\link[=postexport_control]{postexport_control()}}: numerical and inferential settings
 (frozen defaults);
 \item \code{\link[=fit_postexport_model]{fit_postexport_model()}}: full and \code{sigma_c = 0} null fits

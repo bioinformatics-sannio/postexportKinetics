@@ -33,6 +33,7 @@ Imports:
     MASS,
     nnls,
     stats,
+    SummarizedExperiment,
     utils
 Suggests:
     expm,
