@@ -1,0 +1,91 @@
+# Publish a GitHub release for a pushed version tag (vX.Y.Z).
+#
+# It does NOT rebuild the package. It publishes the tarball that
+# release-candidate.yml already built and gated on the exact tagged commit:
+#   1. the tag must be annotated, point to a commit on main, and match the
+#      DESCRIPTION version; release notes must exist in
+#      .github/release-notes/<tag>.md;
+#   2. release-candidate, linux-regression, platforms and r-compat must all
+#      have completed successfully (push event) on that exact commit;
+#   3. the release-candidate artifact of that commit is downloaded; the
+#      tarball SHA256 must match its .sha256 file, the tarball DESCRIPTION
+#      version must match the tag, and the logs must report tarball
+#      inspection PASSED, smoke test PASSED, citation audit PASSED and full
+#      manuscript validation EQUIVALENT;
+#   4. only then the release is created with the tarball, its checksum and
+#      the full validation log as assets.
+# No Zenodo archive and no DOI are involved (maintainer policy).
+
+name: publish-release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag, version and release notes
+        run: |
+          git fetch --force origin "refs/tags/$TAG:refs/tags/$TAG"
+          test "$(git cat-file -t "refs/tags/$TAG")" = tag || { echo "::error::$TAG is not an annotated tag"; exit 1; }
+          SHA=$(git rev-parse "refs/tags/$TAG^{commit}")
+          test "$SHA" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$SHA" origin/main || { echo "::error::$TAG is not on main"; exit 1; }
+          V=$(grep '^Version:' DESCRIPTION | awk '{print $2}')
+          test "v$V" = "$TAG" || { echo "::error::DESCRIPTION version $V does not match $TAG"; exit 1; }
+          test -f ".github/release-notes/$TAG.md"
+          echo "SHA=$SHA" >> "$GITHUB_ENV"
+          echo "::notice title=Tag::$TAG (annotated) -> $SHA on main; DESCRIPTION $V"
+
+      - name: Require green release workflows on the tagged commit
+        run: |
+          for wf in release-candidate linux-regression platforms r-compat; do
+            n=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$wf.yml" --commit "$SHA" --event push \
+                  --json status,conclusion --jq '[.[] | select(.status == "completed" and .conclusion == "success")] | length')
+            test "${n:-0}" -ge 1 || { echo "::error::$wf has no successful run on $SHA"; exit 1; }
+            echo "$wf: green on $SHA"
+          done
+          RID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow release-candidate.yml --commit "$SHA" --event push \
+                  --json databaseId,conclusion --jq '[.[] | select(.conclusion == "success")][0].databaseId')
+          echo "RID=$RID" >> "$GITHUB_ENV"
+          echo "::notice title=Gates::all four workflows green on $SHA; release-candidate run $RID"
+
+      - name: Download the gated release-candidate artifact
+        run: gh run download "$RID" --repo "$GITHUB_REPOSITORY" --name "release-candidate-$SHA" --dir asset
+
+      - name: Verify the asset
+        run: |
+          cd asset
+          sha256sum -c postexportKinetics_*.tar.gz.sha256
+          V=${TAG#v}
+          tar -xzOf "postexportKinetics_$V.tar.gz" postexportKinetics/DESCRIPTION | grep -qx "Version: $V"
+          grep -q "TARBALL INSPECTION PASSED" inspect_tarball.log
+          grep -q "SMOKE TEST PASSED" smoke_install.log
+          grep -q "CITATION AUDIT PASSED" citation_audit.log
+          grep -q "Scientific equivalence status: EQUIVALENT (0 step(s) failed)" validate_against_manuscript_full.log
+          S=$(cut -d' ' -f1 "postexportKinetics_$V.tar.gz.sha256")
+          echo "::notice title=Release asset::postexportKinetics_$V.tar.gz from $SHA (release-candidate run $RID) | sha256 $S"
+
+      - name: Create the GitHub release
+        run: |
+          V=${TAG#v}
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag \
+            --title "postexportKinetics $V" \
+            --notes-file ".github/release-notes/$TAG.md" \
+            "asset/postexportKinetics_$V.tar.gz" \
+            "asset/postexportKinetics_$V.tar.gz.sha256" \
+            "asset/validate_against_manuscript_full.log"
+          echo "::notice title=Release::$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json url --jq .url)"
