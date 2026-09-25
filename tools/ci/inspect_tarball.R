@@ -39,7 +39,7 @@ top <- unique(sub("/.*$", "", rel))
 for (t in setdiff(top, allowed_top)) fail("unexpected top-level entry: %s", t)
 
 forbidden <- paste(c("PHASE[0-9A-Za-z_]*_REPORT", "PACKAGE_PLAN", "STOP_CONDITION",
-                     "BIOCONDUCTOR_AUDIT",
+                     "BIOCONDUCTOR_AUDIT", "BIOCONDUCTOR_READINESS",
                      "PROJECT_STATE", "RELEASE_", "CLAUDE\\.md", "^tools/",
                      "/tools/", "data-raw", "\\.github", "\\.zenodo\\.json",
                      "CITATION\\.cff", "\\.Rproj", "\\.DS_Store",

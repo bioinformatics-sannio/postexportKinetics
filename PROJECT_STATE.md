@@ -299,8 +299,16 @@ Phase 5 final counts (BiocCheck 1.48.1): **2 ERRORs, 2 WARNINGs, 10 NOTEs**.
 **Phase 6: Bioconductor preparation.**
 
 - Stop Point 0 audit (`BIOCONDUCTOR_AUDIT.md`) is approved.
-- **Phase 6A/6B** is on branch `bioconductor-prep`, reported in
-  `PHASE6_AB_REPORT.md` and awaiting review:
+- **Phase 6C/6D readiness:** `BIOCONDUCTOR_READINESS.md`, awaiting explicit
+  approval.
+  - Package-only branch `devel` @ `ad31ab9` (Source-Commit `271c573`), not
+    default.
+  - Export and verification tools in `tools/release/`.
+  - `bioc-devel` CI.
+  - The recommendation is NO-GO until Watched Tags and the Note A/B
+    decisions are resolved.
+- **Phase 6A/6B** (approved) is on branch `bioconductor-prep`, reported in
+  `PHASE6_AB_REPORT.md`:
   - version 0.99.0;
   - build-ignore entries;
   - vignette Introduction and Installation sections;
@@ -310,10 +318,9 @@ Phase 5 final counts (BiocCheck 1.48.1): **2 ERRORs, 2 WARNINGs, 10 NOTEs**.
   - `inst/scripts` provenance.
 - **Not done:** default-branch switch (policy P1 approved conceptually,
   not implemented), submission, new release or tag.
-- **Pending maintainer actions** (`BIOCONDUCTOR_AUDIT.md` §9):
-  - Support Site Watched Tags;
-  - bioc-devel;
-  - SSH key;
+- **Maintainer actions:**
+  - done: Support Site registration, bioc-devel, SSH key;
+  - pending: Support Site Watched Tags;
   - the later default-branch switch;
   - optional ORCID or funder metadata.
 
