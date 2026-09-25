@@ -263,3 +263,28 @@ test_that("printed output does not claim a mechanism", {
     expect_false(grepl("splicing|detected", txt, ignore.case = TRUE))
     expect_true(grepl("do not establish", txt))
 })
+
+test_that("the parameter-name error message is unchanged", {
+    msg <- function(p) {
+        tryCatch(simulate_postexport_kinetics(
+            p, times = 1:2, onset_time = 0, t_star = 1, regime = "SHUTOFF",
+            time_unit = "min"), error = conditionMessage)
+    }
+    base <- c(R = 1, tau = 1, tau_s = 1, sigma_c = 0, sigma_n = 1, alpha = 1,
+              alpha_s = 1)
+    expect_identical(
+        msg(c(base[-7], foo = 1)),
+        paste0("'params' must have exactly the names R, tau, tau_s, ",
+               "sigma_c, sigma_n, alpha, alpha_s (missing: alpha_s; ",
+               "unknown: foo)."))
+    expect_identical(
+        msg(base[-(6:7)]),
+        paste0("'params' must have exactly the names R, tau, tau_s, ",
+               "sigma_c, sigma_n, alpha, alpha_s (missing: alpha, alpha_s; ",
+               "unknown: none)."))
+    expect_identical(
+        msg(c(base, R = 2)),
+        paste0("'params' must have exactly the names R, tau, tau_s, ",
+               "sigma_c, sigma_n, alpha, alpha_s (missing: none; ",
+               "unknown: none)."))
+})
