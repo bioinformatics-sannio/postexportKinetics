@@ -294,9 +294,10 @@ Phase 5 final counts (BiocCheck 1.48.1): **2 ERRORs, 2 WARNINGs, 10 NOTEs**.
 
 ## 10. Next phase
 
-**Bioconductor preparation. NOT started.** Its scope must be specified and
-approved before any work begins. Expected topics, recorded as candidates
-only:
+**Phase 6: Bioconductor preparation. Stop Point 0 (read-only audit) is in
+progress** on branch `bioconductor-prep`: `BIOCONDUCTOR_AUDIT.md`, awaiting
+review. No package change, no version change and no account action have
+been made. Earlier candidate topics:
 
 - the `0.99.x` version line;
 - BiocCheck remaining items:
