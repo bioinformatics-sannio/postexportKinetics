@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # Regression: within-time covariance estimation, shrinkage, stabilisation and
 # propagation structures against the frozen core.
 #   time_summary_cov_shrink(): T2 (make_spd eigendecomposition)

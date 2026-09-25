@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # =============================================================================
 # print() and summary() methods for fit and test results
 #

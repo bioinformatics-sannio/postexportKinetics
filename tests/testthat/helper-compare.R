@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # =============================================================================
 # Regression comparison helpers
 #

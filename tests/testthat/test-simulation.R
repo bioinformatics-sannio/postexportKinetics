@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # Simulation: regression against the frozen simulator (ode_model/ode.r,
 # commons/platforms.r, benchmark noise presets) and public-API behaviour.
 #   A. same-platform: strict (T1 for ODE outputs; exact for draws);

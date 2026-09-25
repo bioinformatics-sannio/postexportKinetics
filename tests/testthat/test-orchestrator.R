@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # Regression: internal port of the frozen orchestration test_sigma_nested()
 # (commons/nested_test2.r:1447-2166) against the frozen tag.
 #

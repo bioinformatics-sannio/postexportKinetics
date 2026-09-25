@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # =============================================================================
 # Operational-domain diagnostics: check_operational_domain()
 #

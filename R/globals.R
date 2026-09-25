@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # The frozen ODE right-hand side rna_kinetics() (R/ode.R) evaluates the state
 # and parameter names inside with(); declare them so that R CMD check does not
 # report them as undefined globals. This does not change the ported code.

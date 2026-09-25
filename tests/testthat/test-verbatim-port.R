@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # The ported internals must be the frozen functions, up to the documented
 # mechanical edits (namespace qualification of stats functions). Both sides are
 # parsed and deparsed in the current R session without source references, so

@@ -1,3 +1,5 @@
+# Assisted-by: Claude Code (Anthropic)
+
 #' Create post-export kinetics data from a SummarizedExperiment
 #'
 #' Converts an already state-resolved `SummarizedExperiment` (layout A) into

@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # Regression on real data: mESC (GSE256335) events from the final manuscript
 # audit. Deterministic observed-fit quantities only (no bootstrap).
 #

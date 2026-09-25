@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # Data model, validation and control object.
 
 make_wide <- function(n_rep = 3, times = c(0, 15, 30, 60), event = "e1") {
