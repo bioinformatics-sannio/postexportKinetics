@@ -3,6 +3,25 @@
 Items are completed for every release. Status column is filled in at release
 time; nothing below is claimed as done until it has been run.
 
+## Release record
+
+| Version | Tag | Release | Merge commit | Tarball SHA256 | DOI |
+|---|---|---|---|---|---|
+| 0.1.0 (2026-09-25) | `v0.1.0` (annotated) | <https://github.com/bioinformatics-sannio/postexportKinetics/releases/tag/v0.1.0> | `04c4407dfbc0e04b2725a007387e33bdcf5b131d` | `dd6979ff48a49c5ce5118e3990abb5b74ebdf2264a5728e22662d6ba87f18eda` | **none** (no package DOI; no Zenodo archive) |
+
+0.1.0 gates: all green on the merge commit, and recorded in
+`RELEASE_CANDIDATE_0.1.0.md`:
+
+- release-candidate (run `36143895882`): tarball built in CI, inspection
+  PASSED, clean install PASSED, citation audit PASSED, full manuscript
+  validation EQUIVALENT;
+- linux-regression (`36143895845`), platforms (`36143896058`) and r-compat
+  (`36143895875`) green;
+- `publish-release.yml` (run `36144950320`) published the gated asset.
+
+The frozen manuscript implementation DOI remains `10.5281/zenodo.22944109`.
+The next phase is Bioconductor preparation, which has not been started.
+
 ## 1. Frozen-reference regression validation
 
 - [ ] Frozen export verified: tag `manuscript-revision-v1.0` resolves to

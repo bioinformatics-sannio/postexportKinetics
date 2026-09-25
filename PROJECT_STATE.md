@@ -16,25 +16,38 @@ scientific-invariance rules.
 
 ## 2. Package state
 
-- Package: `postexportKinetics`. `main` is at `0.0.0.9000`; the release
-  candidate on branch `release-0.1.0` is at **`0.1.0`**. MIT license.
+- Package: `postexportKinetics` **`0.1.0` (released)**. MIT license.
   Maintainer Luigi Cerulo `<lcerulo@unisannio.it>`.
-- **First public GitHub release: `0.1.0`** (approved). It has **no DOI**
-  and no Zenodo archive (maintainer policy). The Bioconductor line `0.99.0`
-  comes later and is not used for the GitHub release. No release or tag has
-  been created yet.
-- **RC status:** stop point 1 (B.1–B.3) is approved. B.4–B.9 (version
-  sync, final gates) are on `release-0.1.0` and stop for explicit release
-  approval (`RELEASE_CANDIDATE_0.1.0.md`).
+- **Released version 0.1.0**, the first public GitHub release:
+  - GitHub tag: **`v0.1.0`**, annotated (tag object `303e2e1`);
+  - GitHub release:
+    <https://github.com/bioinformatics-sannio/postexportKinetics/releases/tag/v0.1.0>
+    (published 2026-09-25);
+  - release merge commit:
+    **`04c4407dfbc0e04b2725a007387e33bdcf5b131d`** (`--no-ff` merge of
+    `release-0.1.0`);
+  - release tarball `postexportKinetics_0.1.0.tar.gz`, built in CI
+    (release-candidate run `36143895882`, R 4.6.1, Ubuntu 24.04.5) from the
+    merge commit: SHA256
+    **`dd6979ff48a49c5ce5118e3990abb5b74ebdf2264a5728e22662d6ba87f18eda`**;
+  - release assets: the tarball, its `.sha256` and the full manuscript
+    validation log (EQUIVALENT), published by `publish-release.yml` from the
+    gated artifact of the merge commit;
+  - **no package DOI and no Zenodo archive** (maintainer policy);
+  - the frozen manuscript DOI remains **`10.5281/zenodo.22944109`**. It is
+    the DOI of the frozen implementation, never of the package.
+- **Bioconductor** is the intended future distribution channel. The
+  Bioconductor line `0.99.0` has not been started.
 - Repository: `https://github.com/bioinformatics-sannio/postexportKinetics`.
-- **Current approved main:** `f7e23ee` (Phase 5 merge, `--no-ff`) plus the
+- **Current approved main:** `04c4407` (0.1.0 release merge) plus the
   documentation-only commit that updates this file.
+- **Phase 5 merge:** `f7e23ee`.
 - **Earlier baselines:**
   - Phase 4 merge `21d8a23` (with `PROJECT_STATE.md` update `982aeb6`);
   - Phase 3 merge `aace22ddf9a8248e9950aef3841eefc0cbbd713e`;
   - documentation checkpoints `1965404` and `9de2958`.
-- Branches `phase1-core`, `phase2-api`, `phase3-sim`, `phase4-batch` and
-  `phase5-docs` are kept.
+- Branches `phase1-core`, `phase2-api`, `phase3-sim`, `phase4-batch`,
+  `phase5-docs` and `release-0.1.0` are kept.
 
 ## 3. Completed phases
 
@@ -47,6 +60,7 @@ scientific-invariance rules.
 | 3 | simulator and assay ports, simulation API, operational-domain diagnostics | `PHASE3_REPORT.md` |
 | 4 | batch usability, multiple-testing adjustment, exploratory ranking, plots, tidy tables | `PHASE4_REPORT.md` |
 | 5 | README, vignette, synthetic example data, NEWS, CITATION.cff / inst/CITATION, `tools/validate_against_manuscript.R`, documentation and metadata polish | `PHASE5_REPORT.md` |
+| RC / release 0.1.0 | fixture provenance normalisation, dependency minimums, R-compatibility and platform CI, release-candidate and publish-release workflows, version 0.1.0, GitHub release `v0.1.0` | `RELEASE_CANDIDATE_0.1.0.md` |
 
 ## 4. Current public API
 
@@ -280,32 +294,36 @@ Phase 5 final counts (BiocCheck 1.48.1): **2 ERRORs, 2 WARNINGs, 10 NOTEs**.
 
 ## 10. Next phase
 
-**Release candidate `0.1.0`**, in progress on branch `release-0.1.0` (see
-`RELEASE_CANDIDATE_0.1.0.md`). It covers:
+**Bioconductor preparation. NOT started.** Its scope must be specified and
+approved before any work begins. Expected topics, recorded as candidates
+only:
 
-- the version bump to `0.1.0`;
-- compatibility CI on at least one older R release, to verify the
-  provisional `R (>= 4.1.0)`. A concrete incompatibility is reported before
-  `DESCRIPTION` is changed.
-- macOS, Linux and Windows checks where feasible;
-- the full `tools/validate_against_manuscript.R`;
-- README, CITATION and NEWS synchronisation;
-- release tarball inspection;
-- GitHub release preparation (no Zenodo archival: maintainer policy).
+- the `0.99.x` version line;
+- BiocCheck remaining items:
+  - Support Site registration;
+  - Bioconductor dependency (the SummarizedExperiment decision, deferred;
+    Layout A converter possible);
+  - `set.seed`;
+  - style NOTEs outside the frozen ports;
+- the bioc-devel subscription;
+- ORCID if supplied by the authors.
 
-**Not yet:**
-
-- no release or tag has been created;
-- no switch to `0.99.0`;
-- no Bioconductor submission preparation.
+**Release 0.1.0: done** (§2). There is no package DOI and no Zenodo archive.
 
 **Still open for later:** parallel execution, rMATS conversion,
 comparators, SummarizedExperiment input.
 
-**CI runner:** GitHub moves `ubuntu-latest` to Ubuntu 26 from 2026-10-19.
-CI stays on `ubuntu-latest` unless a concrete compatibility problem
-appears. After the migration, confirm the level A/B/C results and record
-the new LAPACK/BLAS provenance (`RELEASE_CHECKLIST.md` §3a).
+**CI maintenance:**
+
+- GitHub moves `ubuntu-latest` to Ubuntu 26 from 2026-10-19. CI stays on
+  `ubuntu-latest` unless a concrete compatibility problem appears. After
+  the migration, confirm the level A/B/C results and record the new
+  LAPACK/BLAS provenance (`RELEASE_CHECKLIST.md` §3a).
+- `actions/upload-artifact@v4` triggers a Node.js 20 deprecation warning.
+
+**Manuscript Availability statement** (author action): cite the
+manuscript-code repository and DOI 10.5281/zenodo.22944109, and optionally
+the postexportKinetics repository and release `v0.1.0`.
 
 ## 11. Authoritative reading order
 
@@ -314,7 +332,8 @@ the new LAPACK/BLAS provenance (`RELEASE_CHECKLIST.md` §3a).
 3. `STOP_CONDITION_REPORT.md`: provenance decisions (SF-1 … SF-19).
 4. `PHASE1_5_REPORT.md` §9–10 and `tools/frozen/README.md`: regression
    policy.
-5. `PHASE5_REPORT.md`, `PHASE4_REPORT.md`, `PHASE3_REPORT.md`, then
+5. `RELEASE_CANDIDATE_0.1.0.md` (release record), `PHASE5_REPORT.md`,
+   `PHASE4_REPORT.md`, `PHASE3_REPORT.md`, then
    `PHASE2_REPORT.md`: current API and decisions.
 6. `PACKAGE_PLAN.md`: original architecture and remaining scope, with the
    amendments recorded in the later reports.
