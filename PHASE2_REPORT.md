@@ -1,7 +1,7 @@
 # Phase 2 Report: public inference API
 
-Status: **Phase 2 implemented on branch `phase2-api`; stopped for review.
-Phase 3 not started. Not merged to `main`.**
+Status: **Phase 2 approved and completed (§11); merged to `main`.
+Phase 3 not started.**
 
 Frozen reference: `manuscript-revision-v1.0` →
 `65c3b7368fb7686bfde3dab857f98c393bb534c5`.
@@ -380,3 +380,73 @@ same-platform package-vs-frozen regression passes on Linux.
    50 lines (BiocCheck NOTE). They could be split in a later clean-up
    without behavioural change.
 10. **Merge.** `phase2-api` is not merged to `main`, pending review.
+
+
+---
+
+## 11. Phase 2 completion: approved decisions, final results
+
+Decisions from the review of this report were implemented in `f5ed74d`.
+Neither the verbatim frozen ports nor any fixture changed.
+
+| # | Decision | Implementation |
+|---|---|---|
+| 1 | `t_star` stays an explicit required argument of fit/test | unchanged |
+| 2 | Public-API RNG hygiene; frozen orchestrator unmodified | With an explicit seed, the caller's `.Random.seed` is saved before each event and restored afterwards (removed again if it did not exist). The frozen `set.seed(seed)` call is unchanged, and the BiocCheck `set.seed` WARNING stays documented. With `seed = NULL`, the global stream is consumed as in the frozen code. |
+| 3 | Batch seeds | unchanged: a named per-event vector or `NULL`; a scalar seed with several events is an error |
+| 4 | `t_star` at/before the first or at/after the last sampled time → WARNING | Per-event warnings state the consequence: R not estimable (zero design column, infinite condition number), or no post-intervention interval (the fit equals `t_star = NULL`). They are emitted by `fit_postexport_model()`/`test_postexport_conversion()`, stored in `$design$warnings` and shown by `summary()`, and they never block. Unequal replication, single-replicate time points and two time points remain information. |
+| 5 | Strict long-format vocabulary | unchanged |
+| 6 | Advanced controls | `scaling_A` and `truncate_nonnegative_boot` are documented as **advanced options**, with frozen defaults, effects, and the statement that changing them changes the analysis |
+| 7 | Strict public validation | unchanged |
+| 8 | Frozen statuses | unchanged coverage |
+| 9 | Function length | no refactoring |
+
+Other changes:
+
+- Examples now include a pre-shutoff sample, so they do not trigger the
+  `t_star` warning.
+- The validation print no longer repeats the event name.
+- Tests that reproduce the manuscript's `t_star = first sample` designs muffle
+  exactly that warning (`quiet_tstar()`); dedicated tests assert that it is
+  emitted.
+
+**New regression tests:**
+
+- **RNG, explicit seed:** the caller's state is identical before and after
+  the call, including when no state existed beforehand, and the result is
+  `identical()` to the frozen orchestrator's.
+- **RNG, several events with named seeds:** the caller's state is unchanged.
+- **RNG, `seed = NULL`:** the state after the call is identical to that after
+  a direct frozen call from the same starting state; the results are
+  identical; the starting state is recorded.
+- **`t_star` warnings:** the inference result under the warning is
+  `identical()` to the frozen result; `t_star` at the last sample gives the
+  same estimates and fit as `t_star = NULL`.
+
+**Final local results (macOS):**
+
+- test suite: 3,067 expectations, 0 failures, 0 unexpected warnings; the
+  forced cross-platform mode also passes;
+- `R CMD check --as-cran --no-manual`: 0 ERRORs, 0 WARNINGs, 2 NOTEs (new
+  submission; no pandoc);
+- BiocCheck: 3 ERRORs, 3 WARNINGs, 10 NOTEs, the same findings as §8.
+
+**Final Linux CI on `phase2-api`:**
+
+| Run | Commit | Result |
+|---|---|---|
+| 36059225108 | `9476319` (report only) | success |
+| **36092399780** | **`f5ed74d`** (final) | **success**, both jobs |
+
+On Linux the same-platform package-vs-frozen strict regression passes,
+including bootstrap draws and the public-API regression. The cross-platform
+scientific policy is satisfied. The differences reported as non-blocking are
+the usual ones:
+
+- bootstrap draws, in 16 `fx_bootstrap` cases, 17 `fx_orchestrator` cases and
+  9 `fx_test_sigma_nested` cases;
+- the four extreme-conditioning fixtures (2 in `fx_fit`, 2 in `fx_matrix`),
+  within `100·κ·ε`.
+
+**Final Phase 2 commits:** `ef02fb1`, `600d49e`, `9476319`, `f5ed74d`, and
+this report update.
