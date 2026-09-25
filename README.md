@@ -70,8 +70,9 @@ remotes::install_github("bioinformatics-sannio/postexportKinetics",
                         build_vignettes = TRUE)
 ```
 
-- **R version:** R >= 4.1.0. The package is currently tested with the
-  current R release on macOS and Linux.
+- **R version:** `R (>= 4.1.0)` is declared provisionally. The package is
+  currently tested only with the current R release on macOS and Linux.
+  Compatibility with older R releases has not yet been checked.
 - **Runtime dependencies:** `deSolve`, `ggplot2`, `MASS`, `nnls`, `stats`,
   `utils`.
 - **Suggested:** `knitr` and `rmarkdown` for the vignette; `testthat` and
@@ -109,6 +110,7 @@ p-value is `1 / (B + 1)`.
 events <- unique(x$event)
 res <- test_postexport_conversion(
     x, t_star = 332,
+    # B = 499 only for speed; not recommended for final analyses.
     control = postexport_control(B = 499,
                                  seed = setNames(seq_along(events), events)))
 

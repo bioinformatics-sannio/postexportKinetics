@@ -97,6 +97,14 @@ simulated with the package's simulator (see `?postexport_example` and
 - 5 time points and 5 destructive replicates per time point;
 - RNA-seq-type noise.
 
+The design was selected from the manuscript benchmark table before any data
+were generated. It is the calibrated design (Type-I error interval
+containing 0.05) with the highest benchmark power among small shutoff
+designs, and that power is only about 0.24. The simulation seed was fixed a
+priori; neither the design nor the data were chosen by searching over
+seeds. The example therefore shows realistic uncertainty and does not
+guarantee detection.
+
 ```{r data}
 data(postexport_example)
 head(postexport_example)
@@ -202,9 +210,10 @@ res <- test_postexport_conversion(
 res
 ```
 
-`B = 499` keeps this vignette fast. The smallest attainable p-value is
-`1 / (B + 1)`. The package default is `B = 1999`, and the manuscript's final
-real-data analyses used larger values.
+`B = 499` is used only to keep this vignette fast and is not recommended
+for final scientific analysis. The smallest attainable p-value is
+`1 / (B + 1)`, here 0.002. The package default is `B = 1999`, and the
+manuscript's final real-data analyses used larger values.
 
 With an explicit seed, the caller's random-number state is restored
 afterwards. With `seed = NULL`, the global stream is used and consumed.

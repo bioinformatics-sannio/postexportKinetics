@@ -466,8 +466,9 @@ fit_postexport_model <- function(data, t_star, control = postexport_control(),
 #' x <- postexport_data(
 #'     postexport_example[postexport_example$event == "alt_3", ],
 #'     time_unit = "min")
-#' # B = 99 only keeps the example fast; analyses should use the default
-#' # B = 1999 or more (the smallest attainable p-value is 1 / (B + 1)).
+#' # B = 99 is used only to keep the example fast and is not recommended for
+#' # final scientific analysis: use the default B = 1999 or more (the
+#' # smallest attainable p-value is 1 / (B + 1)).
 #' res <- test_postexport_conversion(
 #'     x, t_star = 332, control = postexport_control(B = 99, seed = 1)
 #' )

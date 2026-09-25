@@ -42,6 +42,6 @@ Suggests:
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 biocViews: Software, Transcriptomics, RNASeq, AlternativeSplicing,
-    TimeCourse, StatisticalMethod, Visualization
+    TimeCourse, StatisticalMethod, MultipleComparison, Visualization
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 8.0.0

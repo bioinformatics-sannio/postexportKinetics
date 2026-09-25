@@ -77,7 +77,8 @@
 #' ev <- c("alt_1", "alt_3", "null_2")
 #' x <- postexport_data(postexport_example[postexport_example$event %in% ev, ],
 #'                      time_unit = "min")
-#' # Small B only to keep the example fast; use B = 1999 or more in analyses.
+#' # B = 49 is used only to keep the example fast and is not recommended for
+#' # final scientific analysis: use the default B = 1999 or more.
 #' res <- test_postexport_conversion(
 #'     x, t_star = 332,
 #'     control = postexport_control(B = 49, seed = c(alt_1 = 1, alt_3 = 2,
@@ -230,7 +231,8 @@ adjust_postexport_pvalues <- function(x, method = "BH", groups = NULL) {
 #' ev <- c("alt_1", "alt_3", "null_2")
 #' x <- postexport_data(postexport_example[postexport_example$event %in% ev, ],
 #'                      time_unit = "min")
-#' # Small B only to keep the example fast; use B = 1999 or more in analyses.
+#' # B = 49 is used only to keep the example fast and is not recommended for
+#' # final scientific analysis: use the default B = 1999 or more.
 #' res <- test_postexport_conversion(
 #'     x, t_star = 332,
 #'     control = postexport_control(B = 49, seed = c(alt_1 = 1, alt_3 = 2,

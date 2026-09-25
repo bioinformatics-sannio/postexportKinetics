@@ -90,8 +90,13 @@ time; nothing below is claimed as done until it has been run.
 
 ## 4. Versioning
 
-- [ ] Version number decided (development `0.0.0.9000`; release target
-      `0.1.0`; Bioconductor submission convention `0.99.x` — decision pending).
+- [ ] Version: first public GitHub release `0.1.0` (decided); the
+      Bioconductor submission line `0.99.x` comes later and is not used
+      for the GitHub release.
+- [ ] Declared minimum R version (`R (>= 4.1.0)`, provisional) verified by
+      a compatibility CI job on at least one older supported R release. If
+      a concrete incompatibility is found, report it before changing
+      `DESCRIPTION`.
 - [ ] `NEWS.md` updated (created in Phase 5).
 - [ ] `CITATION.cff` and `inst/CITATION` versions match `DESCRIPTION`; no
       package DOI is added before one is minted.

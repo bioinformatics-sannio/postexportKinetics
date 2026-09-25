@@ -13,18 +13,21 @@
 #' `+ 20` and `+ 30` min (5 time points); 5 destructive replicates per time
 #' point; replicate-level rate variability `param_cv = 0.05`; RNA-seq assay
 #' noise at level `"very_low"`; integration grid `origin = 0`,
-#' `grid_step = 1`, `horizon = 1000`, `y0 = 0`. Among the benchmark's
-#' SHUTOFF designs with at most 10 time points and 5 replicates whose Type-I
-#' error interval contains 0.05, this one had the highest power at
-#' `alpha = 0.05` (0.24; Type-I error 0.042). Most simulated alternative
-#' events are therefore not expected to reach significance.
+#' `grid_step = 1`, `horizon = 1000`, `y0 = 0`. The design was selected from
+#' the benchmark table before any data were generated. Among the
+#' benchmark's SHUTOFF designs with at most 10 time points and 5 replicates
+#' whose Type-I error interval contains 0.05, it had the highest power at
+#' `alpha = 0.05`: about 0.24, with Type-I error 0.042. Most simulated
+#' alternative events are therefore not expected to reach significance. The
+#' example shows realistic uncertainty and does not guarantee detection.
 #'
 #' @section Events and parameters:
 #' Events `alt_1` to `alt_4` were simulated with `sigma_c > 0` and events
 #' `null_1` to `null_4` with `sigma_c = 0`. For each event, the kinetic
 #' parameters were drawn once from the manuscript benchmark ranges, and a
 #' transcriptional onset was drawn as a uniform integer in `[-100, 100]` min.
-#' The script's seed, 20260925, was fixed before generation and not tuned.
+#' The script's seed, 20260925, was fixed a priori. Neither the design nor
+#' the data were chosen by searching over seeds.
 #' The true values are in [postexport_example_truth]. The draws reproduce the
 #' benchmark's parameter distributions, not its per-gene random streams.
 #' Generation code: `data-raw/postexport_example.R` in the package source
