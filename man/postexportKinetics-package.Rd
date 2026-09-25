@@ -40,14 +40,19 @@ input data;
 \item \code{\link[=fit_postexport_model]{fit_postexport_model()}}: full and \code{sigma_c = 0} null fits
 without bootstrap;
 \item \code{\link[=test_postexport_conversion]{test_postexport_conversion()}}: bootstrap test of the null
-\code{sigma_c = 0} against \code{sigma_c > 0}.
+\code{sigma_c = 0} against \code{sigma_c > 0};
+\item \code{\link[=simulate_postexport_kinetics]{simulate_postexport_kinetics()}}: simulation with the frozen
+manuscript simulator (onset, common intervention time, replicates,
+assay noise);
+\item \code{\link[=check_operational_domain]{check_operational_domain()}}: diagnostic comparison of a design
+with the manuscript benchmark (not a calibration guarantee).
 }
 }
 
 \section{Development status}{
 
-Development version. Simulation, operational-domain diagnostics,
-exploratory ranking, plotting and batch execution are not yet available.
+Development version. Exploratory ranking, plotting and batch execution are
+not yet available.
 }
 
 \seealso{
