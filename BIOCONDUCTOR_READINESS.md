@@ -12,11 +12,11 @@ Status: **prepared; stopped for explicit human approval.**
 | Item | Value |
 |---|---|
 | Development branch | `bioconductor-prep`; CI, tools, provenance infrastructure, reports and the scientific regression gates |
-| Development tip at this report | `5daa6badf098e2b2088e5cb0968babb9726d4b51`; this report is added on top (documentation only) |
-| **Development source commit** of the package-only export | **`271c573738888222d300b0b0e1b1926c5ff0a40b`**. Later development commits (`5b1467e`, `3ec0025`, `5daa6ba`, this report) change only CI, tools and reports; the exported package tree is identical, so the export script creates no new `devel` commit. |
-| **`devel`** (package-only branch, pushed, **not default**) | **`ad31ab97b9c2afe84d6503206329b9fc759af925`**: "package-only export of 271c573" / `Source-Commit: 271c573738888222d300b0b0e1b1926c5ff0a40b`; tree `a94294e454447dc136504d2ea53fb75f68fe4c7f` |
+| **Development source commit** of the current package-only export | **`f6e1bfb823e90a7f1aa8294f628aedb4950dc008`**. It adds `^BIOCONDUCTOR_READINESS\.md$` to `.Rbuildignore`, an allowlisted file, so the exported tree changed. Later development commits (this correction) change only reports, so no new `devel` commit is created. |
+| **`devel`** (package-only branch, pushed, **not default**) | **`e3202a89382e5b241baa5cfb7e881cf7de5b343d`**: "package-only export of f6e1bfb" / `Source-Commit: f6e1bfb823e90a7f1aa8294f628aedb4950dc008`; tree `f5000fb810b9387158256913e91b2e24aad62083`; parent `ad31ab9` |
+| Earlier export | `ad31ab97b9c2afe84d6503206329b9fc759af925` ("package-only export of 271c573", tree `a94294e…`). It differs from the current export only by that one `.Rbuildignore` line; package content is otherwise identical. |
 | `devel` content | `.Rbuildignore`, `.gitignore`, `CITATION.cff`, `DESCRIPTION`, `LICENSE`, `NAMESPACE`, `NEWS.md`, `README.md`, `R/`, `data/`, `inst/`, `man/`, `tests/`, `vignettes/` (allowlist `tools/release/package_allowlist.txt`) |
-| `devel` history | a linear first commit (root) made with `commit-tree`; normal push, no force |
+| `devel` history | linear: `ad31ab9` (root) → `e3202a8`; normal pushes, no force |
 | GitHub default branch | `main` (unchanged) |
 
 ## 2. Tooling added (development branch only)
@@ -61,13 +61,16 @@ on `main` / `release-*`. It will first be exercised at the next `main` push.
 
 ## 3. Verification results
 
-| Check | Local (macOS, R 4.6.0) | CI (Bioconductor devel container, `5daa6ba`) |
+| Check | Local, `devel` @ `e3202a8` ← `f6e1bfb` (macOS, R 4.6.0) | CI, `devel` @ `ad31ab9` ← `271c573` (Bioconductor devel container, run on `5daa6ba`) |
 |---|---|---|
-| A. exact tree | PASS (`a94294e…`) | PASS |
+| A. exact tree | PASS (`f5000fb…`) | PASS (`a94294e…`) |
 | B. tarball equivalence | PASS (90 files; only `Packaged:` differs) | PASS (90 files) |
 | C. tarball hygiene | PASS | PASS |
 | D. **BiocCheckGitClone(devel)** | **0 ERRORS / 0 WARNINGS / 0 NOTES** | **0 / 0 / 0** |
 | E. version / citation / API | PASS (0.99.0; 10 exports) | PASS |
+
+CI verification of the current `devel` (`e3202a8`) is reported in the review
+message: the bioc-devel `package-branch` job on this commit.
 
 **Finding on check B:** in one earlier CI run (`3ec0025`, run `36180831285`),
 B failed.
@@ -84,7 +87,7 @@ B failed.
 - **Decision (optional):** whether a recurrence confirmed by the control
   should be tolerated for embedded vignette images.
 
-## 4. Checks on the final package content (`0.99.0`, tree `a94294e…`)
+## 4. Checks on the final package content (`0.99.0`; `R/`, `man/`, `data/`, `inst/`, `tests/` and `vignettes/` identical between trees `a94294e…` and `f5000fb…`)
 
 | Check | Result |
 |---|---|
