@@ -6,7 +6,8 @@
 #   package installation; regression tests (committed fixtures, levels B/C);
 #   R CMD build; R CMD check (fails on ERROR or WARNING); BiocCheck on the
 #   tarball (fails on any ERROR other than the maintainer-side Support Site
-#   check; warnings and notes are reported as annotations). A second job
+#   checks checkSupportReg / checkWatchedTag; warnings and notes are
+#   reported as annotations). A second job
 #   verifies the package-only branch `devel` against its Source-Commit
 #   (tools/release/verify_package_branch.sh, including BiocCheckGitClone),
 #   when that branch exists.
@@ -76,7 +77,8 @@ jobs:
             cat(sprintf("::notice title=BiocCheck (Bioconductor devel)::%d ERRORS [%s] | %d WARNINGS [%s] | %d NOTES\n",
                         length(r$error), fmt(r$error), length(r$warning),
                         fmt(r$warning), length(r$note)))
-            unexpected <- setdiff(names(r$error), "checkSupportReg")
+            # Maintainer-side Support Site checks (registration, Watched Tags).
+            unexpected <- setdiff(names(r$error), c("checkSupportReg", "checkWatchedTag"))
             if (length(unexpected)) {
               cat(sprintf("::error title=BiocCheck::unexpected ERROR(s): %s\n",
                           paste(unexpected, collapse = ", ")))
@@ -102,6 +104,11 @@ jobs:
           fi
           git fetch --quiet origin devel:devel
           Rscript -e 'BiocManager::install(c("BiocCheck", "remotes", "knitr", "rmarkdown"), ask = FALSE, update = FALSE); remotes::install_deps(dependencies = TRUE, repos = BiocManager::repositories(), upgrade = "never")'
-          sh tools/release/verify_package_branch.sh devel "$RUNNER_TEMP/verify" 2>&1 | tee verify.log
-          grep -q "^PACKAGE BRANCH VERIFICATION PASSED" verify.log || exit 1
+          sh tools/release/verify_package_branch.sh devel "$RUNNER_TEMP/verify" > verify.log 2>&1 || true
+          cat verify.log
+          grep -E "^\[(PASS|FAIL)\]" verify.log | sed -e 's/^\[FAIL\]/::error title=Package-only branch::FAIL/' -e 's/^\[PASS\]/::notice title=Package-only branch::PASS/'
+          if ! grep -q "^PACKAGE BRANCH VERIFICATION PASSED" verify.log; then
+            tail -30 verify.log | sed -e 's/%/%25/g' | awk 'BEGIN{ORS="%0A"}{print}' | sed 's/^/::error title=Package-only branch log tail::/'; echo
+            exit 1
+          fi
           echo "::notice title=Package-only branch::$(tail -1 verify.log)"
