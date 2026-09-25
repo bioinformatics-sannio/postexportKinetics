@@ -67,7 +67,24 @@ if [ -n "$TS" ] && [ -n "$TD" ]; then
      diff -r "$WORK/xs/postexportKinetics" "$WORK/xd/postexportKinetics" > "$WORK/tarball.diff" 2>&1; then
     pass "B tarball: $(basename "$TD") from $X and from $BRANCH have identical content ($(find "$WORK/xd/postexportKinetics" -type f | wc -l | tr -d ' ') files; only Packaged: may differ)"
   else
-    bad "B tarball: content differs (see $WORK/tarball.diff)"; head -20 "$WORK/tarball.diff"
+    bad "B tarball: content differs (see $WORK/tarball.diff)"
+    DIFFS=$(diff -rq "$WORK/xs/postexportKinetics" "$WORK/xd/postexportKinetics" 2>&1 | sed "s|$WORK/x[sd]/postexportKinetics/||g" | tr '\n' ';')
+    echo "[INFO] B differing files ($X vs $BRANCH): $DIFFS"
+    # Diagnostic control (does not change the verdict): build X a second time
+    # and compare X with itself. Differences there are build nondeterminism,
+    # not differences between the branches.
+    rm -rf "$WORK/build-src2" "$WORK/xs2"; mkdir -p "$WORK/build-src2" "$WORK/xs2"
+    if ( cd "$WORK/build-src2" && R CMD build "$WORK/src" > build.log 2>&1 ); then
+      tar -xzf "$WORK"/build-src2/*.tar.gz -C "$WORK/xs2"
+      grep -v '^Packaged:' "$WORK/xs2/postexportKinetics/DESCRIPTION" > "$WORK/xs2/D.cmp" && \
+        mv "$WORK/xs2/D.cmp" "$WORK/xs2/postexportKinetics/DESCRIPTION"
+      CTRL=$(diff -rq "$WORK/xs/postexportKinetics" "$WORK/xs2/postexportKinetics" 2>&1 | sed "s|$WORK/xs2\{0,1\}/postexportKinetics/||g" | tr '\n' ';')
+      if [ -n "$CTRL" ]; then
+        echo "[INFO] B control: two builds of the SAME source $X also differ: $CTRL"
+      else
+        echo "[INFO] B control: two builds of the same source $X are identical"
+      fi
+    fi
   fi
 fi
 

@@ -106,9 +106,9 @@ jobs:
           Rscript -e 'BiocManager::install(c("BiocCheck", "remotes", "knitr", "rmarkdown"), ask = FALSE, update = FALSE); remotes::install_deps(dependencies = TRUE, repos = BiocManager::repositories(), upgrade = "never")'
           sh tools/release/verify_package_branch.sh devel "$RUNNER_TEMP/verify" > verify.log 2>&1 || true
           cat verify.log
-          grep -E "^\[(PASS|FAIL)\]" verify.log | sed -e 's/^\[FAIL\]/::error title=Package-only branch::FAIL/' -e 's/^\[PASS\]/::notice title=Package-only branch::PASS/'
+          grep -E "^\[(PASS|FAIL|INFO)\]" verify.log | cut -c1-900 | sed -e 's/^\[FAIL\]/::error title=Package-only branch::FAIL/' -e 's/^\[PASS\]/::notice title=Package-only branch::PASS/' -e 's/^\[INFO\]/::notice title=Package-only branch info::/'
           if ! grep -q "^PACKAGE BRANCH VERIFICATION PASSED" verify.log; then
-            tail -30 verify.log | sed -e 's/%/%25/g' | awk 'BEGIN{ORS="%0A"}{print}' | sed 's/^/::error title=Package-only branch log tail::/'; echo
+            tail -30 verify.log | cut -c1-300 | sed -e 's/%/%25/g' | awk 'BEGIN{ORS="%0A"}{print}' | sed 's/^/::error title=Package-only branch log tail::/'; echo
             exit 1
           fi
           echo "::notice title=Package-only branch::$(tail -1 verify.log)"
