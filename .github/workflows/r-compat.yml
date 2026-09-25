@@ -45,6 +45,9 @@ jobs:
           r-version: ${{ matrix.r }}
           use-public-rspm: true
 
+      - name: Record R provenance
+        run: Rscript tools/ci/record_r_provenance.R "r-compat R ${{ matrix.r }}"
+
       - name: Install dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
