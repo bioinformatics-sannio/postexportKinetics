@@ -20,10 +20,13 @@ scientific-invariance rules.
   only at Bioconductor submission preparation). MIT license. Maintainer Luigi
   Cerulo `<lcerulo@unisannio.it>`.
 - Repository: `https://github.com/bioinformatics-sannio/postexportKinetics`.
-- **Current approved main:** `1965404`. This is a documentation-only
-  checkpoint that adds this file on top of the Phase 3 merge.
-- **Phase 3 merge baseline:** `aace22ddf9a8248e9950aef3841eefc0cbbd713e`.
-- Branches `phase1-core`, `phase2-api` and `phase3-sim` are kept.
+- **Current approved main:** `21d8a23` (Phase 4 merge, `--no-ff`) plus the
+  documentation-only commit that updates this file.
+- **Earlier baselines:** Phase 3 merge
+  `aace22ddf9a8248e9950aef3841eefc0cbbd713e`; documentation checkpoints
+  `1965404` and `9de2958`.
+- Branches `phase1-core`, `phase2-api`, `phase3-sim` and `phase4-batch` are
+  kept.
 
 ## 3. Completed phases
 
@@ -34,6 +37,7 @@ scientific-invariance rules.
 | 1.5 | Linux CI, three-level cross-platform regression policy | `PHASE1_5_REPORT.md` |
 | 2 | public inference API, frozen orchestrator port | `PHASE2_REPORT.md` |
 | 3 | simulator and assay ports, simulation API, operational-domain diagnostics | `PHASE3_REPORT.md` |
+| 4 | batch usability, multiple-testing adjustment, exploratory ranking, plots, tidy tables | `PHASE4_REPORT.md` |
 
 ## 4. Current public API
 
@@ -54,14 +58,24 @@ check_operational_domain(data = NULL, regime, t_star = NULL, platform = NULL,
                          noise_level = NULL, n_time_points = NULL,
                          n_replicates = NULL, sampling_interval = NULL,
                          time_unit = NULL)
+adjust_postexport_pvalues(x, method = "BH", groups = NULL)  # set or single test
+rank_postexport_candidates(x)                               # adjusted set
+as.data.frame(x, ...)  # postexport_fit, postexport_test, postexport_fit_set,
+                       # postexport_test_set: stable columns + column_roles
+plot(x, ...)           # fit/test ("fit", "bootstrap"), fit_set/test_set
+                       # ("status" default, "boundary", "sigma_IR",
+                       # test_set also "sigma_q", "IR_q", "score"),
+                       # simulation, domain_check ("Manuscript benchmark designs")
 ```
 
-- **Methods:** `print`/`summary` for all result classes. There is no
-  `plot()` yet.
+- **Methods:** `print`/`summary` for all result classes, `print` for
+  `postexport_ranking`, and `plot()` (ggplot2) and `as.data.frame()` as
+  above.
 - **Internal:** `build_interval_balance`, `add_assay_noise` and
   `postexport_trajectory` concepts stay internal.
-- **Not yet available:** ranking, plotting, batch/parallel execution, rMATS
-  conversion, comparators, vignette.
+- **Not yet available:** parallel execution, rMATS conversion, comparators,
+  vignette, SummarizedExperiment input.
+- **Dependencies (Imports):** deSolve, ggplot2, MASS, nnls, stats, utils.
 
 ## 5. Key scientific-invariance decisions
 
@@ -97,6 +111,42 @@ check_operational_domain(data = NULL, regime, t_star = NULL, platform = NULL,
   - PSEUDO_SHUTOFF is `not_benchmarked`;
   - nearest evaluated benchmark designs are returned as a full set, with no
     score.
+- **Batch failures (`event_error`):**
+  - used exclusively for unexpected R-level errors while processing one
+    event in a multi-event run;
+  - the original message is kept in `error_message`, and the other events
+    continue;
+  - never used for frozen scientific or numerical statuses, malformed
+    package-level input, or validation errors, which stop before batch
+    processing;
+  - single-event calls are not wrapped.
+- **Multiple testing:**
+  - an explicit step, `adjust_postexport_pvalues()`, never done inside
+    `test_postexport_conversion()`;
+  - BH by default via `stats::p.adjust`;
+  - only valid tests enter: status `ok` and a finite p-value;
+  - raw p-values are never altered.
+  - Families: one family by default. `groups` adjusts separately per group;
+    the manuscript used one family per dataset.
+  - A single `postexport_test` is a family of size one (BH: `q = p`), with
+    no warning.
+- **Ranking:**
+  - exploratory prioritisation, not inferential and not an optimised
+    discrimination score;
+  - score `sigma_c × IR × min(−log10(max(q, 1e-10)), 6)`; q is required, and
+    p is never substituted;
+  - ranks are computed within adjustment families, with no global rank; a
+    common ranking needs one common family;
+  - `ties.method = "min"`, with stable input order;
+  - failed or NA events are kept with NA score and rank.
+- **Plots:**
+  - fitted curves are display-only ODE reconstructions, propagated from the
+    observed replicate-mean state at the first sampled time with the fitted
+    coefficients;
+  - they do not replace the frozen interval-balance / Crank-Nicolson
+    inference;
+  - there is no CN overlay in v0.1;
+  - plots never refit or modify results.
 - **Excluded from v0.1:** ΔPSI and cytoplasmic-only comparators, and
   PR-AUC/AUROC utilities.
 
@@ -142,8 +192,8 @@ check_operational_domain(data = NULL, regime, t_star = NULL, platform = NULL,
 - ERROR: no vignette (a later phase).
 - ERROR: support-site registration of the maintainer email (maintainer
   action; also needs network).
+- Phase 4 final counts: 3 ERRORs, 2 WARNINGs, 12 NOTEs (BiocCheck 1.48.1).
 - WARNINGs:
-  - version format;
   - no Bioconductor dependencies (open: SummarizedExperiment input);
   - `set.seed` usage, in the frozen orchestrator and the public simulator
     (documented).
@@ -154,24 +204,24 @@ check_operational_domain(data = NULL, regime, t_star = NULL, platform = NULL,
 
 ## 10. Next phase
 
-**Phase 4** is the next phase. Its approved scope is:
+**Phase 5** is the next phase. It has not started, and its scope must be
+specified and approved before any work begins.
 
-- serial multi-event / batch usability;
-- Benjamini-Hochberg multiple-testing adjustment;
-- exploratory candidate ranking (approved score
-  `sigma_c × IR × min(−log10(max(q, 1e-10)), 6)`; exploratory prioritisation,
-  not inferential);
-- plotting;
-- exportable result tables.
-
-**Not part of Phase 4** (later phases):
-
-- parallel execution;
-- vignette;
-- rMATS conversion;
-- comparators;
-- Bioconductor submission cleanup;
-- release `0.99.0`.
+- **Items deferred to later phases in earlier reports and decisions**
+  (candidates only, not an approved scope):
+  - vignette;
+  - `NEWS.md`;
+  - `tools/validate_against_manuscript.R`;
+  - Bioconductor submission cleanup;
+  - release `0.99.0`.
+- **Excluded from Phase 4 and still open:**
+  - parallel execution;
+  - rMATS conversion;
+  - comparators;
+  - SummarizedExperiment input.
+- **Pending maintainer action:** the Linux CI runner label `ubuntu-latest`
+  migrates to Ubuntu 26 from 2026-10-19 (GitHub notice). Pinning the runner
+  image is an open decision.
 
 ## 11. Authoritative reading order
 
@@ -180,7 +230,8 @@ check_operational_domain(data = NULL, regime, t_star = NULL, platform = NULL,
 3. `STOP_CONDITION_REPORT.md`: provenance decisions (SF-1 … SF-19).
 4. `PHASE1_5_REPORT.md` §9–10 and `tools/frozen/README.md`: regression
    policy.
-5. `PHASE3_REPORT.md`, then `PHASE2_REPORT.md`: current API and decisions.
+5. `PHASE4_REPORT.md`, `PHASE3_REPORT.md`, then `PHASE2_REPORT.md`:
+   current API and decisions.
 6. `PACKAGE_PLAN.md`: original architecture and remaining scope, with the
    amendments recorded in the later reports.
 7. `RELEASE_CHECKLIST.md`: release requirements.
