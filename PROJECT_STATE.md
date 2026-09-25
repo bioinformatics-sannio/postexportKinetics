@@ -20,8 +20,10 @@ scientific-invariance rules.
   only at Bioconductor submission preparation). MIT license. Maintainer Luigi
   Cerulo `<lcerulo@unisannio.it>`.
 - Repository: `https://github.com/bioinformatics-sannio/postexportKinetics`.
-- **Approved `main`:** the Phase 3 merge commit `aace22d`. Branches
-  `phase1-core`, `phase2-api` and `phase3-sim` are kept.
+- **Current approved main:** `1965404`. This is a documentation-only
+  checkpoint that adds this file on top of the Phase 3 merge.
+- **Phase 3 merge baseline:** `aace22ddf9a8248e9950aef3841eefc0cbbd713e`.
+- Branches `phase1-core`, `phase2-api` and `phase3-sim` are kept.
 
 ## 3. Completed phases
 
@@ -152,17 +154,24 @@ check_operational_domain(data = NULL, regime, t_star = NULL, platform = NULL,
 
 ## 10. Next phase
 
-**Phase 4 is not started and awaits explicit approval.** Per
-`PACKAGE_PLAN.md`, the remaining scope is:
+**Phase 4** is the next phase. Its approved scope is:
 
-- `rank_postexport_candidates()` (approved score
-  `sigma_c × IR × min(−log10(max(q, 1e-10)), 6)`, exploratory);
+- serial multi-event / batch usability;
+- Benjamini-Hochberg multiple-testing adjustment;
+- exploratory candidate ranking (approved score
+  `sigma_c × IR × min(−log10(max(q, 1e-10)), 6)`; exploratory prioritisation,
+  not inferential);
 - plotting;
-- batch/parallel execution with a seed policy;
-- vignette with `inst/extdata`;
-- README, NEWS and `CITATION.cff`;
-- `tools/validate_against_manuscript.R`;
-- Bioconductor preparation.
+- exportable result tables.
+
+**Not part of Phase 4** (later phases):
+
+- parallel execution;
+- vignette;
+- rMATS conversion;
+- comparators;
+- Bioconductor submission cleanup;
+- release `0.99.0`.
 
 ## 11. Authoritative reading order
 
