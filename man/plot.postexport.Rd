@@ -50,9 +50,13 @@ each method returns a \code{ggplot} object.
 \code{type = "fit"} (default) shows, for the four states \code{N}, \code{N_s}, \code{C} and
 \code{C_s}, the replicate observations, the time-point means (\code{show_means}),
 the sampling times, \code{t_star} and the fitted full (\code{sigma_c >= 0}) and null
-(\code{sigma_c = 0}) models propagated from the observed mean at the first time
-point with the model's transcription schedule (display only; the
-bootstrap uses Crank-Nicolson null means at the sampled times). For
+(\code{sigma_c = 0}) models. The fitted curves are display reconstructions
+only: they are propagated with the ODE model from the observed
+replicate-mean state at the first sampled time using the fitted
+coefficients and the model's transcription schedule. The fit, the test
+statistic and the bootstrap/null calculations do not use these curves;
+they use the validated frozen interval-balance / Crank-Nicolson machinery.
+Plotting never refits or modifies the result. For
 \code{postexport_test}, \code{type = "bootstrap"} shows the bootstrap distribution
 of \code{T} with the observed \code{T}, the boundary atom, the p-value and the
 failure fraction.

@@ -27,6 +27,16 @@ is not inferential evidence and not an optimized discrimination score.
 Statistical evidence is given by the p- and q-values, \code{sigma_c} is the
 effect-size estimate and \code{IR} the relative fit improvement.
 }
+\section{Families and ties}{
+
+Ranks are computed independently within each multiple-testing adjustment
+group; no global rank is formed across distinct families. A user who wants
+one common ranking must define one common multiple-testing family
+(\code{groups = NULL} in \code{\link[=adjust_postexport_pvalues]{adjust_postexport_pvalues()}}) before adjustment and
+ranking. Tied scores share the same minimum (competition) rank
+(\code{ties.method = "min"}) and keep their input order for display.
+}
+
 \section{Provenance}{
 
 The score is \code{score_sigma_IR_q} of the frozen manuscript real-data

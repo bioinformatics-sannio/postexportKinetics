@@ -48,7 +48,9 @@ test_that("fit and test plots show the four states, both models and t_star", {
     expect_identical(vl$data$xintercept, 300)
     lines <- b$data[[which(layer_geoms == "GeomLine")]]
     expect_identical(length(unique(lines$colour)), 2L)
-    expect_match(g$labels$caption, "display only")
+    expect_match(g$labels$caption, "display reconstructions")
+    expect_match(g$labels$caption, "first sampled time")
+    expect_match(g$labels$caption, "interval-balance / Crank-Nicolson")
     check_plot(set$results$alt, type = "bootstrap")
     gb <- plot(set$results$alt, type = "bootstrap")
     expect_match(gb$labels$subtitle, "bootstrap p =")

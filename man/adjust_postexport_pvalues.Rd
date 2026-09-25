@@ -8,7 +8,7 @@ adjust_postexport_pvalues(x, method = "BH", groups = NULL)
 }
 \arguments{
 \item{x}{A \code{postexport_test_set} (from \code{\link[=test_postexport_conversion]{test_postexport_conversion()}} with
-several events).}
+several events) or a single \code{postexport_test}.}
 
 \item{method}{Adjustment method passed to \code{\link[stats:p.adjust]{stats::p.adjust()}}; default
 \code{"BH"} (Benjamini-Hochberg), as in the manuscript.}
@@ -21,7 +21,9 @@ the order of \code{x$summary$event}, or a vector named by event. \code{NULL}
 \code{x} with a \code{q_value} column (and \code{adjustment_group}) added to
 \code{x$summary}, \code{q_value} added to each result's \code{inference}, and an
 \code{adjustment} element (method, families, numbers of adjusted and excluded
-events). Existing fields are unchanged.
+events). Existing fields are unchanged. For a single \code{postexport_test},
+\code{q_value} and \code{adjustment_method} are added to \code{x$inference} and the
+\code{adjustment} element is added to \code{x}.
 }
 \description{
 Computes q-values for a set of events tested with
@@ -36,6 +38,17 @@ within each dataset. By default all events of \code{x} form one family; with
 \code{groups}, the adjustment is performed separately within each group (for
 example one group per dataset). Combining events from different datasets in
 one family changes the q-values.
+}
+
+\section{Single tests}{
+
+A single \code{postexport_test} is also accepted. It is adjusted as a
+multiple-testing family of size one: \code{\link[stats:p.adjust]{stats::p.adjust()}} is applied
+normally, which under BH gives \code{q = p}. Adjustment is always an explicit
+step and is never performed inside \code{\link[=test_postexport_conversion]{test_postexport_conversion()}}.
+Multi-event studies should define their testing family (for example all
+events of one dataset) according to the experimental or dataset analysis
+plan, and adjust that family jointly rather than event by event.
 }
 
 \examples{
@@ -57,6 +70,10 @@ res <- test_postexport_conversion(
                                                 seed = c(e1 = 1, e2 = 2)))
 res <- adjust_postexport_pvalues(res)
 res$summary[, c("event", "status", "p_value", "q_value")]
+
+# A single test is a family of size one (under BH, q = p).
+one <- adjust_postexport_pvalues(res$results$e1)
+c(p = one$inference$p_value, q = one$inference$q_value)
 
 }
 \seealso{

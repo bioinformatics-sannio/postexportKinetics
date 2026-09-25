@@ -129,9 +129,12 @@ NULL
                 "Points: replicate observations; crosses: time-point means; ",
                 "rug: sampling times",
                 if (!is.null(x$design$t_star)) "; dotted line: t_star" else "",
-                ".\nCurves: fitted models propagated from the observed ",
-                "first-time mean (display only).\nsigma_c is a ",
-                "phenomenological post-export conversion rate.")) +
+                ".\nCurves: display reconstructions, propagated from the ",
+                "observed replicate-mean state at the first sampled time with ",
+                "the fitted coefficients;\ninference uses the frozen ",
+                "interval-balance / Crank-Nicolson machinery, not these ",
+                "curves. sigma_c is a\nphenomenological post-export ",
+                "conversion rate.")) +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.position = "bottom")
 }
@@ -185,9 +188,13 @@ NULL
 #' `type = "fit"` (default) shows, for the four states `N`, `N_s`, `C` and
 #' `C_s`, the replicate observations, the time-point means (`show_means`),
 #' the sampling times, `t_star` and the fitted full (`sigma_c >= 0`) and null
-#' (`sigma_c = 0`) models propagated from the observed mean at the first time
-#' point with the model's transcription schedule (display only; the
-#' bootstrap uses Crank-Nicolson null means at the sampled times). For
+#' (`sigma_c = 0`) models. The fitted curves are display reconstructions
+#' only: they are propagated with the ODE model from the observed
+#' replicate-mean state at the first sampled time using the fitted
+#' coefficients and the model's transcription schedule. The fit, the test
+#' statistic and the bootstrap/null calculations do not use these curves;
+#' they use the validated frozen interval-balance / Crank-Nicolson machinery.
+#' Plotting never refits or modifies the result. For
 #' `postexport_test`, `type = "bootstrap"` shows the bootstrap distribution
 #' of `T` with the observed `T`, the boundary atom, the p-value and the
 #' failure fraction.

@@ -45,8 +45,17 @@
 #' example one group per dataset). Combining events from different datasets in
 #' one family changes the q-values.
 #'
+#' @section Single tests:
+#' A single `postexport_test` is also accepted. It is adjusted as a
+#' multiple-testing family of size one: [stats::p.adjust()] is applied
+#' normally, which under BH gives `q = p`. Adjustment is always an explicit
+#' step and is never performed inside [test_postexport_conversion()].
+#' Multi-event studies should define their testing family (for example all
+#' events of one dataset) according to the experimental or dataset analysis
+#' plan, and adjust that family jointly rather than event by event.
+#'
 #' @param x A `postexport_test_set` (from [test_postexport_conversion()] with
-#'   several events).
+#'   several events) or a single `postexport_test`.
 #' @param method Adjustment method passed to [stats::p.adjust()]; default
 #'   `"BH"` (Benjamini-Hochberg), as in the manuscript.
 #' @param groups Optional family labels: a vector with one label per event in
@@ -56,7 +65,9 @@
 #' @return `x` with a `q_value` column (and `adjustment_group`) added to
 #'   `x$summary`, `q_value` added to each result's `inference`, and an
 #'   `adjustment` element (method, families, numbers of adjusted and excluded
-#'   events). Existing fields are unchanged.
+#'   events). Existing fields are unchanged. For a single `postexport_test`,
+#'   `q_value` and `adjustment_method` are added to `x$inference` and the
+#'   `adjustment` element is added to `x`.
 #'
 #' @seealso [rank_postexport_candidates()], [stats::p.adjust()]
 #'
@@ -80,17 +91,23 @@
 #' res <- adjust_postexport_pvalues(res)
 #' res$summary[, c("event", "status", "p_value", "q_value")]
 #'
+#' # A single test is a family of size one (under BH, q = p).
+#' one <- adjust_postexport_pvalues(res$results$e1)
+#' c(p = one$inference$p_value, q = one$inference$q_value)
+#'
 #' @export
 adjust_postexport_pvalues <- function(x, method = "BH", groups = NULL) {
-    if (!inherits(x, "postexport_test_set")) {
-        stop("'x' must be a postexport_test_set, i.e. the result of ",
-             "test_postexport_conversion() for several events.",
-             call. = FALSE)
+    if (!inherits(x, c("postexport_test_set", "postexport_test"))) {
+        stop("'x' must be a postexport_test_set or a postexport_test, i.e. ",
+             "the result of test_postexport_conversion().", call. = FALSE)
     }
     if (!is.character(method) || length(method) != 1L ||
         !method %in% stats::p.adjust.methods) {
         stop(sprintf("'method' must be one of: %s.",
                      toString(stats::p.adjust.methods)), call. = FALSE)
+    }
+    if (inherits(x, "postexport_test")) {
+        return(.adjust_single_test(x, method, groups))
     }
     s <- x$summary
     fam <- .adjustment_groups(groups, s$event)
@@ -116,6 +133,31 @@ adjust_postexport_pvalues <- function(x, method = "BH", groups = NULL) {
         note = paste("q-values computed with stats::p.adjust() over valid",
                      "tests (status ok, finite p-value) within each family;",
                      "raw p-values unchanged.")
+    )
+    x
+}
+
+# A single test is a multiple-testing family of size one.
+.adjust_single_test <- function(x, method, groups) {
+    fam <- .adjustment_groups(groups, x$event)
+    s <- data.frame(status = x$status, p_value = x$inference$p_value,
+                    stringsAsFactors = FALSE)
+    valid <- .valid_tests(s)
+    q <- if (valid) {
+        stats::p.adjust(s$p_value, method = method)
+    } else {
+        NA_real_
+    }
+    x$inference$q_value <- q
+    x$inference$adjustment_method <- method
+    x$adjustment <- list(
+        method = method,
+        groups = fam,
+        n_adjusted = sum(valid),
+        n_excluded = sum(!valid),
+        note = paste("single test adjusted as a multiple-testing family of",
+                     "size one with stats::p.adjust(); raw p-value",
+                     "unchanged.")
     )
     x
 }
@@ -147,6 +189,14 @@ adjust_postexport_pvalues <- function(x, method = "BH", groups = NULL) {
 #' is not inferential evidence and not an optimized discrimination score.
 #' Statistical evidence is given by the p- and q-values, `sigma_c` is the
 #' effect-size estimate and `IR` the relative fit improvement.
+#'
+#' @section Families and ties:
+#' Ranks are computed independently within each multiple-testing adjustment
+#' group; no global rank is formed across distinct families. A user who wants
+#' one common ranking must define one common multiple-testing family
+#' (`groups = NULL` in [adjust_postexport_pvalues()]) before adjustment and
+#' ranking. Tied scores share the same minimum (competition) rank
+#' (`ties.method = "min"`) and keep their input order for display.
 #'
 #' @section Provenance:
 #' The score is `score_sigma_IR_q` of the frozen manuscript real-data

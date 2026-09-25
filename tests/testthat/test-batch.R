@@ -83,7 +83,6 @@ test_that("BH adjustment equals stats::p.adjust on valid tests only", {
     expect_identical(hol$summary$q_value,
                      stats::p.adjust(res$summary$p_value, "holm"))
     expect_error(adjust_postexport_pvalues(res, method = "fdr2"), "'method'")
-    expect_error(adjust_postexport_pvalues(res$results$alt), "postexport_test_set")
 })
 
 test_that("invalid and failed events are excluded and keep their status", {
@@ -199,4 +198,34 @@ test_that("tidy tables have stable user-facing columns and roles", {
     expect_identical(one$p_value, res$results$alt$inference$p_value)
     # Existing summary and per-event objects are unchanged.
     expect_identical(names(res$summary)[1:3], c("event", "status", "sigma_c"))
+})
+
+test_that("a single test is adjusted as a family of size one", {
+    one <- res$results$alt
+    for (m in c("BH", "holm", "bonferroni")) {
+        adj <- expect_no_warning(adjust_postexport_pvalues(one, method = m))
+        expect_s3_class(adj, "postexport_test")
+        expect_identical(adj$inference$q_value,
+                         stats::p.adjust(one$inference$p_value, method = m))
+        expect_identical(adj$inference$adjustment_method, m)
+        expect_identical(adj$inference$p_value, one$inference$p_value)
+        expect_identical(adj$raw, one$raw)
+        expect_identical(adj$adjustment$n_adjusted, 1L)
+    }
+    # Under BH a one-test family gives q = p.
+    expect_identical(adjust_postexport_pvalues(one)$inference$q_value,
+                     one$inference$p_value)
+    # Invalid single tests are excluded.
+    bad <- one
+    bad$status <- "bootstrap_unstable"
+    ab <- adjust_postexport_pvalues(bad)
+    expect_true(is.na(ab$inference$q_value))
+    expect_identical(ab$adjustment$n_excluded, 1L)
+    # Tidy table gains q_value; ranking still requires a set.
+    tab <- as.data.frame(adjust_postexport_pvalues(one))
+    expect_identical(tab$q_value, one$inference$p_value)
+    expect_error(rank_postexport_candidates(adjust_postexport_pvalues(one)),
+                 "postexport_test_set")
+    expect_error(adjust_postexport_pvalues(fit_postexport_model(
+        batch_data(), t_star = 300, events = "alt")), "postexport_test")
 })
