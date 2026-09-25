@@ -88,15 +88,16 @@
 #'   [test_postexport_conversion()]
 #'
 #' @examples
-#' set.seed(1)
-#' tab <- expand.grid(replicate = 1:3, time = c(0, 15, 30, 60, 120))
-#' tab$event <- "event_1"
-#' tab$N <- 60 * exp(-0.03 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
-#' tab$N_s <- 20 * exp(-0.01 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
-#' tab$C <- 25 * exp(-0.02 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
-#' tab$C_s <- 40 * exp(-0.005 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
-#' x <- postexport_data(tab, time_unit = "min")
+#' # Wide format (synthetic example data; see ?postexport_example).
+#' data(postexport_example)
+#' x <- postexport_data(postexport_example, time_unit = "min")
 #' x
+#'
+#' # Long format: one row per sample and state.
+#' long <- read.csv(system.file("extdata", "postexport_example_long.csv",
+#'                              package = "postexportKinetics"))
+#' head(long)
+#' y <- postexport_data(long, time_unit = "min", format = "long")
 #'
 #' @export
 postexport_data <- function(x, time_unit, format = c("wide", "long"),

@@ -62,22 +62,16 @@ order.
 }
 
 \examples{
-set.seed(1)
-mk <- function(ev, rate) {
-    tab <- expand.grid(replicate = 1:3, time = c(-15, 0, 30, 60, 120))
-    tab$event <- ev
-    tab$N <- 60 * exp(-0.03 * pmax(tab$time, 0)) *
-        exp(rnorm(nrow(tab), 0, 0.05))
-    tab$N_s <- 20 * exp(-0.01 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
-    tab$C <- 25 * exp(-rate * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
-    tab$C_s <- 40 * exp(-0.005 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
-    tab
-}
-x <- postexport_data(rbind(mk("e1", 0.02), mk("e2", 0.04)),
+# Synthetic example data (simulated; see ?postexport_example).
+data(postexport_example)
+ev <- c("alt_1", "alt_3", "null_2")
+x <- postexport_data(postexport_example[postexport_example$event \%in\% ev, ],
                      time_unit = "min")
+# Small B only to keep the example fast; use B = 1999 or more in analyses.
 res <- test_postexport_conversion(
-    x, t_star = 0, control = postexport_control(B = 19,
-                                                seed = c(e1 = 1, e2 = 2)))
+    x, t_star = 332,
+    control = postexport_control(B = 49, seed = c(alt_1 = 1, alt_3 = 2,
+                                                  null_2 = 3)))
 rank_postexport_candidates(adjust_postexport_pvalues(res))
 
 }

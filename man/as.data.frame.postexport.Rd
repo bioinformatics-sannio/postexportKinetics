@@ -54,15 +54,10 @@ The role of every column is also given in the attribute
 }
 
 \examples{
-set.seed(1)
-tab <- expand.grid(replicate = 1:3, time = c(-15, 0, 30, 60, 120))
-tab$event <- "event_1"
-tab$N <- 60 * exp(-0.03 * pmax(tab$time, 0)) *
-    exp(rnorm(nrow(tab), 0, 0.05))
-tab$N_s <- 20 * exp(-0.01 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
-tab$C <- 25 * exp(-0.02 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
-tab$C_s <- 40 * exp(-0.005 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
-fit <- fit_postexport_model(postexport_data(tab, time_unit = "min"),
-                            t_star = 0)
-as.data.frame(fit)
+data(postexport_example)
+fits <- fit_postexport_model(
+    postexport_data(postexport_example, time_unit = "min"), t_star = 332)
+tab <- as.data.frame(fits)
+tab[, c("event", "status", "sigma_c", "IR", "at_boundary")]
+attr(tab, "column_roles")[c("sigma_c", "IR", "at_boundary")]
 }

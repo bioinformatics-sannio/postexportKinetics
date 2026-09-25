@@ -34,12 +34,23 @@
 #'     manuscript simulator (onset, common intervention time, replicates,
 #'     assay noise);
 #'   \item [check_operational_domain()]: diagnostic comparison of a design
-#'     with the manuscript benchmark (not a calibration guarantee).
+#'     with the manuscript benchmark (not a calibration guarantee);
+#'   \item [adjust_postexport_pvalues()]: explicit multiple-testing
+#'     adjustment (Benjamini-Hochberg by default) over a user-defined family;
+#'   \item [rank_postexport_candidates()]: exploratory prioritisation of
+#'     tested events (not inferential);
+#'   \item `plot()` methods for fits, tests, sets, simulations and domain
+#'     checks; `as.data.frame()` methods for fit and test results.
 #' }
 #'
+#' @section Getting started:
+#' See the vignette, `vignette("postexportKinetics")`, and the synthetic
+#' example data [postexport_example].
+#'
 #' @section Development status:
-#' Development version. Exploratory ranking, plotting and batch execution are
-#' not yet available.
+#' Development version, not yet a Bioconductor release. Batch execution is
+#' sequential; parallel execution, rMATS conversion and comparator methods
+#' are not available.
 #'
 #' @keywords internal
 "_PACKAGE"
