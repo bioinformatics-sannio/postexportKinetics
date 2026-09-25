@@ -16,17 +16,20 @@ scientific-invariance rules.
 
 ## 2. Package state
 
-- Package: `postexportKinetics` `0.0.0.9000` (development; move to `0.99.0`
-  only at Bioconductor submission preparation). MIT license. Maintainer Luigi
-  Cerulo `<lcerulo@unisannio.it>`.
+- Package: `postexportKinetics` `0.0.0.9000` (development). MIT license.
+  Maintainer Luigi Cerulo `<lcerulo@unisannio.it>`.
+- **Planned first public GitHub release: `0.1.0`** (approved). The
+  Bioconductor submission line `0.99.0` comes later and is not used for the
+  GitHub release. No release has been created or tagged yet.
 - Repository: `https://github.com/bioinformatics-sannio/postexportKinetics`.
-- **Current approved main:** `21d8a23` (Phase 4 merge, `--no-ff`) plus the
+- **Current approved main:** `f7e23ee` (Phase 5 merge, `--no-ff`) plus the
   documentation-only commit that updates this file.
-- **Earlier baselines:** Phase 3 merge
-  `aace22ddf9a8248e9950aef3841eefc0cbbd713e`; documentation checkpoints
-  `1965404` and `9de2958`.
-- Branches `phase1-core`, `phase2-api`, `phase3-sim` and `phase4-batch` are
-  kept.
+- **Earlier baselines:**
+  - Phase 4 merge `21d8a23` (with `PROJECT_STATE.md` update `982aeb6`);
+  - Phase 3 merge `aace22ddf9a8248e9950aef3841eefc0cbbd713e`;
+  - documentation checkpoints `1965404` and `9de2958`.
+- Branches `phase1-core`, `phase2-api`, `phase3-sim`, `phase4-batch` and
+  `phase5-docs` are kept.
 
 ## 3. Completed phases
 
@@ -38,6 +41,7 @@ scientific-invariance rules.
 | 2 | public inference API, frozen orchestrator port | `PHASE2_REPORT.md` |
 | 3 | simulator and assay ports, simulation API, operational-domain diagnostics | `PHASE3_REPORT.md` |
 | 4 | batch usability, multiple-testing adjustment, exploratory ranking, plots, tidy tables | `PHASE4_REPORT.md` |
+| 5 | README, vignette, synthetic example data, NEWS, CITATION.cff / inst/CITATION, `tools/validate_against_manuscript.R`, documentation and metadata polish | `PHASE5_REPORT.md` |
 
 ## 4. Current public API
 
@@ -73,9 +77,23 @@ plot(x, ...)           # fit/test ("fit", "bootstrap"), fit_set/test_set
   above.
 - **Internal:** `build_interval_balance`, `add_assay_noise` and
   `postexport_trajectory` concepts stay internal.
-- **Not yet available:** parallel execution, rMATS conversion, comparators,
-  vignette, SummarizedExperiment input.
-- **Dependencies (Imports):** deSolve, ggplot2, MASS, nnls, stats, utils.
+- **Data:** `postexport_example` and `postexport_example_truth`
+  (synthetic; see §5a); `inst/extdata/postexport_example_long.csv`.
+- **Documentation:** vignette `vignette("postexportKinetics")`, README,
+  NEWS, `citation("postexportKinetics")`.
+- **Not yet available:** parallel execution, rMATS conversion, comparators.
+  SummarizedExperiment input is **deferred** (§5a).
+- **Dependencies:**
+  - Imports: deSolve, ggplot2, MASS, nnls, stats, utils;
+  - Suggests: expm, knitr, rmarkdown, testthat;
+  - VignetteBuilder: knitr.
+- **Metadata:**
+  - `Depends: R (>= 4.1.0)` is **provisional**, pending a compatibility CI
+    job on an older R release before `0.1.0`. It is tested only with the
+    current R release.
+  - biocViews: Software, Transcriptomics, RNASeq, AlternativeSplicing,
+    TimeCourse, StatisticalMethod, **MultipleComparison**, Visualization.
+  - `LazyData: false`.
 
 ## 5. Key scientific-invariance decisions
 
@@ -150,6 +168,32 @@ plot(x, ...)           # fit/test ("fit", "bootstrap"), fit_set/test_set
 - **Excluded from v0.1:** ΔPSI and cytoplasmic-only comparators, and
   PR-AUC/AUROC utilities.
 
+## 5a. Phase 5 decisions
+
+- **Example data:**
+  - one calibrated benchmark design (SHUTOFF, `t_star = 332` min, 5 time
+    points × 5 replicates, step 10 min, RNA-seq very low noise; benchmark
+    power about 0.24), selected from the benchmark table before generation;
+  - the seed (20260925) was fixed a priori, with no seed search;
+  - it is not to be replaced by a higher-power, anti-conservative design;
+  - generation code in `data-raw/postexport_example.R`.
+- **Bootstrap counts in documentation:** `B = 499` in the vignette (which
+  states the floor `1/(B+1)`), `B = 49`/`99` in examples. Each is marked as
+  only for speed and not recommended for final analysis.
+- **SummarizedExperiment:** deferred from v0.1. No Bioconductor dependency
+  is added merely to silence BiocCheck.
+  - Layout A (four state assays) is a possible future thin converter.
+  - Layout B (compartment libraries) needs pairing, normalisation and
+    mapping decisions.
+  - Revisit at Bioconductor submission preparation.
+- **Citation:** the manuscript stays unpublished/submitted, and there is no
+  package DOI yet. `10.5281/zenodo.22944109` is the frozen manuscript
+  implementation. A package DOI will be added only after the first GitHub
+  release is archived on Zenodo.
+- **Manuscript validation:** `tools/validate_against_manuscript.R`,
+  documented in `tools/frozen/README.md`. It exits 1 on any failure. The
+  full run is required for release; Linux CI runs it with `--quick`.
+
 ## 6. Cross-platform regression policy
 
 - **A. Same platform (provenance matches): strict, blocking.** Elementwise
@@ -188,40 +232,64 @@ plot(x, ...)           # fit/test ("fit", "bootstrap"), fit_set/test_set
 
 ## 9. Current BiocCheck blockers (not claimed compatible)
 
-- ERROR: version not `x.99.z` (intentional during development).
-- ERROR: no vignette (a later phase).
-- ERROR: support-site registration of the maintainer email (maintainer
-  action; also needs network).
-- Phase 4 final counts: 3 ERRORs, 2 WARNINGs, 12 NOTEs (BiocCheck 1.48.1).
+Phase 5 final counts (BiocCheck 1.48.1): **2 ERRORs, 2 WARNINGs, 10 NOTEs**.
+
+- ERRORs:
+  - version not `x.99.z` (intentional during development);
+  - support-site registration of the maintainer email (maintainer action;
+    also needs network).
+  - The missing-vignette ERROR is resolved.
 - WARNINGs:
-  - no Bioconductor dependencies (open: SummarizedExperiment input);
+  - no Bioconductor dependencies (SummarizedExperiment deferred);
   - `set.seed` usage, in the frozen orchestrator and the public simulator
     (documented).
-- NOTEs: frozen-code style (indentation, `paste` in conditions, `<<-`, `=`,
-  long lines, function length); metadata (ORCID, `fnd`, NEWS, R version).
-- `R CMD check --as-cran`: 0 ERRORs / 0 WARNINGs, with 2 NOTEs locally (new
-  submission; no pandoc).
+- NOTEs:
+  - frozen-code style (indentation, `paste` in conditions, `<<-`, `=`, long
+    lines, function length);
+  - metadata (ORCID, `fnd`, bioc-devel);
+  - R version (4.1.0 is kept provisionally).
+  - The NEWS and biocViews notes are resolved.
+- `R CMD check --as-cran`, including the manual and the vignette: 0 ERRORs,
+  0 WARNINGs, 2 NOTEs locally.
+  - CRAN incoming feasibility: new submission and the development version
+    number.
+  - HTML manual validation skipped because of the local tools (old HTML
+    Tidy, no V8).
+- **Correction of the historical NOTE attribution:** in Phases 1–4, the
+  "checking top-level files" NOTE was the non-ignored `PHASE1_5_REPORT.md`,
+  not the missing pandoc as reported earlier. `.Rbuildignore` was fixed in
+  Phase 5 (`^PHASE[0-9_]+_REPORT\.md$`), and that NOTE no longer appears.
+- Test suite: 16 files, 3,677 expectations, 0 failures.
 
 ## 10. Next phase
 
-**Phase 5** is the next phase. It has not started, and its scope must be
-specified and approved before any work begins.
+**Release candidate `0.1.0`.** A separate release-candidate plan must be
+prepared and approved before any work begins. It will cover:
 
-- **Items deferred to later phases in earlier reports and decisions**
-  (candidates only, not an approved scope):
-  - vignette;
-  - `NEWS.md`;
-  - `tools/validate_against_manuscript.R`;
-  - Bioconductor submission cleanup;
-  - release `0.99.0`.
-- **Excluded from Phase 4 and still open:**
-  - parallel execution;
-  - rMATS conversion;
-  - comparators;
-  - SummarizedExperiment input.
-- **Pending maintainer action:** the Linux CI runner label `ubuntu-latest`
-  migrates to Ubuntu 26 from 2026-10-19 (GitHub notice). Pinning the runner
-  image is an open decision.
+- the version bump to `0.1.0`;
+- compatibility CI on at least one older R release, to verify the
+  provisional `R (>= 4.1.0)`. A concrete incompatibility is reported before
+  `DESCRIPTION` is changed.
+- macOS, Linux and Windows checks where feasible;
+- the full `tools/validate_against_manuscript.R`;
+- README, CITATION and NEWS synchronisation;
+- release tarball inspection;
+- GitHub release preparation;
+- Zenodo archival planning.
+
+**Not yet:**
+
+- no release or tag has been created;
+- no switch to `0.99.0`;
+- no Bioconductor submission preparation.
+
+**Still open for later:** parallel execution, rMATS conversion,
+comparators, SummarizedExperiment input.
+
+**CI runner:** GitHub moves `ubuntu-latest` to Ubuntu 26 from 2026-10-19.
+CI stays on `ubuntu-latest` unless a concrete compatibility problem
+appears. After the migration, confirm the level A/B/C results and record
+the new LAPACK/BLAS provenance (`RELEASE_CHECKLIST.md` §3a).
 
 ## 11. Authoritative reading order
 
@@ -230,8 +298,8 @@ specified and approved before any work begins.
 3. `STOP_CONDITION_REPORT.md`: provenance decisions (SF-1 … SF-19).
 4. `PHASE1_5_REPORT.md` §9–10 and `tools/frozen/README.md`: regression
    policy.
-5. `PHASE4_REPORT.md`, `PHASE3_REPORT.md`, then `PHASE2_REPORT.md`:
-   current API and decisions.
+5. `PHASE5_REPORT.md`, `PHASE4_REPORT.md`, `PHASE3_REPORT.md`, then
+   `PHASE2_REPORT.md`: current API and decisions.
 6. `PACKAGE_PLAN.md`: original architecture and remaining scope, with the
    amendments recorded in the later reports.
 7. `RELEASE_CHECKLIST.md`: release requirements.
