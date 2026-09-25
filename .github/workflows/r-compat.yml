@@ -54,6 +54,23 @@ jobs:
           extra-packages: any::rcmdcheck, any::testthat, any::expm
           needs: check
 
+      - name: Diagnose a dependency-installation failure (category A)
+        if: failure()
+        run: |
+          Rscript -e '
+            options(repos = c(CRAN = "https://cloud.r-project.org"))
+            if (!requireNamespace("pak", quietly = TRUE))
+              install.packages("pak", repos = sprintf(
+                "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+                .Platform$pkgType, R.Version()$os, R.Version()$arch))
+            r <- tryCatch({ pak::lockfile_create("deps::.", lockfile = "diag.lock",
+                                                 dependencies = TRUE); "resolved" },
+                          error = function(e) conditionMessage(e))
+            cat("PAK RESOLUTION:", r, "\n")' > diag.log 2>&1 || true
+          tail -c 3000 diag.log > diag_tail.log
+          MSG=$(sed -e 's/%/%25/g' diag_tail.log | awk 'BEGIN{ORS="%0A"}{print}')
+          echo "::error title=R ${{ matrix.r }} dependency resolution::$MSG"
+
       - name: Session and dependency versions
         run: |
           Rscript -e 'cat(R.version.string, "\n"); for (p in c("deSolve","ggplot2","MASS","nnls","knitr","rmarkdown","testthat")) cat(sprintf("%-10s %s\n", p, as.character(packageVersion(p)))); print(La_version()); print(RNGkind())'
