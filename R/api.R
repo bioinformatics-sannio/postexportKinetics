@@ -326,7 +326,7 @@
 #'     \item{`system`}{the interval-balance system (`A`, `b`, `Sigma_b`,
 #'       ...).}
 #'     \item{`data`}{the event's input rows (used by
-#'       plot()).}
+#'       [plot()][plot.postexport]).}
 #'     \item{`control`, `provenance`}{settings and frozen reference.}
 #'   }
 #'   For several events, a `postexport_fit_set`: a list with `summary` (one

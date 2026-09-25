@@ -43,7 +43,7 @@ replicates per time point.}
 \item{\code{system}}{the interval-balance system (\code{A}, \code{b}, \code{Sigma_b},
 ...).}
 \item{\code{data}}{the event's input rows (used by
-plot()).}
+\link[=plot.postexport]{plot()}).}
 \item{\code{control}, \code{provenance}}{settings and frozen reference.}
 }
 For several events, a \code{postexport_fit_set}: a list with \code{summary} (one
