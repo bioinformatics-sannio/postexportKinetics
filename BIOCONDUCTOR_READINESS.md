@@ -69,8 +69,12 @@ on `main` / `release-*`. It will first be exercised at the next `main` push.
 | D. **BiocCheckGitClone(devel)** | **0 ERRORS / 0 WARNINGS / 0 NOTES** | **0 / 0 / 0** |
 | E. version / citation / API | PASS (0.99.0; 10 exports) | PASS |
 
-CI verification of the current `devel` (`e3202a8`) is reported in the review
-message: the bioc-devel `package-branch` job on this commit.
+**CI verification of the current `devel` (`e3202a8` ← `f6e1bfb`), run
+`36185810683` on `f6d037f`:** A, C, D and E pass (BiocCheckGitClone 0/0/0),
+but **B FAILS**. The only differing file is again
+`inst/doc/postexportKinetics.html`. The diagnostic control build of the same
+source reproduced the first build exactly, so nondeterminism was not shown
+within a single job.
 
 **Finding on check B:** in one earlier CI run (`3ec0025`, run `36180831285`),
 B failed.
@@ -84,8 +88,22 @@ B failed.
 - B was **not relaxed**. It still allows only `Packaged:`. The diagnostic
   control build will show directly whether any recurrence is build
   nondeterminism (`X` differs from itself).
-- **Decision (optional):** whether a recurrence confirmed by the control
-  should be tolerated for embedded vignette images.
+- **Recurrence (`f6d037f`, run `36185810683`):**
+  - B failed again on the rendered vignette HTML only;
+  - the control build of the source reproduced the first source build;
+  - the trees are identical (A), and every non-vignette file is identical;
+  - locally, B passes consistently.
+- **Status: unresolved and intermittent.** Across the three CI runs it failed
+  twice and passed once. The cause, probably rendering nondeterminism in the
+  vignette figures, is **not yet demonstrated**.
+- **Proposed investigation (needs approval):** extend the B diagnostic to
+  decode each embedded PNG from both HTML files and compare them
+  pixel-wise (for example with the `png` package, in CI only).
+  - Pixel-identical images mean encoding nondeterminism.
+  - Differing pixels mean a rendering difference, and identify the figure.
+- **Decision:** whether B may then treat embedded vignette images as a
+  controlled exception, or must stay strict. **Until decided, the
+  package-branch gate is not green.**
 
 ## 4. Checks on the final package content (`0.99.0`; `R/`, `man/`, `data/`, `inst/`, `tests/` and `vignettes/` identical between trees `a94294e…` and `f5000fb…`)
 
@@ -108,6 +126,8 @@ B failed.
 | platforms (macOS, Windows; R 4.6.1) | `36183026990` | **success** |
 | r-compat (R 4.1.3 with Bioconductor 3.14 / SummarizedExperiment 1.24.0; R 4.5.3) | `36183027013` | **success** |
 | **bioc-devel** (`bioc-devel` and `package-branch` jobs) | `36183026953` | **success** |
+| bioc-devel on `f6d037f` (current `devel` `e3202a8`) | `36185810683` | `bioc-devel` job **success** (R CMD check OK; BiocCheck 1E `checkWatchedTag` / 1W / 9N); `package-branch` job **failure** (check B, §3) |
+| linux-regression, platforms, r-compat on `f6d037f` | `36185810688`, `36185810691`, `36185810608` | **success** |
 
 The earlier runs on this phase's commits:
 
@@ -338,6 +358,11 @@ copied from: source" in the code itself.
 
 **Recommendation: NO-GO at this moment. GO once the following are
 resolved, in order:**
+
+0. **Check B**, package-only branch tarball equivalence: it fails
+   intermittently in CI on the rendered vignette HTML (§3). Approve the
+   pixel-wise diagnostic, then decide whether to accept a controlled image
+   exception or keep B strict.
 
 1. **Watched Tags** set by the maintainer. BiocCheck is then expected to
    show 0 ERRORs; re-run the final networked BiocCheck to confirm.
