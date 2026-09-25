@@ -1,7 +1,8 @@
-# postexportKinetics 0.0.0.9000 (development)
+# postexportKinetics 0.1.0
 
-Initial development version. It is not yet a Bioconductor release, and the
-interface may still change.
+First public release, published as a GitHub software release. It is not a
+Bioconductor release (Bioconductor is the intended future distribution
+channel), and the interface may still evolve. The package has no DOI.
 
 ## Scientific reference
 
@@ -64,6 +65,14 @@ interface may still change.
 * Vignette `vignette("postexportKinetics")`.
 * Synthetic example data `postexport_example` and `postexport_example_truth`,
   with a long-format copy in `inst/extdata`.
+
+## Compatibility and checks
+
+* Declared minimum versions: R (>= 4.1.0), ggplot2 (>= 3.4.0), testthat
+  (>= 3.1.7).
+* Continuous integration: R 4.1 and oldrel-1 on Linux; the current R
+  release on Linux, macOS and Windows; the Linux frozen-reference
+  regression gate.
 
 ## Not yet available
 

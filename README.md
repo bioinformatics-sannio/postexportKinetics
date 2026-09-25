@@ -2,9 +2,9 @@
 
 Kinetic model comparison for post-export RNA conversion.
 
-> **Development status.** This package is under active development
-> (version `0.0.0.9000`). It is not yet a Bioconductor release, and its
-> interface may still change.
+> **Release status.** Version `0.1.0` is the first public GitHub release.
+> It is **not yet a Bioconductor release** (Bioconductor is the intended
+> future distribution channel), and the interface may still evolve.
 
 `postexportKinetics` fits a compartment-resolved four-state kinetic model to
 time courses of nuclear and cytoplasmic, unprocessed and processed RNA. It
@@ -56,10 +56,12 @@ splicing.
 
 ## Installation
 
-Development version from GitHub:
+From GitHub, the 0.1.0 release (once the `v0.1.0` tag is published) or the
+current development state:
 
 ```r
 # install.packages("remotes")
+remotes::install_github("bioinformatics-sannio/postexportKinetics@v0.1.0")
 remotes::install_github("bioinformatics-sannio/postexportKinetics")
 ```
 
@@ -70,9 +72,9 @@ remotes::install_github("bioinformatics-sannio/postexportKinetics",
                         build_vignettes = TRUE)
 ```
 
-- **R version:** `R (>= 4.1.0)` is declared provisionally. The package is
-  currently tested only with the current R release on macOS and Linux.
-  Compatibility with older R releases has not yet been checked.
+- **R version:** `R (>= 4.1.0)`. Continuous integration tests R 4.1 and
+  the previous minor R release (oldrel-1) on Linux, and the current
+  R release on Linux, macOS and Windows.
 - **Runtime dependencies:** `deSolve`, `ggplot2` (>= 3.4.0), `MASS`, `nnls`, `stats`,
   `utils`.
 - **Suggested:** `knitr` and `rmarkdown` for the vignette; `testthat` and

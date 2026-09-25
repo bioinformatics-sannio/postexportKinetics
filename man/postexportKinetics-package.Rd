@@ -61,9 +61,10 @@ See the vignette, \code{vignette("postexportKinetics")}, and the synthetic
 example data \link{postexport_example}.
 }
 
-\section{Development status}{
+\section{Release status}{
 
-Development version, not yet a Bioconductor release. Batch execution is
+Version 0.1.0 is the first public GitHub release; it is not a
+Bioconductor release, and the interface may still evolve. Batch execution is
 sequential; parallel execution, rMATS conversion and comparator methods
 are not available.
 }

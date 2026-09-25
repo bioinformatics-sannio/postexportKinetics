@@ -6,8 +6,7 @@ bibentry(
     author = c(person("Luca", "Faretra"), person("Francesco", "Napolitano"),
                person("Massimo", "Pancione"), person("Luigi", "Cerulo")),
     year = "2026",
-    note = paste("R package version", meta$Version,
-                 "(development version)"),
+    note = paste("R package version", meta$Version),
     url = "https://github.com/bioinformatics-sannio/postexportKinetics"
 )
 

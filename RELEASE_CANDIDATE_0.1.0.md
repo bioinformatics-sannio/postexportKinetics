@@ -209,8 +209,8 @@ steps:
     with: { args: 'c("--no-manual", "--as-cran")', error-on: '"warning"' }
 ```
 
-- **R 4.1:** the declared minimum. `oldrel-1` is the release before the
-  previous one, as a mid-range point. The current release is already
+- **R 4.1:** the declared minimum. `oldrel-1` is the previous minor R
+  release (r-lib/actions naming), as a mid-range point. The current release is already
   covered by `linux-regression.yml`.
 - **Interpreting failures:**
   - A **dependency-installation** failure (a CRAN dependency no longer
