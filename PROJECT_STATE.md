@@ -79,8 +79,14 @@ plot(x, ...)           # fit/test ("fit", "bootstrap"), fit_set/test_set
   `postexport_trajectory` concepts stay internal.
 - **Data:** `postexport_example` and `postexport_example_truth`
   (synthetic; see §5a); `inst/extdata/postexport_example_long.csv`.
-- **Documentation:** vignette `vignette("postexportKinetics")`, README,
-  NEWS, `citation("postexportKinetics")`.
+- **Documentation and metadata:**
+  - vignette `vignette("postexportKinetics")`;
+  - `README.md`, `NEWS.md`;
+  - `CITATION.cff` and `inst/CITATION` (`citation("postexportKinetics")`):
+    the package (development version, **no package DOI yet**), the submitted
+    manuscript, and the frozen manuscript implementation
+    (`10.5281/zenodo.22944109`, which is not the package DOI).
+- **Maintainer validation:** `tools/validate_against_manuscript.R` (§5a).
 - **Not yet available:** parallel execution, rMATS conversion, comparators.
   SummarizedExperiment input is **deferred** (§5a).
 - **Dependencies:**
