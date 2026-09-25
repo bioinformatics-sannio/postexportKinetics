@@ -19,7 +19,8 @@ parameters, with rates per minute. Replicates vary these rates by
 }
 }
 \source{
-Simulated; see \code{data-raw/postexport_example.R}.
+Simulated with \code{\link[=simulate_postexport_kinetics]{simulate_postexport_kinetics()}}; see
+\code{inst/scripts/generate_postexport_example.R}.
 }
 \usage{
 data(postexport_example_truth)

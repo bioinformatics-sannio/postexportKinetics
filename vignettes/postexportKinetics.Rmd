@@ -113,7 +113,8 @@ intervention time `t_star`. After `t_star`, transcription stops completely
 
 The package ships a small **synthetic** dataset, `postexport_example`. It was
 simulated with the package's simulator (see `?postexport_example` and
-`data-raw/postexport_example.R` in the source repository):
+the generation script `generate_postexport_example.R`, installed in the
+package's `scripts` directory):
 
 - eight events: four simulated with `sigma_c > 0` (`alt_*`) and four with
   `sigma_c = 0` (`null_*`);

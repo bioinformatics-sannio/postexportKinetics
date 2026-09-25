@@ -30,8 +30,9 @@
 #' the data were chosen by searching over seeds.
 #' The true values are in [postexport_example_truth]. The draws reproduce the
 #' benchmark's parameter distributions, not its per-gene random streams.
-#' Generation code: `data-raw/postexport_example.R` in the package source
-#' repository.
+#' Generation code (distributed with the package):
+#' `system.file("scripts", "generate_postexport_example.R",
+#' package = "postexportKinetics")`.
 #'
 #' The same observations in long format are installed as
 #' `system.file("extdata", "postexport_example_long.csv",
@@ -50,7 +51,8 @@
 #'     RNA (RNA-seq noise model, arbitrary scale).}
 #' }
 #'
-#' @source Simulated; see `data-raw/postexport_example.R`.
+#' @source Simulated with [simulate_postexport_kinetics()]; see
+#'   `inst/scripts/generate_postexport_example.R`.
 #'
 #' @seealso [postexport_example_truth], [postexport_data()]
 #'
@@ -79,7 +81,8 @@
 #'   \item{simulation_seed}{seed passed to [simulate_postexport_kinetics()].}
 #' }
 #'
-#' @source Simulated; see `data-raw/postexport_example.R`.
+#' @source Simulated with [simulate_postexport_kinetics()]; see
+#'   `inst/scripts/generate_postexport_example.R`.
 #'
 #' @seealso [postexport_example]
 #'

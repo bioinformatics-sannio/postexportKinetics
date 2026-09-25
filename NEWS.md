@@ -16,6 +16,9 @@ unchanged). The package has no DOI.
   * SummarizedExperiment is now in Imports.
 * Vignette: "Introduction" and "Installation" sections, and a short
   SummarizedExperiment input section.
+* The example-data generation script is distributed as
+  `inst/scripts/generate_postexport_example.R`. It reproduces the shipped
+  example data exactly.
 
 # postexportKinetics 0.1.0
 
