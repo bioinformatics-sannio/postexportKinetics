@@ -1,0 +1,107 @@
+# Bioconductor-devel checks (Phase 6D). Supplements, never replaces,
+# linux-regression (the frozen-reference scientific gate), platforms and
+# r-compat.
+#
+# Runs in the official Bioconductor devel container:
+#   package installation; regression tests (committed fixtures, levels B/C);
+#   R CMD build; R CMD check (fails on ERROR or WARNING); BiocCheck on the
+#   tarball (fails on any ERROR other than the maintainer-side Support Site
+#   check; warnings and notes are reported as annotations). A second job
+#   verifies the package-only branch `devel` against its Source-Commit
+#   (tools/release/verify_package_branch.sh, including BiocCheckGitClone),
+#   when that branch exists.
+
+name: bioc-devel
+
+on:
+  push:
+    branches-ignore: ['devel']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bioc-devel:
+    runs-on: ubuntu-latest
+    container: bioconductor/bioconductor_docker:devel
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Mark workspace safe for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Record R and Bioconductor provenance
+        run: |
+          Rscript tools/ci/record_r_provenance.R "bioc-devel"
+          Rscript -e 'cat(sprintf("::notice title=Bioconductor devel::Bioconductor %s (%s); BiocCheck %s\n", BiocManager::version(), if (BiocManager:::isDevel()) "devel" else "release", tryCatch(as.character(packageVersion("BiocCheck")), error = function(e) "not preinstalled")))'
+
+      - name: Install dependencies
+        run: |
+          Rscript -e '
+            BiocManager::install(c("BiocCheck", "remotes", "testthat", "expm",
+                                   "knitr", "rmarkdown"),
+                                 ask = FALSE, update = FALSE)
+            remotes::install_deps(dependencies = TRUE,
+                                  repos = BiocManager::repositories(),
+                                  upgrade = "never")'
+
+      - name: Install package
+        run: R CMD INSTALL .
+
+      - name: Regression tests (committed fixtures)
+        run: Rscript tools/ci/run_tests_ci.R
+
+      - name: R CMD build and R CMD check
+        run: |
+          mkdir -p "$RUNNER_TEMP/biocdevel" && cd "$RUNNER_TEMP/biocdevel"
+          R CMD build "$GITHUB_WORKSPACE"
+          T=$(ls postexportKinetics_*.tar.gz)
+          R CMD check --no-manual "$T" || true
+          STATUS=$(grep '^Status:' postexportKinetics.Rcheck/00check.log || echo "Status: check did not complete")
+          echo "::notice title=R CMD check (Bioconductor devel)::$STATUS"
+          if grep -Eq '^Status:.*(ERROR|WARNING)' postexportKinetics.Rcheck/00check.log || ! grep -q '^Status:' postexportKinetics.Rcheck/00check.log; then
+            grep -E '(WARNING|ERROR)$' -A6 postexportKinetics.Rcheck/00check.log | head -40
+            exit 1
+          fi
+
+      - name: BiocCheck
+        run: |
+          cd "$RUNNER_TEMP/biocdevel"
+          Rscript -e '
+            r <- BiocCheck::BiocCheck(list.files(pattern = "[.]tar[.]gz$"),
+                                      `quit-with-status` = FALSE)
+            fmt <- function(x) if (length(x)) paste(names(x), collapse = ", ") else "none"
+            cat(sprintf("::notice title=BiocCheck (Bioconductor devel)::%d ERRORS [%s] | %d WARNINGS [%s] | %d NOTES\n",
+                        length(r$error), fmt(r$error), length(r$warning),
+                        fmt(r$warning), length(r$note)))
+            unexpected <- setdiff(names(r$error), "checkSupportReg")
+            if (length(unexpected)) {
+              cat(sprintf("::error title=BiocCheck::unexpected ERROR(s): %s\n",
+                          paste(unexpected, collapse = ", ")))
+              quit(status = 1L)
+            }'
+
+  package-branch:
+    runs-on: ubuntu-latest
+    container: bioconductor/bioconductor_docker:devel
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Mark workspace safe for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Verify the package-only branch devel
+        run: |
+          if ! git ls-remote --exit-code --heads origin devel > /dev/null; then
+            echo "::notice title=Package-only branch::devel does not exist yet; nothing to verify"
+            exit 0
+          fi
+          git fetch --quiet origin devel:devel
+          Rscript -e 'BiocManager::install(c("BiocCheck", "remotes", "knitr", "rmarkdown"), ask = FALSE, update = FALSE); remotes::install_deps(dependencies = TRUE, repos = BiocManager::repositories(), upgrade = "never")'
+          sh tools/release/verify_package_branch.sh devel "$RUNNER_TEMP/verify" 2>&1 | tee verify.log
+          grep -q "^PACKAGE BRANCH VERIFICATION PASSED" verify.log || exit 1
+          echo "::notice title=Package-only branch::$(tail -1 verify.log)"
