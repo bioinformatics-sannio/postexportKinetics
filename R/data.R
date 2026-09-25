@@ -146,17 +146,17 @@ postexport_data <- function(x, time_unit, format = c("wide", "long"),
 #' }
 #'
 #' @section Warnings:
-#' Negative abundances. They are accepted and used unchanged.
+#' Negative abundances (accepted and used unchanged). An intervention time
+#' `t_star` at or before the first sampled time of an event (the
+#' transcription rate `R` is then not estimable), or at or after the last
+#' sampled time (no post-intervention interval is observed; the fit equals
+#' continuous transcription). Warnings never block or alter inference.
 #'
 #' @section Diagnostic information:
 #' Unsorted time points; unequal replication across time points; time points
 #' with a single replicate (the frozen core then uses the pooled covariance
-#' for that time point); events with exactly two time points; `t_star` at or
-#' before the first sample (the transcription column of the design matrix is
-#' then identically zero, so `R` is not estimable and the condition number
-#' is infinite by construction); `t_star` at or after the last sample; and
-#' `t_star = NULL` (continuous transcription). These are reported for
-#' information only and are not thresholds.
+#' for that time point); events with exactly two time points. These are
+#' reported for information only and are not thresholds.
 #'
 #' @param x A data frame (wide or long format) or a `postexport_data` object.
 #' @param format Either `"wide"` or `"long"`; ignored for `postexport_data`.
@@ -455,21 +455,30 @@ validate_postexport_data <- function(x, format = c("wide", "long"),
 }
 
 .t_star_info <- function(w, t_star, add) {
-    first <- min(w$time)
-    last <- max(w$time)
+    for (ev in unique(as.character(w$event))) {
+        tt <- w$time[as.character(w$event) == ev]
+        .t_star_event(ev, min(tt), max(tt), t_star, add)
+    }
+}
+
+.t_star_event <- function(ev, first, last, t_star, add) {
     if (t_star <= first) {
-        add("info", "t_star", sprintf(
-            paste0("t_star = %s is at or before the first sample (%s): the ",
-                   "transcription column of the design matrix is identically ",
-                   "zero, R is not estimable and the condition number is ",
-                   "infinite by construction."),
-            format(t_star), format(first)))
+        add("warning", "t_star", sprintf(paste0(
+            "Event %s: t_star = %s is at or before the first sample (%s). ",
+            "The transcription input is zero in every sampled interval, so ",
+            "the transcription rate R is not estimable: its design column is ",
+            "identically zero, R is fitted as 0 and the condition number is ",
+            "infinite by construction. Inference proceeds unchanged."),
+            ev, format(t_star), format(first)), ev)
     }
     if (t_star >= last) {
-        add("info", "t_star", sprintf(
-            paste0("t_star = %s is at or after the last sample (%s): no ",
-                   "sampled interval follows the intervention."),
-            format(t_star), format(last)))
+        add("warning", "t_star", sprintf(paste0(
+            "Event %s: t_star = %s is at or after the last sample (%s). ",
+            "Transcription is active throughout the sampled window, so no ",
+            "post-intervention interval is observed and the fit is the same ",
+            "as for continuous transcription (t_star = NULL). Inference ",
+            "proceeds unchanged."),
+            ev, format(t_star), format(last)), ev)
     }
 }
 
@@ -543,12 +552,7 @@ print.postexport_validation <- function(x, ...) {
         if (!nrow(tab)) return(invisible())
         cat("\n", label, ":\n", sep = "")
         for (i in seq_len(nrow(tab))) {
-            ev <- if (is.na(tab$event[i])) {
-                ""
-            } else {
-                paste0("[", tab$event[i], "] ")
-            }
-            cat("  - ", ev, tab$message[i], "\n", sep = "")
+            cat("  - ", tab$message[i], "\n", sep = "")
         }
     }
     show(x$errors, "Errors")

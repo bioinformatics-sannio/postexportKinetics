@@ -131,3 +131,18 @@ skip_bootstrap_across_platforms <- function(prov, summary = NULL) {
     "."
   ))
 }
+
+
+# The manuscript's shutoff designs sample at t_star itself (t_star = first
+# sample), which triggers the approved non-blocking t_star design warning.
+# Regression tests that reproduce those designs muffle exactly that warning;
+# dedicated tests check that it is emitted.
+T_STAR_WARNING <- "t_star = .* is at or (before the first|after the last) sample"
+
+quiet_tstar <- function(expr) {
+    withCallingHandlers(expr, warning = function(w) {
+        if (grepl(T_STAR_WARNING, conditionMessage(w))) {
+            invokeRestart("muffleWarning")
+        }
+    })
+}

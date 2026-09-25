@@ -34,8 +34,8 @@ run_public_test <- function(case) {
     a <- case$input$args
     x <- as_public_data(a$tsampled_data)
     if (!is.null(case$input$pre_seed)) set.seed(case$input$pre_seed)
-    test_postexport_conversion(x, t_star = a$t_star,
-                               control = public_control(a))
+    quiet_tstar(test_postexport_conversion(x, t_star = a$t_star,
+                                           control = public_control(a)))
 }
 
 test_that("public test covers the required cases", {
@@ -100,9 +100,9 @@ test_that("fit_postexport_model() reproduces the frozen observed fit", {
     for (key in names(public_cases)) {
         case <- public_cases[[key]]
         a <- case$input$args
-        fit <- fit_postexport_model(as_public_data(a$tsampled_data),
-                                    t_star = a$t_star,
-                                    control = public_control(a))
+        fit <- quiet_tstar(fit_postexport_model(
+            as_public_data(a$tsampled_data), t_star = a$t_star,
+            control = public_control(a)))
         expect_s3_class(fit, "postexport_fit")
         raw <- case$output$value
         got <- list(
@@ -138,7 +138,8 @@ test_that("real mESC events reproduce the published values", {
     for (gene in names(targets)) {
         case <- fx$cases[[sprintf("orchestrator/real_mesc/%s", gene)]]
         x <- as_public_data(case$input$args$tsampled_data, gene)
-        fit <- fit_postexport_model(x, t_star = 0)
+        expect_warning(fit <- fit_postexport_model(x, t_star = 0),
+                       "not estimable")
         expect_equal(signif(fit$estimates$sigma_c, 7),
                      targets[[gene]][["sigma_c"]])
         expect_equal(signif(fit$fit$IR, 7), targets[[gene]][["IR"]])

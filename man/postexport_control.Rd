@@ -27,8 +27,11 @@ observed fit, exactly as in the frozen implementation. For several events,
 a named integer vector with one seed per event. A fixed seed reproduces
 the bootstrap draws within a matched numerical environment; across
 LAPACK/BLAS builds the draws can differ because the frozen bootstrap uses
-\code{\link[MASS:mvrnorm]{MASS::mvrnorm()}}. Note that, as in the frozen implementation, setting a
-seed changes the global random-number state.}
+\code{\link[MASS:mvrnorm]{MASS::mvrnorm()}}. The frozen implementation calls \code{\link[=set.seed]{set.seed()}}; the
+public API saves the caller's random-number state before and restores
+it afterwards, so an explicit seed leaves the global state unchanged
+(the result is not affected). With \code{seed = NULL} the global stream is
+used and consumed, as in the frozen implementation.}
 
 \item{lambda_time}{Shrinkage of each time point's within-time covariance
 towards the pooled covariance, in \verb{[0, 1]}. Frozen default \code{0.5}.
@@ -49,13 +52,18 @@ replicates, in \verb{[0, 1]}. Frozen default \code{0.05}. If exceeded, the p-val
 is \code{NA} with status \code{"bootstrap_unstable"}. It does not change p-values
 that are reported.}
 
-\item{scaling_A}{Logical; scale design-matrix columns to unit norm before
-the NNLS fits. Frozen default \code{TRUE}. This is a numerical conditioning
-step; coefficients are returned on the original scale.}
+\item{scaling_A}{\strong{Advanced option.} Logical; scale the design-matrix
+columns to unit norm before the NNLS fits. Frozen default \code{TRUE}. This
+is a numerical conditioning step (coefficients are returned on the
+original scale), but it changes the floating-point path of the fits and
+can change results for ill-conditioned designs. Changing it changes the
+analysis relative to the manuscript procedure.}
 
-\item{truncate_nonnegative_boot}{Logical; set negative values of bootstrap
-samples to zero. Frozen default \code{FALSE}. Changing it changes the
-bootstrap null distribution and hence the p-value.}
+\item{truncate_nonnegative_boot}{\strong{Advanced option.} Logical; set
+negative values of simulated bootstrap samples to zero. Frozen default
+\code{FALSE}. Changing it changes the bootstrap null distribution, hence the
+p-value, and therefore the analysis relative to the manuscript
+procedure.}
 }
 \value{
 An object of class \code{postexport_control} (a named list).
@@ -69,6 +77,14 @@ experimental design and is therefore an explicit argument of
 \code{\link[=fit_postexport_model]{fit_postexport_model()}} and \code{\link[=test_postexport_conversion]{test_postexport_conversion()}}, not a control
 setting.
 }
+\section{Advanced options}{
+
+\code{scaling_A} and \code{truncate_nonnegative_boot} exist in the frozen
+implementation and are exposed for completeness. Their frozen defaults
+define the manuscript procedure; non-default values change the analysis.
+\code{print()} flags every setting that differs from the frozen default.
+}
+
 \examples{
 postexport_control()
 postexport_control(B = 199, seed = 1)

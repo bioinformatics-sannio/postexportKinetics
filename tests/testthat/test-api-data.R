@@ -110,12 +110,43 @@ test_that("negative abundances warn and are kept unchanged", {
 test_that("design diagnostics are information, not errors", {
     w <- make_wide()
     w <- w[-(1:2), ]
+    v <- validate_postexport_data(w)
+    expect_identical(nrow(v$errors), 0L)
+    expect_identical(nrow(v$warnings), 0L)
+    expect_true(any(grepl("single replicate", v$info$message)))
+    expect_true(any(grepl("unequal replication", v$info$message)))
+    v <- validate_postexport_data(make_wide(times = c(0, 30)))
+    expect_true(any(grepl("exactly two time points", v$info$message)))
+})
+
+test_that("t_star outside the sampled window warns without blocking", {
+    w <- make_wide()
     v <- validate_postexport_data(w, t_star = 0)
     expect_identical(nrow(v$errors), 0L)
-    expect_true(any(grepl("single replicate", v$info$message)))
-    expect_true(any(grepl("identically zero", v$info$message)))
-    v <- validate_postexport_data(make_wide(), t_star = 100)
-    expect_true(any(grepl("at or after the last sample", v$info$message)))
+    expect_true(any(grepl("not estimable", v$warnings$message)))
+    v <- validate_postexport_data(w, t_star = 100)
+    expect_true(any(grepl("continuous transcription", v$warnings$message)))
+    v <- validate_postexport_data(w, t_star = 20)
+    expect_identical(nrow(v$warnings), 0L)
+
+    x <- postexport_data(w, time_unit = "min")
+    expect_warning(f0 <- fit_postexport_model(x, t_star = 0),
+                   "not estimable")
+    expect_identical(f0$status, "ok")
+    expect_length(f0$design$warnings, 1L)
+    expect_warning(t0 <- test_postexport_conversion(
+        x, t_star = 0, control = postexport_control(B = 9, seed = 1)),
+        "not estimable")
+    expect_identical(t0$raw, test_sigma_nested(
+        .event_data(x, "e1"), t_star = 0, B_n = 9L, seed = 1,
+        return_boot = TRUE))
+    # t_star at or after the last sample is the same fit as t_star = NULL.
+    expect_warning(f_late <- fit_postexport_model(x, t_star = 60),
+                   "continuous transcription")
+    f_null <- fit_postexport_model(x, t_star = NULL)
+    expect_identical(f_late$estimates, f_null$estimates)
+    expect_identical(f_late$fit, f_null$fit)
+    expect_length(f_null$design$warnings, 0L)
 })
 
 test_that("control defaults are the frozen defaults", {
@@ -156,11 +187,12 @@ test_that("t_star must be given explicitly and validly", {
 
 test_that("printed output uses cautious interpretation only", {
     x <- postexport_data(make_wide(), time_unit = "min")
-    res <- test_postexport_conversion(
-        x, t_star = 0, control = postexport_control(B = 9, seed = 1))
+    res <- quiet_tstar(test_postexport_conversion(
+        x, t_star = 0, control = postexport_control(B = 9, seed = 1)))
     out <- c(utils::capture.output(print(res)),
              utils::capture.output(print(summary(res))),
-             utils::capture.output(print(fit_postexport_model(x, t_star = 0))),
+             utils::capture.output(print(quiet_tstar(
+                 fit_postexport_model(x, t_star = 0)))),
              utils::capture.output(print(x)),
              utils::capture.output(print(postexport_control())))
     txt <- paste(out, collapse = "\n")
@@ -169,4 +201,57 @@ test_that("printed output uses cautious interpretation only", {
     expect_true(grepl("post-export conversion component", txt))
     expect_true(grepl("not a likelihood-ratio test", txt))
     expect_false(grepl("q-value|q_value", txt))
+})
+
+
+test_that("explicit seeds leave the caller's random-number state unchanged", {
+    x <- postexport_data(make_wide(), time_unit = "min")
+    d <- .event_data(x, "e1")
+    set.seed(99)
+    before <- .Random.seed
+    res <- test_postexport_conversion(
+        x, t_star = 20, control = postexport_control(B = 19, seed = 5))
+    expect_identical(.Random.seed, before)
+    # Numerical result identical to the frozen orchestrator.
+    expect_identical(res$raw, test_sigma_nested(d, t_star = 20, B_n = 19L,
+                                                seed = 5, return_boot = TRUE))
+    # No random-number state before the call: none is left behind.
+    rm(".Random.seed", envir = globalenv())
+    res2 <- test_postexport_conversion(
+        x, t_star = 20, control = postexport_control(B = 19, seed = 5))
+    expect_false(exists(".Random.seed", envir = globalenv(), inherits = FALSE))
+    expect_identical(res2$raw, res$raw)
+    set.seed(1)
+})
+
+test_that("seed = NULL consumes the global stream exactly as frozen", {
+    x <- postexport_data(make_wide(), time_unit = "min")
+    d <- .event_data(x, "e1")
+    set.seed(7)
+    start <- .Random.seed
+    res <- test_postexport_conversion(
+        x, t_star = 20, control = postexport_control(B = 19))
+    after_public <- .Random.seed
+    expect_false(identical(after_public, start))
+    expect_identical(res$rng$random_seed_before, start)
+    set.seed(7)
+    raw <- test_sigma_nested(d, t_star = 20, B_n = 19L, seed = NULL,
+                             return_boot = TRUE)
+    expect_identical(.Random.seed, after_public)
+    expect_identical(res$raw, raw)
+})
+
+test_that("named per-event seeds restore the caller's state across events", {
+    w <- rbind(make_wide(event = "a"), make_wide(event = "b"))
+    x <- postexport_data(w, time_unit = "min")
+    set.seed(123)
+    before <- .Random.seed
+    res <- test_postexport_conversion(
+        x, t_star = 20,
+        control = postexport_control(B = 9, seed = c(a = 1L, b = 2L)))
+    expect_identical(.Random.seed, before)
+    expect_identical(res$results$b$raw,
+                     test_sigma_nested(.event_data(x, "b"), t_star = 20,
+                                       B_n = 9L, seed = 2L,
+                                       return_boot = TRUE))
 })

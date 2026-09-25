@@ -52,19 +52,19 @@ finite number).
 
 \section{Warnings}{
 
-Negative abundances. They are accepted and used unchanged.
+Negative abundances (accepted and used unchanged). An intervention time
+\code{t_star} at or before the first sampled time of an event (the
+transcription rate \code{R} is then not estimable), or at or after the last
+sampled time (no post-intervention interval is observed; the fit equals
+continuous transcription). Warnings never block or alter inference.
 }
 
 \section{Diagnostic information}{
 
 Unsorted time points; unequal replication across time points; time points
 with a single replicate (the frozen core then uses the pooled covariance
-for that time point); events with exactly two time points; \code{t_star} at or
-before the first sample (the transcription column of the design matrix is
-then identically zero, so \code{R} is not estimable and the condition number
-is infinite by construction); \code{t_star} at or after the last sample; and
-\code{t_star = NULL} (continuous transcription). These are reported for
-information only and are not thresholds.
+for that time point); events with exactly two time points. These are
+reported for information only and are not thresholds.
 }
 
 \examples{

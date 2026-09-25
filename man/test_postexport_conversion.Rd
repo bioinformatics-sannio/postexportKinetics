@@ -97,15 +97,18 @@ With a fixed \code{seed}, the bootstrap draws are reproducible within a matched
 numerical environment (operating system, LAPACK/BLAS, R and package
 versions). Across LAPACK/BLAS builds the draws, and hence Monte-Carlo
 p-values, can differ even under the same seed, because the frozen
-bootstrap uses \code{\link[MASS:mvrnorm]{MASS::mvrnorm()}}. As in the frozen implementation, a
-non-\code{NULL} seed resets the global random-number state.
+bootstrap uses \code{\link[MASS:mvrnorm]{MASS::mvrnorm()}}. With an explicit seed, the frozen
+implementation calls \code{\link[=set.seed]{set.seed()}} before the observed fit; the caller's
+random-number state is saved before and restored after each event, so the
+call does not alter it. With \code{seed = NULL}, the global random-number stream
+is used and consumed, as in the frozen implementation.
 }
 
 \examples{
 set.seed(1)
-tab <- expand.grid(replicate = 1:3, time = c(0, 15, 30, 60, 120))
+tab <- expand.grid(replicate = 1:3, time = c(-15, 0, 30, 60, 120))
 tab$event <- "event_1"
-tab$N <- 60 * exp(-0.03 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
+tab$N <- 60 * exp(-0.03 * pmax(tab$time, 0)) * exp(rnorm(nrow(tab), 0, 0.05))
 tab$N_s <- 20 * exp(-0.01 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
 tab$C <- 25 * exp(-0.02 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
 tab$C_s <- 40 * exp(-0.005 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))

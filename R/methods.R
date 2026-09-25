@@ -127,7 +127,13 @@ print.summary.postexport_fit <- function(x, ...) {
     cat("Design\n")
     cat("  ", .design_line(o), "\n", sep = "")
     cat("  times:", .fmt(o$design$times), "\n")
-    cat("  replicates per time:", .fmt(o$design$n_replicates_by_time), "\n\n")
+    cat("  replicates per time:", .fmt(o$design$n_replicates_by_time), "\n")
+    if (length(o$design$warnings)) {
+        cat("  design warning(s):\n")
+        cat(strwrap(o$design$warnings, width = 76, prefix = "    "),
+            sep = "\n")
+    }
+    cat("\n")
 
     cat("Estimates (rates per ", o$design$time_unit, ")\n", sep = "")
     tab <- x$coefficients

@@ -39,8 +39,11 @@
 #'   a named integer vector with one seed per event. A fixed seed reproduces
 #'   the bootstrap draws within a matched numerical environment; across
 #'   LAPACK/BLAS builds the draws can differ because the frozen bootstrap uses
-#'   [MASS::mvrnorm()]. Note that, as in the frozen implementation, setting a
-#'   seed changes the global random-number state.
+#'   [MASS::mvrnorm()]. The frozen implementation calls [set.seed()]; the
+#'   public API saves the caller's random-number state before and restores
+#'   it afterwards, so an explicit seed leaves the global state unchanged
+#'   (the result is not affected). With `seed = NULL` the global stream is
+#'   used and consumed, as in the frozen implementation.
 #' @param lambda_time Shrinkage of each time point's within-time covariance
 #'   towards the pooled covariance, in `[0, 1]`. Frozen default `0.5`.
 #'   Changing it changes the estimated covariance, the whitening and hence the
@@ -56,12 +59,23 @@
 #'   replicates, in `[0, 1]`. Frozen default `0.05`. If exceeded, the p-value
 #'   is `NA` with status `"bootstrap_unstable"`. It does not change p-values
 #'   that are reported.
-#' @param scaling_A Logical; scale design-matrix columns to unit norm before
-#'   the NNLS fits. Frozen default `TRUE`. This is a numerical conditioning
-#'   step; coefficients are returned on the original scale.
-#' @param truncate_nonnegative_boot Logical; set negative values of bootstrap
-#'   samples to zero. Frozen default `FALSE`. Changing it changes the
-#'   bootstrap null distribution and hence the p-value.
+#' @param scaling_A **Advanced option.** Logical; scale the design-matrix
+#'   columns to unit norm before the NNLS fits. Frozen default `TRUE`. This
+#'   is a numerical conditioning step (coefficients are returned on the
+#'   original scale), but it changes the floating-point path of the fits and
+#'   can change results for ill-conditioned designs. Changing it changes the
+#'   analysis relative to the manuscript procedure.
+#' @param truncate_nonnegative_boot **Advanced option.** Logical; set
+#'   negative values of simulated bootstrap samples to zero. Frozen default
+#'   `FALSE`. Changing it changes the bootstrap null distribution, hence the
+#'   p-value, and therefore the analysis relative to the manuscript
+#'   procedure.
+#'
+#' @section Advanced options:
+#' `scaling_A` and `truncate_nonnegative_boot` exist in the frozen
+#' implementation and are exposed for completeness. Their frozen defaults
+#' define the manuscript procedure; non-default values change the analysis.
+#' `print()` flags every setting that differs from the frozen default.
 #'
 #' @return An object of class `postexport_control` (a named list).
 #'

@@ -51,7 +51,12 @@
              call. = FALSE)
     }
     all_events <- unique(data$event)
-    if (is.null(events)) return(all_events)
+    if (is.null(events)) events <- all_events
+    .check_event_names(events, all_events)
+    events
+}
+
+.check_event_names <- function(events, all_events) {
     if (!is.character(events) || !length(events) || anyNA(events) ||
         anyDuplicated(events)) {
         stop("'events' must be NULL or a vector of distinct event names.",
@@ -62,7 +67,26 @@
         stop(sprintf("Event(s) not found in 'data': %s.",
                      toString(utils::head(absent, 5L))), call. = FALSE)
     }
-    events
+    invisible(TRUE)
+}
+
+# Design warnings about t_star (never blocking; inference is unchanged).
+# Returns a named list of warning messages per event and emits them.
+.t_star_warnings <- function(data, events, t_star) {
+    out <- stats::setNames(vector("list", length(events)), events)
+    if (is.null(t_star)) return(out)
+    for (ev in events) {
+        tt <- data$time[data$event == ev]
+        acc <- new.env(parent = emptyenv())
+        acc$msg <- character()
+        .t_star_event(ev, min(tt), max(tt), t_star,
+                      function(level, check, message, event) {
+                          acc$msg <- c(acc$msg, message)
+                      })
+        out[[ev]] <- acc$msg
+        for (m in acc$msg) warning(m, call. = FALSE)
+    }
+    out
 }
 
 .intervention_label <- function(t_star) {
@@ -310,9 +334,9 @@
 #'
 #' @examples
 #' set.seed(1)
-#' tab <- expand.grid(replicate = 1:3, time = c(0, 15, 30, 60, 120))
+#' tab <- expand.grid(replicate = 1:3, time = c(-15, 0, 30, 60, 120))
 #' tab$event <- "event_1"
-#' tab$N <- 60 * exp(-0.03 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
+#' tab$N <- 60 * exp(-0.03 * pmax(tab$time, 0)) * exp(rnorm(nrow(tab), 0, 0.05))
 #' tab$N_s <- 20 * exp(-0.01 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
 #' tab$C <- 25 * exp(-0.02 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
 #' tab$C_s <- 40 * exp(-0.005 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
@@ -327,9 +351,12 @@ fit_postexport_model <- function(data, t_star, control = postexport_control(),
     events <- .check_inputs(data, if (missing(t_star)) NULL else t_star,
                             missing(t_star), control, events)
     unit <- attr(data, "time_unit")
+    design_warnings <- .t_star_warnings(data, events, t_star)
     res <- lapply(events, function(ev) {
         obs <- .observed_fit(.event_data(data, ev), t_star, control)
-        .new_fit(ev, obs, t_star, control, unit)
+        r <- .new_fit(ev, obs, t_star, control, unit)
+        r$design$warnings <- design_warnings[[ev]]
+        r
     })
     names(res) <- events
     if (length(res) == 1L) return(res[[1L]])
@@ -386,8 +413,11 @@ fit_postexport_model <- function(data, t_star, control = postexport_control(),
 #' numerical environment (operating system, LAPACK/BLAS, R and package
 #' versions). Across LAPACK/BLAS builds the draws, and hence Monte-Carlo
 #' p-values, can differ even under the same seed, because the frozen
-#' bootstrap uses [MASS::mvrnorm()]. As in the frozen implementation, a
-#' non-`NULL` seed resets the global random-number state.
+#' bootstrap uses [MASS::mvrnorm()]. With an explicit seed, the frozen
+#' implementation calls [set.seed()] before the observed fit; the caller's
+#' random-number state is saved before and restored after each event, so the
+#' call does not alter it. With `seed = NULL`, the global random-number stream
+#' is used and consumed, as in the frozen implementation.
 #'
 #' @inheritParams fit_postexport_model
 #' @param control A [postexport_control()] object; `B` and `seed` control
@@ -417,9 +447,9 @@ fit_postexport_model <- function(data, t_star, control = postexport_control(),
 #'
 #' @examples
 #' set.seed(1)
-#' tab <- expand.grid(replicate = 1:3, time = c(0, 15, 30, 60, 120))
+#' tab <- expand.grid(replicate = 1:3, time = c(-15, 0, 30, 60, 120))
 #' tab$event <- "event_1"
-#' tab$N <- 60 * exp(-0.03 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
+#' tab$N <- 60 * exp(-0.03 * pmax(tab$time, 0)) * exp(rnorm(nrow(tab), 0, 0.05))
 #' tab$N_s <- 20 * exp(-0.01 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
 #' tab$C <- 25 * exp(-0.02 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
 #' tab$C_s <- 40 * exp(-0.005 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
@@ -437,6 +467,7 @@ test_postexport_conversion <- function(data, t_star,
                             missing(t_star), control, events)
     seeds <- .event_seeds(control$seed, events)
     unit <- attr(data, "time_unit")
+    design_warnings <- .t_star_warnings(data, events, t_star)
     res <- lapply(events, function(ev) {
         d <- .event_data(data, ev)
         seed <- seeds[[ev]]
@@ -446,7 +477,7 @@ test_postexport_conversion <- function(data, t_star,
         } else {
             NULL
         }
-        raw <- test_sigma_nested(
+        raw <- .with_caller_rng(!is.null(seed), test_sigma_nested(
             tsampled_data = d,
             scaling_A = control$scaling_A,
             t_star = t_star,
@@ -458,13 +489,36 @@ test_postexport_conversion <- function(data, t_star,
             truncate_nonnegative_boot = control$truncate_nonnegative_boot,
             max_failure_rate = control$max_failure_rate,
             return_boot = TRUE
-        )
+        ))
         obs <- .observed_fit(d, t_star, control)
-        .new_test(ev, raw, obs, t_star, control, unit, seed, rng_before)
+        r <- .new_test(ev, raw, obs, t_star, control, unit, seed, rng_before)
+        r$design$warnings <- design_warnings[[ev]]
+        r
     })
     names(res) <- events
     if (length(res) == 1L) return(res[[1L]])
     .new_set(res, "postexport_test_set", t_star, control, unit)
+}
+
+# Public-API RNG hygiene (approved in review of PHASE2_REPORT.md): with an
+# explicit seed, the frozen orchestrator still calls set.seed(seed) exactly as
+# in the manuscript implementation, but the caller's random-number state is
+# saved before and restored afterwards, so the call leaves the global state
+# unchanged. The computed result is not affected. With seed = NULL the frozen
+# behaviour is kept: the global stream is consumed and not restored.
+.with_caller_rng <- function(restore, expr) {
+    if (!restore) return(expr)
+    genv <- globalenv()
+    had_seed <- exists(".Random.seed", envir = genv, inherits = FALSE)
+    saved <- if (had_seed) get(".Random.seed", envir = genv) else NULL
+    on.exit({
+        if (had_seed) {
+            assign(".Random.seed", saved, envir = genv)
+        } else if (exists(".Random.seed", envir = genv, inherits = FALSE)) {
+            rm(".Random.seed", envir = genv)
+        }
+    }, add = TRUE)
+    expr
 }
 
 .event_seeds <- function(seed, events) {
@@ -555,10 +609,12 @@ test_postexport_conversion <- function(data, t_star,
         kind = RNGkind(),
         random_seed_before = rng_before,
         note = if (is.null(seed)) {
-            "seed = NULL: the global random-number state was not reset"
+            paste("seed = NULL: the global random-number stream was used and",
+                  "consumed (not reset, not restored)")
         } else {
-            paste0("set.seed(seed) was called before the observed fit ",
-                   "(frozen behaviour)")
+            paste("set.seed(seed) was called before the observed fit (frozen",
+                  "behaviour); the caller's random-number state was restored",
+                  "afterwards")
         }
     )
     base$raw <- raw
