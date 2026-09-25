@@ -25,7 +25,9 @@ time; nothing below is claimed as done until it has been run.
       extreme-conditioning fixtures and of bootstrap draws reviewed in the CI
       annotations; none changes a boundary decision
       (`tools/frozen/README.md`).
-- [ ] `tools/validate_against_manuscript.R` run (from Phase 5 onward).
+- [ ] `Rscript tools/validate_against_manuscript.R` (full, not `--quick`)
+      run on the release commit; overall status `EQUIVALENT`; output kept
+      with the release notes.
 - [ ] Release notes state the reproducibility guarantees:
       - scientific equivalence with the frozen algorithm;
       - bitwise reproducibility only within a matched numerical environment;
@@ -62,6 +64,9 @@ time; nothing below is claimed as done until it has been run.
 
 ## 2. R checks
 
+- [ ] Vignette builds (`R CMD build`; requires pandoc) with no network
+      access and within the check time budget.
+- [ ] Examples run fast and use small `B` only with an explicit comment.
 - [ ] `R CMD build`
 - [ ] `R CMD check --as-cran` — 0 errors, 0 warnings; every NOTE explained.
 - [ ] Checks on at least macOS and Linux (and Windows before Bioconductor
@@ -72,11 +77,24 @@ time; nothing below is claimed as done until it has been run.
 - [ ] `BiocCheck::BiocCheck()` — no ERRORs; WARNINGs addressed; NOTEs
       explained. Legitimate checks are not suppressed.
 
+## 3a. Continuous integration
+
+- [ ] Linux CI (`.github/workflows/linux-regression.yml`) green on the
+      release commit: package job, frozen-reference job and the quick
+      manuscript-validation step.
+- [ ] Runner image checked. GitHub announced that `ubuntu-latest` migrates
+      to Ubuntu 26 from 2026-10-19. CI stays on `ubuntu-latest` unless a
+      concrete compatibility problem appears. After the migration, confirm
+      that the levels A/B/C results are unchanged, and record the new
+      platform provenance (LAPACK/BLAS) of the frozen-reference job.
+
 ## 4. Versioning
 
 - [ ] Version number decided (development `0.0.0.9000`; release target
       `0.1.0`; Bioconductor submission convention `0.99.x` — decision pending).
-- [ ] `NEWS.md` updated.
+- [ ] `NEWS.md` updated (created in Phase 5).
+- [ ] `CITATION.cff` and `inst/CITATION` versions match `DESCRIPTION`; no
+      package DOI is added before one is minted.
 - [ ] Frozen tag and commit recorded in `NEWS.md` and package documentation.
 
 ## 5. GitHub release
