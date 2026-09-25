@@ -42,7 +42,11 @@ random-number state before the test.}
 Frozen status codes: \code{"ok"}, \code{"observed_system_failed"},
 \code{"observed_fit_failed"}, \code{"null_trajectory_failed"},
 \code{"bootstrap_unstable"}. For several events, a \code{postexport_test_set}
-with \code{summary} and \code{results}.
+with \code{summary} and \code{results}; events are processed sequentially and an
+unexpected per-event error is recorded as status \code{"event_error"}. Use
+\code{\link[=adjust_postexport_pvalues]{adjust_postexport_pvalues()}} for q-values,
+\code{\link[=rank_postexport_candidates]{rank_postexport_candidates()}} for exploratory ranking and
+\link[=as.data.frame.postexport]{as.data.frame()} for a tidy table.
 }
 \description{
 Compares, for each event, the constrained null model (\code{sigma_c = 0}) with

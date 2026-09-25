@@ -42,10 +42,16 @@ number over the remaining columns (diagnostic only).}
 replicates per time point.}
 \item{\code{system}}{the interval-balance system (\code{A}, \code{b}, \code{Sigma_b},
 ...).}
+\item{\code{data}}{the event's input rows (used by
+plot()).}
 \item{\code{control}, \code{provenance}}{settings and frozen reference.}
 }
 For several events, a \code{postexport_fit_set}: a list with \code{summary} (one
-row per event) and \code{results} (named list of \code{postexport_fit}).
+row per event) and \code{results} (named list of \code{postexport_fit}). Events
+are processed sequentially; an unexpected error while processing one
+event is recorded as status \code{"event_error"} (with the message in
+\code{error_message}) and the remaining events are processed. See also
+\link[=as.data.frame.postexport]{as.data.frame()} for a tidy table.
 }
 \description{
 Fits, for each event, the full model (post-export conversion rate

@@ -171,7 +171,7 @@
 
 .na_coef <- function() stats::setNames(rep(NA_real_, 7L), PARAM_NAMES)
 
-.new_fit <- function(event, obs, t_star, control, time_unit) {
+.new_fit <- function(event, obs, t_star, control, time_unit, d = NULL) {
     ok <- identical(obs$status, "ok")
     built <- obs$built
     fit <- obs$fit
@@ -254,6 +254,7 @@
                 }
             ),
             system = built,
+            data = d,
             control = control,
             provenance = .provenance()
         ),
@@ -324,10 +325,16 @@
 #'       replicates per time point.}
 #'     \item{`system`}{the interval-balance system (`A`, `b`, `Sigma_b`,
 #'       ...).}
+#'     \item{`data`}{the event's input rows (used by
+#'       plot()).}
 #'     \item{`control`, `provenance`}{settings and frozen reference.}
 #'   }
 #'   For several events, a `postexport_fit_set`: a list with `summary` (one
-#'   row per event) and `results` (named list of `postexport_fit`).
+#'   row per event) and `results` (named list of `postexport_fit`). Events
+#'   are processed sequentially; an unexpected error while processing one
+#'   event is recorded as status `"event_error"` (with the message in
+#'   `error_message`) and the remaining events are processed. See also
+#'   [as.data.frame()][as.data.frame.postexport] for a tidy table.
 #'
 #' @seealso [test_postexport_conversion()], [postexport_data()],
 #'   [postexport_control()]
@@ -352,14 +359,21 @@ fit_postexport_model <- function(data, t_star, control = postexport_control(),
                             missing(t_star), control, events)
     unit <- attr(data, "time_unit")
     design_warnings <- .t_star_warnings(data, events, t_star)
-    res <- lapply(events, function(ev) {
-        obs <- .observed_fit(.event_data(data, ev), t_star, control)
-        r <- .new_fit(ev, obs, t_star, control, unit)
+    one <- function(ev) {
+        d <- .event_data(data, ev)
+        obs <- .observed_fit(d, t_star, control)
+        r <- .new_fit(ev, obs, t_star, control, unit, d)
         r$design$warnings <- design_warnings[[ev]]
         r
+    }
+    if (length(events) == 1L) return(one(events))
+    res <- lapply(events, function(ev) {
+        .event_or_error(one(ev), ev, function(msg) {
+            .new_fit(ev, list(status = "event_error", error.message = msg),
+                     t_star, control, unit, .event_data(data, ev))
+        })
     })
     names(res) <- events
-    if (length(res) == 1L) return(res[[1L]])
     .new_set(res, "postexport_fit_set", t_star, control, unit)
 }
 
@@ -441,7 +455,11 @@ fit_postexport_model <- function(data, t_star, control = postexport_control(),
 #'   Frozen status codes: `"ok"`, `"observed_system_failed"`,
 #'   `"observed_fit_failed"`, `"null_trajectory_failed"`,
 #'   `"bootstrap_unstable"`. For several events, a `postexport_test_set`
-#'   with `summary` and `results`.
+#'   with `summary` and `results`; events are processed sequentially and an
+#'   unexpected per-event error is recorded as status `"event_error"`. Use
+#'   [adjust_postexport_pvalues()] for q-values,
+#'   [rank_postexport_candidates()] for exploratory ranking and
+#'   [as.data.frame()][as.data.frame.postexport] for a tidy table.
 #'
 #' @seealso [fit_postexport_model()], [postexport_control()]
 #'
@@ -468,7 +486,7 @@ test_postexport_conversion <- function(data, t_star,
     seeds <- .event_seeds(control$seed, events)
     unit <- attr(data, "time_unit")
     design_warnings <- .t_star_warnings(data, events, t_star)
-    res <- lapply(events, function(ev) {
+    one <- function(ev) {
         d <- .event_data(data, ev)
         seed <- seeds[[ev]]
         rng_before <- if (is.null(seed) &&
@@ -491,12 +509,20 @@ test_postexport_conversion <- function(data, t_star,
             return_boot = TRUE
         ))
         obs <- .observed_fit(d, t_star, control)
-        r <- .new_test(ev, raw, obs, t_star, control, unit, seed, rng_before)
+        r <- .new_test(ev, raw, obs, t_star, control, unit, seed, rng_before,
+                       d)
         r$design$warnings <- design_warnings[[ev]]
         r
+    }
+    if (length(events) == 1L) return(one(events))
+    res <- lapply(events, function(ev) {
+        .event_or_error(one(ev), ev, function(msg) {
+            fail <- list(status = "event_error", error.message = msg)
+            .new_test(ev, c(list(p.value = NA_real_), fail), fail, t_star,
+                      control, unit, seeds[[ev]], NULL, .event_data(data, ev))
+        })
     })
     names(res) <- events
-    if (length(res) == 1L) return(res[[1L]])
     .new_set(res, "postexport_test_set", t_star, control, unit)
 }
 
@@ -519,6 +545,17 @@ test_postexport_conversion <- function(data, t_star,
         }
     }, add = TRUE)
     expr
+}
+
+# Multi-event runs: an unexpected R error while processing one event is
+# recorded as that event's status ("event_error") so that the remaining
+# events are still processed. The frozen computation already converts its
+# own failures into frozen status codes; this only guards the package layer.
+# Single-event calls are not wrapped and behave exactly as before.
+.event_or_error <- function(expr, event, make_failed) {
+    tryCatch(expr, error = function(e) {
+        make_failed(sprintf("Event %s: %s", event, conditionMessage(e)))
+    })
 }
 
 .event_seeds <- function(seed, events) {
@@ -548,8 +585,8 @@ test_postexport_conversion <- function(data, t_star,
 }
 
 .new_test <- function(event, raw, obs, t_star, control, unit, seed,
-                      rng_before) {
-    base <- .new_fit(event, obs, t_star, control, unit)
+                      rng_before, d = NULL) {
+    base <- .new_fit(event, obs, t_star, control, unit, d)
     has_fit <- !is.null(raw$T.obs)
     coef_full <- .field(raw, "coef_full", base$estimates$coef_full)
     coef_null <- .field(raw, "coef_null", base$estimates$coef_null)
