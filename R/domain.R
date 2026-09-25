@@ -44,13 +44,23 @@
 #' and noise level (when supplied; otherwise all are included), the number of
 #' time points, the number of replicates and, for `SHUTOFF`, the sampling
 #' interval are equal. The sampling interval is compared only when it is
-#' regular and the time unit is minutes (the benchmark time scale). Without
-#' an exact match, the nearest evaluated designs are reported, selected
-#' lexicographically (nearest sampling interval, then nearest number of time
-#' points, then nearest number of replicates, among configurations with the
-#' same regime, platform and noise level); they are labelled as nearest
-#' benchmark designs, not equivalent designs. No calibration is interpolated
-#' and no score is computed.
+#' exactly regular and the time unit is minutes (the benchmark time scale);
+#' units are never converted. Without an exact match, the set of nearest
+#' evaluated benchmark designs (not equivalent designs) is returned: among
+#' configurations with the same regime, platform and noise level, for every
+#' ordering of the design dimensions (sampling interval, number of time
+#' points, number of replicates) the configurations at the nearest evaluated
+#' level of each dimension in turn are kept, ties included, and the union
+#' over all orderings is reported. No single configuration is singled out as
+#' the closest, no calibration is interpolated and no score is computed.
+#' Each returned configuration lists the dimensions in which it differs
+#' (`differs_in`).
+#'
+#' @section Vocabulary:
+#' Package labels map one to one to the manuscript benchmark labels:
+#' platforms `gaussian` = GAUSS, `rnaseq` = RNA-seq, `rtqpcr` = RT-qPCR;
+#' noise levels `very_low` = Very low, `low` = Low, `medium` = Medium,
+#' `high` = High.
 #'
 #' @param data Optional `postexport_data` object. The number of time points,
 #'   the minimum number of replicates per time point, the sampling interval
@@ -76,7 +86,8 @@
 #'   `checks` (per design: `design`, `match_type` = `"exact"`, `"nearest"` or
 #'   `"not_benchmarked"`, `matches` (benchmark configurations), `differences`
 #'   (for nearest designs: user value and benchmark levels per dimension),
-#'   `summary`, `statements` and `caveats`) and `provenance`.
+#'   `summary`, `statements` and `caveats`) and `provenance`. For nearest
+#'   designs, `matches` has an additional column `differs_in`.
 #'
 #' @seealso [test_postexport_conversion()]
 #'
@@ -211,6 +222,43 @@ check_operational_domain <- function(data = NULL, regime, t_star = NULL,
     out[, c("events", setdiff(names(out), "events"))]
 }
 
+# Nearest evaluated benchmark designs, without a score: for every ordering of
+# the design dimensions, keep (lexicographically) the configurations at the
+# nearest evaluated level of each dimension in turn, retaining ties; return
+# the union over all orderings. When the per-dimension nearest levels are
+# jointly evaluated this is exactly their combinations; otherwise every
+# relevant nearest design is returned rather than a single arbitrary one.
+# Rows are ordered lexicographically for display, and `differs_in` lists the
+# dimensions in which a configuration differs from the design.
+.nearest_designs <- function(cand, dims, user_vals) {
+    perms <- function(v) {
+        if (length(v) <= 1L) return(list(v))
+        out <- list()
+        for (i in seq_along(v)) {
+            for (p in perms(v[-i])) out[[length(out) + 1L]] <- c(v[i], p)
+        }
+        out
+    }
+    keep <- rep(FALSE, nrow(cand))
+    for (ord in perms(dims)) {
+        sel <- rep(TRUE, nrow(cand))
+        for (d in ord) {
+            lv <- .nearest_levels(cand[[d]][sel], user_vals[[d]])
+            sel <- sel & cand[[d]] %in% lv
+        }
+        keep <- keep | sel
+    }
+    out <- cand[keep, , drop = FALSE]
+    out <- out[do.call(order, unname(as.list(out[dims]))), , drop = FALSE]
+    out$differs_in <- vapply(seq_len(nrow(out)), function(i) {
+        dd <- dims[vapply(dims, function(d) {
+            is.na(user_vals[[d]]) || out[[d]][i] != user_vals[[d]]
+        }, logical(1))]
+        if (length(dd)) paste(dd, collapse = ", ") else "none"
+    }, character(1))
+    out
+}
+
 .nearest_levels <- function(values, target) {
     if (is.na(target)) return(sort(unique(values)))
     d <- abs(values - target)
@@ -266,25 +314,20 @@ check_operational_domain <- function(data = NULL, regime, t_star = NULL,
         matches <- exact
         match_type <- "exact"
     } else {
-        near <- cand
         dims <- c(if (regime == "SHUTOFF") "sampling_interval",
                   "n_time_points", "n_replicates")
         user_vals <- c(sampling_interval = user_si,
                        n_time_points = design$n_time_points,
                        n_replicates = design$n_replicates)
-        diff_rows <- list()
-        for (d in dims) {
-            lv <- .nearest_levels(near[[d]], user_vals[[d]])
-            near <- near[near[[d]] %in% lv, , drop = FALSE]
-            diff_rows[[d]] <- data.frame(
-                dimension = d, user_value = unname(user_vals[[d]]),
-                benchmark_levels = paste(format(lv, trim = TRUE),
-                                         collapse = ", "),
-                stringsAsFactors = FALSE)
-        }
-        differences <- do.call(rbind, diff_rows)
+        matches <- .nearest_designs(cand, dims, user_vals)
+        differences <- do.call(rbind, lapply(dims, function(d) {
+            lv <- sort(unique(matches[[d]]))
+            data.frame(dimension = d, user_value = unname(user_vals[[d]]),
+                       benchmark_levels = paste(format(lv, trim = TRUE),
+                                                collapse = ", "),
+                       stringsAsFactors = FALSE)
+        }))
         rownames(differences) <- NULL
-        matches <- near
         match_type <- "nearest"
     }
     rownames(matches) <- NULL
@@ -319,9 +362,9 @@ check_operational_domain <- function(data = NULL, regime, t_star = NULL,
                 format(differences$user_value, trim = TRUE)]
         sprintf(paste0(
             "No configuration of the manuscript benchmark matches this design ",
-            "exactly. The nearest evaluated benchmark designs (%d ",
-            "configuration(s), %s; not equivalent designs; differing in: %s) ",
-            "%s"), nrow(matches), scope,
+            "exactly. The nearest evaluated benchmark designs (not equivalent ",
+            "designs; %d configuration(s), %s; differing in: %s) %s"),
+            nrow(matches), scope,
             if (length(diff_dims)) toString(diff_dims) else "none", body)
     }
     if (regime == "NONE") {
@@ -406,14 +449,15 @@ print.summary.postexport_domain_check <- function(x, ...) {
     print(o)
     cols <- c("platform", "noise_level", "n_time_points", "n_replicates",
               "sampling_interval", "type1_005", "type1_005_wilson_low",
-              "type1_005_wilson_high", "ci_contains_005", "power_005")
+              "type1_005_wilson_high", "ci_contains_005", "power_005",
+              "differs_in")
     for (i in seq_along(o$checks)) {
         ck <- o$checks[[i]]
         cat(sprintf("\nDesign %d - benchmark configurations (%s):\n", i,
                     ck$match_type))
         if (nrow(ck$matches)) {
-            print(utils::head(ck$matches[, cols], 24L), row.names = FALSE,
-                  digits = 3)
+            show <- ck$matches[, intersect(cols, names(ck$matches))]
+            print(utils::head(show, 24L), row.names = FALSE, digits = 3)
             if (nrow(ck$matches) > 24L) {
                 cat("  ...", nrow(ck$matches) - 24L, "more\n")
             }

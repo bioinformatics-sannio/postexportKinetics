@@ -64,8 +64,11 @@ non-negative); default all zero.}
 
 \item{grid_step}{Integration grid spacing; default \code{1}.}
 
-\item{horizon}{End of the simulation grid (\verb{>= max(times)}); default
-\code{max(times)}.}
+\item{horizon}{End of the integration grid (\verb{>= max(times)}); default
+\code{max(times)}. A numerical-reproducibility parameter of the integration
+grid, not a biological parameter: it does not change the model, only
+where the grid ends (and hence, at the level of the solver tolerance,
+the integration intervals).}
 
 \item{seed}{\code{NULL} or a single whole number.}
 
@@ -147,6 +150,23 @@ to the sampled states with the benchmark presets:
 \code{"very_low"}, \code{"low"}, \code{"medium"}, \code{"high"} (benchmark labels GAUSS,
 RNA-seq, RT-qPCR and Very low, Low, Medium, High). Gaussian noise can give
 negative values (not truncated); RT-qPCR output is on the \code{2^-Ct} scale.
+}
+
+\section{Manuscript benchmark settings}{
+
+The defaults (\code{n_replicates = 1}, \code{param_cv = 0}, \code{noise = NULL}) give a
+deterministic latent trajectory. The manuscript's corrected factorial
+benchmark used \code{param_cv = 0.05}, 3, 5 or 10 replicates, \code{origin = 0},
+\code{grid_step = 1}, \code{horizon = 1000}, \code{y0 = 0}, a common \code{t_star = 332},
+gene-specific onsets between -100 and 100 and the benchmark noise presets.
+Its per-gene and per-stream seeding is not reproduced by this function.
+}
+
+\section{Vocabulary}{
+
+Noise platforms and levels map one to one to the manuscript benchmark
+labels: \code{gaussian} = GAUSS, \code{rnaseq} = RNA-seq, \code{rtqpcr} = RT-qPCR;
+\code{very_low} = Very low, \code{low} = Low, \code{medium} = Medium, \code{high} = High.
 }
 
 \section{Random numbers and reproducibility}{

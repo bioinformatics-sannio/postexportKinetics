@@ -96,6 +96,19 @@
 #' RNA-seq, RT-qPCR and Very low, Low, Medium, High). Gaussian noise can give
 #' negative values (not truncated); RT-qPCR output is on the `2^-Ct` scale.
 #'
+#' @section Manuscript benchmark settings:
+#' The defaults (`n_replicates = 1`, `param_cv = 0`, `noise = NULL`) give a
+#' deterministic latent trajectory. The manuscript's corrected factorial
+#' benchmark used `param_cv = 0.05`, 3, 5 or 10 replicates, `origin = 0`,
+#' `grid_step = 1`, `horizon = 1000`, `y0 = 0`, a common `t_star = 332`,
+#' gene-specific onsets between -100 and 100 and the benchmark noise presets.
+#' Its per-gene and per-stream seeding is not reproduced by this function.
+#'
+#' @section Vocabulary:
+#' Noise platforms and levels map one to one to the manuscript benchmark
+#' labels: `gaussian` = GAUSS, `rnaseq` = RNA-seq, `rtqpcr` = RT-qPCR;
+#' `very_low` = Very low, `low` = Low, `medium` = Medium, `high` = High.
+#'
 #' @section Random numbers and reproducibility:
 #' Random numbers are drawn in this order: per replicate, one normal draw for
 #' each of `tau, tau_s, alpha, alpha_s, sigma_n, sigma_c, R` (the draw for `R`
@@ -134,8 +147,11 @@
 #'   non-negative); default all zero.
 #' @param origin Start of the simulation grid; default `0`.
 #' @param grid_step Integration grid spacing; default `1`.
-#' @param horizon End of the simulation grid (`>= max(times)`); default
-#'   `max(times)`.
+#' @param horizon End of the integration grid (`>= max(times)`); default
+#'   `max(times)`. A numerical-reproducibility parameter of the integration
+#'   grid, not a biological parameter: it does not change the model, only
+#'   where the grid ends (and hence, at the level of the solver tolerance,
+#'   the integration intervals).
 #' @param seed `NULL` or a single whole number.
 #' @param event Event label used in the returned tables.
 #'

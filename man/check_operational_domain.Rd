@@ -48,7 +48,8 @@ An object of class \code{postexport_domain_check}: a list with
 \code{checks} (per design: \code{design}, \code{match_type} = \code{"exact"}, \code{"nearest"} or
 \code{"not_benchmarked"}, \code{matches} (benchmark configurations), \code{differences}
 (for nearest designs: user value and benchmark levels per dimension),
-\code{summary}, \code{statements} and \code{caveats}) and \code{provenance}.
+\code{summary}, \code{statements} and \code{caveats}) and \code{provenance}. For nearest
+designs, \code{matches} has an additional column \code{differs_in}.
 }
 \description{
 Reports how configurations of the manuscript's corrected factorial
@@ -85,13 +86,25 @@ A benchmark configuration matches exactly when the regime, the platform
 and noise level (when supplied; otherwise all are included), the number of
 time points, the number of replicates and, for \code{SHUTOFF}, the sampling
 interval are equal. The sampling interval is compared only when it is
-regular and the time unit is minutes (the benchmark time scale). Without
-an exact match, the nearest evaluated designs are reported, selected
-lexicographically (nearest sampling interval, then nearest number of time
-points, then nearest number of replicates, among configurations with the
-same regime, platform and noise level); they are labelled as nearest
-benchmark designs, not equivalent designs. No calibration is interpolated
-and no score is computed.
+exactly regular and the time unit is minutes (the benchmark time scale);
+units are never converted. Without an exact match, the set of nearest
+evaluated benchmark designs (not equivalent designs) is returned: among
+configurations with the same regime, platform and noise level, for every
+ordering of the design dimensions (sampling interval, number of time
+points, number of replicates) the configurations at the nearest evaluated
+level of each dimension in turn are kept, ties included, and the union
+over all orderings is reported. No single configuration is singled out as
+the closest, no calibration is interpolated and no score is computed.
+Each returned configuration lists the dimensions in which it differs
+(\code{differs_in}).
+}
+
+\section{Vocabulary}{
+
+Package labels map one to one to the manuscript benchmark labels:
+platforms \code{gaussian} = GAUSS, \code{rnaseq} = RNA-seq, \code{rtqpcr} = RT-qPCR;
+noise levels \code{very_low} = Very low, \code{low} = Low, \code{medium} = Medium,
+\code{high} = High.
 }
 
 \examples{

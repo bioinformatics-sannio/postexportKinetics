@@ -84,7 +84,9 @@ test_that("designs outside the benchmark report nearest designs only", {
     ck <- r$checks[[1]]
     expect_identical(ck$match_type, "nearest")
     expect_match(ck$statements[1], "No configuration of the manuscript benchmark")
-    expect_match(ck$statements[1], "not equivalent designs")
+    expect_match(ck$statements[1],
+                 "nearest evaluated benchmark designs (not equivalent designs",
+                 fixed = TRUE)
     d <- ck$differences
     expect_identical(d$dimension,
                      c("sampling_interval", "n_time_points", "n_replicates"))
@@ -92,6 +94,33 @@ test_that("designs outside the benchmark report nearest designs only", {
     expect_true(all(ck$matches$sampling_interval %in% c(10, 20)))
     expect_true(all(ck$matches$n_time_points == 5L))
     expect_true(all(ck$matches$n_replicates %in% c(3L, 5L)))
+    # All tied nearest designs are returned (both intervals, both replicate
+    # levels, all platforms and noise levels), not one closest design.
+    expect_identical(nrow(ck$matches), 2L * 2L * 3L * 4L)
+    expect_setequal(unique(ck$matches$sampling_interval), c(10, 20))
+    expect_setequal(unique(ck$matches$n_replicates), c(3L, 5L))
+    expect_true(all(ck$matches$differs_in ==
+                        "sampling_interval, n_time_points, n_replicates"))
+})
+
+test_that("nearest designs expose every relevant design when levels do not co-occur", {
+    # 15 effective time points exist only at interval 50; interval 10 exists
+    # only with 3/5/10/20 time points. Both nearest designs are returned.
+    r <- check_operational_domain(regime = "SHUTOFF", platform = "gaussian",
+                                  noise_level = "low", n_time_points = 16,
+                                  n_replicates = 5, sampling_interval = 10,
+                                  time_unit = "min")
+    ck <- r$checks[[1]]
+    expect_identical(ck$match_type, "nearest")
+    got <- unique(ck$matches[, c("n_time_points", "sampling_interval")])
+    rownames(got) <- NULL
+    expect_identical(got, data.frame(n_time_points = c(20L, 15L),
+                                     sampling_interval = c(10, 50)))
+    expect_true(all(ck$matches$n_replicates == 5L))
+    expect_setequal(ck$matches$differs_in,
+                    c("n_time_points", "sampling_interval, n_time_points"))
+    expect_match(ck$statements[1],
+                 "nearest evaluated benchmark designs \\(not equivalent designs")
 })
 
 test_that("designs are derived from data; platform and noise are not inferred", {
