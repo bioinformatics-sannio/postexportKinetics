@@ -16,3 +16,4 @@
 ^vignettes/.*\.html$
 ^RELEASE_CANDIDATE_.*\.md$
 ^BIOCONDUCTOR_AUDIT\.md$
+^BIOCONDUCTOR_READINESS\.md$
