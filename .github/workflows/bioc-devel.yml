@@ -103,7 +103,8 @@ jobs:
             exit 0
           fi
           git fetch --quiet origin devel:devel
-          Rscript -e 'BiocManager::install(c("BiocCheck", "remotes", "knitr", "rmarkdown"), ask = FALSE, update = FALSE); remotes::install_deps(dependencies = TRUE, repos = BiocManager::repositories(), upgrade = "never")'
+          # png and jsonlite are CI-only dependencies of the check-B image diagnostic.
+          Rscript -e 'BiocManager::install(c("BiocCheck", "remotes", "knitr", "rmarkdown", "png", "jsonlite"), ask = FALSE, update = FALSE); remotes::install_deps(dependencies = TRUE, repos = BiocManager::repositories(), upgrade = "never")'
           sh tools/release/verify_package_branch.sh devel "$RUNNER_TEMP/verify" > verify.log 2>&1 || true
           cat verify.log
           grep -E "^\[(PASS|FAIL|INFO)\]" verify.log | cut -c1-900 | sed -e 's/^\[FAIL\]/::error title=Package-only branch::FAIL/' -e 's/^\[PASS\]/::notice title=Package-only branch::PASS/' -e 's/^\[INFO\]/::notice title=Package-only branch info::/'
@@ -112,3 +113,9 @@ jobs:
             exit 1
           fi
           echo "::notice title=Package-only branch::$(tail -1 verify.log)"
+
+      - name: Check-B decision-rule tests (negative / mutation)
+        run: |
+          Rscript tools/release/test_compare_built_packages.R "$RUNNER_TEMP/verify/xd/postexportKinetics/inst/doc/postexportKinetics.html" > cmp_tests.log 2>&1 || { cat cmp_tests.log; echo "::error title=Check-B rule tests::$(grep -c '^\[FAIL\]' cmp_tests.log) failing expectation(s)"; exit 1; }
+          cat cmp_tests.log
+          echo "::notice title=Check-B rule tests::$(tail -2 cmp_tests.log | head -1)"

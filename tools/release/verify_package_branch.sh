@@ -14,7 +14,11 @@
 #      branch tip;
 #   B. `R CMD build` of X and of the branch tip give the same
 #      package-distribution content (same file list, identical files); only
-#      the R-generated "Packaged:" line of DESCRIPTION may differ;
+#      the R-generated "Packaged:" line of DESCRIPTION may differ. Controlled
+#      exception (tools/release/compare_built_packages.R):
+#      VIGNETTE_PNG_ENCODING_ONLY, i.e. the only differing file is the
+#      rendered vignette HTML, identical outside its embedded PNG payloads,
+#      with every decoded image pixel-identical;
 #   C. tarball hygiene (tools/ci/inspect_tarball.R) passes on the branch
 #      tarball;
 #   D. BiocCheck::BiocCheckGitClone() on a clone of the branch reports no
@@ -59,31 +63,29 @@ TD=$(ls "$WORK"/build-dev/*.tar.gz 2>/dev/null | head -1)
 if [ -n "$TS" ] && [ -n "$TD" ]; then
   rm -rf "$WORK/xs" "$WORK/xd"; mkdir -p "$WORK/xs" "$WORK/xd"
   tar -xzf "$TS" -C "$WORK/xs"; tar -xzf "$TD" -C "$WORK/xd"
-  for d in xs xd; do
-    grep -v '^Packaged:' "$WORK/$d/postexportKinetics/DESCRIPTION" > "$WORK/$d/DESCRIPTION.cmp"
-    mv "$WORK/$d/DESCRIPTION.cmp" "$WORK/$d/postexportKinetics/DESCRIPTION"
-  done
-  if [ "$(basename "$TS")" = "$(basename "$TD")" ] && \
-     diff -r "$WORK/xs/postexportKinetics" "$WORK/xd/postexportKinetics" > "$WORK/tarball.diff" 2>&1; then
-    pass "B tarball: $(basename "$TD") from $X and from $BRANCH have identical content ($(find "$WORK/xd/postexportKinetics" -type f | wc -l | tr -d ' ') files; only Packaged: may differ)"
+  NFILES=$(find "$WORK/xd/postexportKinetics" -type f | wc -l | tr -d ' ')
+  # Decision rule in tools/release/compare_built_packages.R: IDENTICAL, the
+  # controlled exception VIGNETTE_PNG_ENCODING_ONLY, or DIFFERENT.
+  CMPOUT=$(Rscript "$ROOT/tools/release/compare_built_packages.R" \
+             "$WORK/xs/postexportKinetics" "$WORK/xd/postexportKinetics" 2>&1) || true
+  VERDICT=$(printf '%s\n' "$CMPOUT" | tail -1 | tr -d ' ')
+  DETAIL=$(printf '%s\n' "$CMPOUT" | sed '$d' | tr '\n' ' ')
+  if [ "$(basename "$TS")" != "$(basename "$TD")" ]; then
+    bad "B tarball: file names differ ($(basename "$TS") vs $(basename "$TD"))"
+  elif [ "$VERDICT" = "IDENTICAL" ]; then
+    pass "B tarball: $(basename "$TD") from $X and from $BRANCH have identical content ($NFILES files; only Packaged: may differ)"
+  elif [ "$VERDICT" = "VIGNETTE_PNG_ENCODING_ONLY" ]; then
+    pass "B tarball: VIGNETTE_PNG_ENCODING_ONLY (controlled exception): $DETAIL($NFILES files)"
   else
-    bad "B tarball: content differs (see $WORK/tarball.diff)"
-    DIFFS=$(diff -rq "$WORK/xs/postexportKinetics" "$WORK/xd/postexportKinetics" 2>&1 | sed "s|$WORK/x[sd]/postexportKinetics/||g" | tr '\n' ';')
-    echo "[INFO] B differing files ($X vs $BRANCH): $DIFFS"
+    bad "B tarball: DIFFERENT: $DETAIL"
     # Diagnostic control (does not change the verdict): build X a second time
-    # and compare X with itself. Differences there are build nondeterminism,
-    # not differences between the branches.
+    # and apply the same rule to X against itself.
     rm -rf "$WORK/build-src2" "$WORK/xs2"; mkdir -p "$WORK/build-src2" "$WORK/xs2"
     if ( cd "$WORK/build-src2" && R CMD build "$WORK/src" > build.log 2>&1 ); then
       tar -xzf "$WORK"/build-src2/*.tar.gz -C "$WORK/xs2"
-      grep -v '^Packaged:' "$WORK/xs2/postexportKinetics/DESCRIPTION" > "$WORK/xs2/D.cmp" && \
-        mv "$WORK/xs2/D.cmp" "$WORK/xs2/postexportKinetics/DESCRIPTION"
-      CTRL=$(diff -rq "$WORK/xs/postexportKinetics" "$WORK/xs2/postexportKinetics" 2>&1 | sed "s|$WORK/xs2\{0,1\}/postexportKinetics/||g" | tr '\n' ';')
-      if [ -n "$CTRL" ]; then
-        echo "[INFO] B control: two builds of the SAME source $X also differ: $CTRL"
-      else
-        echo "[INFO] B control: two builds of the same source $X are identical"
-      fi
+      CTRL=$(Rscript "$ROOT/tools/release/compare_built_packages.R" \
+               "$WORK/xs/postexportKinetics" "$WORK/xs2/postexportKinetics" 2>&1) || true
+      echo "[INFO] B control (two builds of the same source $X): $(printf '%s\n' "$CTRL" | tr '\n' ' ')"
     fi
   fi
 fi
