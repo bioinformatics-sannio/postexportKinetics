@@ -73,7 +73,7 @@ remotes::install_github("bioinformatics-sannio/postexportKinetics",
 - **R version:** `R (>= 4.1.0)` is declared provisionally. The package is
   currently tested only with the current R release on macOS and Linux.
   Compatibility with older R releases has not yet been checked.
-- **Runtime dependencies:** `deSolve`, `ggplot2`, `MASS`, `nnls`, `stats`,
+- **Runtime dependencies:** `deSolve`, `ggplot2` (>= 3.4.0), `MASS`, `nnls`, `stats`,
   `utils`.
 - **Suggested:** `knitr` and `rmarkdown` for the vignette; `testthat` and
   `expm` for tests.
