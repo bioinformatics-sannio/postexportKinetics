@@ -1,7 +1,8 @@
 # Release candidate 0.1.0: plan and pre-release inspection
 
-Status: **stop point 1 reached** (B.1–B.3 done; results in §D). Stopped
-for review before B.4.
+Status: **final release candidate** (B.4–B.9 done; results in §E).
+**Stopped for explicit release approval.** Not merged, not tagged, no
+GitHub release.
 
 - No release-version change: `DESCRIPTION` is still `0.0.0.9000`.
 - No tag, no GitHub release, no `0.99.0`.
@@ -28,6 +29,7 @@ This document has four parts:
 - §B is the release plan.
 - §C lists the blockers and decisions.
 - §D records the results of stop point 1.
+- §E is the final RC record (B.4–B.9).
 
 ---
 
@@ -586,3 +588,272 @@ general validation statement. The detailed SF records remain in
   so the README can state them precisely.
 - **Still pending** (unchanged): the Ubuntu 26 migration from 2026-10-19.
   If it happens before tagging, rerun the Linux scientific gate (B.12).
+
+---
+
+## E. Final release candidate (B.4–B.9)
+
+### E.1 Commits after stop point 1
+
+| Commit | Content |
+|---|---|
+| `fd65163` | CI: record the exact R version and platform (annotation and job summary) in r-compat, platforms and both linux-regression jobs; provenance only |
+| `20ec9fc` | release-candidate workflow: `R CMD build .` on a clean runner, SHA256, `tools/ci/inspect_tarball.R`, `tools/ci/smoke_install.R`, full validation, artifact upload |
+| `f919644` | maintainer policy: no Zenodo archive and no package DOI; `.zenodo.json` removed; DOI distinction made explicit (B.11) |
+| `9fcc735` | **version 0.1.0** synchronised (DESCRIPTION, NEWS, CITATION.cff, inst/CITATION, README, package help, PROJECT_STATE, RELEASE_CHECKLIST) |
+| `62226fb` | fix of `tools/ci/smoke_install.R` (see E.4); tooling only |
+| this commit | this record (`RELEASE_CANDIDATE_*.md` is excluded from the build) |
+
+- **RC package commit:** `62226fb36228e70639920f6a1d6b38606f19d2d0`. All
+  gates below ran on this commit.
+- **Final RC SHA:** the branch tip, i.e. this commit. It differs from
+  `62226fb` only by this build-ignored file, which can be checked with
+  `git diff --stat 62226fb <tip>`. The package tarball content is therefore
+  identical.
+- No R code, numerical code, fixture, tolerance or level classification
+  changed in B.4–B.9.
+
+### E.2 Exact tested R versions (from the provenance annotations)
+
+| Job | R | Platform / OS | LAPACK |
+|---|---|---|---|
+| r-compat R 4.1 | **R 4.1.3 (2022-03-10)** | x86_64-pc-linux-gnu, Ubuntu 22.04.5 LTS | 3.10.0 |
+| r-compat oldrel-1 | **R 4.5.3 (2026-03-11)** | x86_64-pc-linux-gnu, Ubuntu 22.04.5 LTS | 3.10.0 |
+| platforms macOS | R 4.6.1 (2026-06-24) | aarch64-apple-darwin23, macOS Tahoe 26.6.2 | 3.12.1 |
+| platforms Windows | R 4.6.1 (2026-06-24 ucrt) | x86_64-w64-mingw32, Windows Server 2022 x64 (build 26100) | 3.12.1 |
+| linux-regression (both jobs) | R 4.6.1 (2026-06-24) | x86_64-pc-linux-gnu, Ubuntu 24.04.5 LTS | 3.12.0 |
+| release-candidate build | R 4.6.1 (2026-06-24) | x86_64-pc-linux-gnu, Ubuntu 24.04.5 LTS | 3.12.0 |
+| local (macOS) | R 4.6.0 (2026-04-24) | aarch64-apple-darwin23 | 3.12.1 |
+
+**macOS:** the runner ran R 4.6.1, while the fixtures were generated with R
+4.6.0. The R version is not part of the provenance match (LAPACK/BLAS
+library, MASS, nnls, OS, architecture and RNG are). The job again reported
+no cross-platform difference, which is consistent with strict level A
+passing, including bootstrap draws.
+
+### E.3 CI runs (all green on the RC package commit `62226fb`)
+
+| Workflow | Run | Jobs |
+|---|---|---|
+| release-candidate | `36132703379` | build: **success** (tarball, inspection PASSED, smoke test PASSED, full validation **EQUIVALENT**, artifact uploaded) |
+| linux-regression (scientific gate) | `36132703330` | package **success**; frozen-reference **success** (level A on recomputed frozen outputs, benchmark MD5, cross-platform B/C, quick validation, frozen clone unchanged) |
+| platforms | `36132703341` | macos-latest **success**; windows-latest **success** |
+| r-compat | `36132703328` | R 4.1 **success**; oldrel-1 **success** |
+
+On `9fcc735`, the same workflows ran:
+
+- `36125387497` linux-regression, `36125387539` platforms and
+  `36125387557` r-compat were all green.
+- `36125387572` release-candidate **failed** in the smoke step. This was a
+  tooling bug, fixed in `62226fb` (E.4).
+
+**Annotations** (notices and one warning):
+
+- level-C cross-platform notices, as always;
+- the Ubuntu 26 migration notice;
+- a GitHub warning that `actions/upload-artifact@v4` targets the
+  deprecated Node.js 20 runtime and is run on Node.js 24. This is a CI
+  infrastructure deprecation, not a package check result.
+  Recommendation: bump the action in a later maintenance commit.
+
+### E.4 Finding fixed during the RC: smoke-test tooling bug
+
+- **Symptom:** on the Linux runner, `tools/ci/smoke_install.R` generated
+  invalid R code ("unexpected symbol").
+- **Cause:** `deparse(.libPaths())` wraps across lines when there are
+  several library paths, as on the CI runner. Locally there was only one.
+- **Fix:** a width-safe one-line literal. The failure was reproduced
+  locally with three library paths before the fix, and the fixed script
+  passed.
+- **Impact:** the package and the tarball were not affected. The inspection
+  of the same tarball had already passed.
+
+### E.5 Scientific release gate: full manuscript validation (not `--quick`)
+
+| Where | Commit | Result |
+|---|---|---|
+| local macOS arm64, R 4.6.0 (fixture platform) | `9fcc735` (package content identical to `62226fb`) | **EQUIVALENT**, 10/10 PASS (strict same-platform level A, including bootstrap draws) |
+| CI ubuntu-latest, R 4.6.1 (`release-candidate` run `36132703379`) | `62226fb` | **EQUIVALENT** (annotation: "Scientific equivalence status: EQUIVALENT (0 step(s) failed)") |
+
+- **Logs:**
+  - the local log is kept as
+    `validate_against_manuscript_full_macos_9fcc735.log` (maintainer
+    scratch, not committed);
+  - the CI log is `validate_against_manuscript_full.log` in the artifact
+    `release-candidate-62226fb36228e70639920f6a1d6b38606f19d2d0`, together
+    with the tarball, its `.sha256`, `inspect_tarball.log` and
+    `smoke_install.log`. It is retained for 90 days and downloadable by
+    maintainers with GitHub authentication.
+- **Proposed release asset:** attach the CI log, which carries no local
+  paths.
+
+### E.6 Package checks
+
+| Check | Result |
+|---|---|
+| testthat (local) | 16 files, **3,677 expectations, 0 failures / errors / warnings / skips** |
+| vignette build (`R CMD build`, local and CI) | OK |
+| `R CMD check --as-cran` (local, clean `git archive` of `9fcc735`, with manual) | **0 ERRORs, 0 WARNINGs, 2 NOTEs**: new submission (CRAN incoming feasibility) and HTML-manual validation skipped (old local HTML Tidy, no V8) |
+| `R CMD check --as-cran` (CI: Linux, macOS, Windows, R 4.1.3, R 4.5.3; warnings blocking) | all **success** |
+| BiocCheck 1.48.1 (information only) | **1 ERROR, 2 WARNINGs, 10 NOTEs** (below) |
+
+- **BiocCheck:** the version-format ERROR disappeared with `0.1.0`. What
+  remains:
+  - ERROR: Support Site lookup (HTTP 404; maintainer registration, needed
+    only for Bioconductor);
+  - WARNINGs: no Bioconductor dependencies; `set.seed`;
+  - NOTEs: known style and metadata items.
+  - No new finding. Bioconductor submission is not started.
+- **Local timing anomaly:** a first local `R CMD check` in the background
+  showed an examples NOTE: `plot.postexport` took 987 s elapsed with 1.1 s
+  CPU. The macOS power log shows a 988 s system sleep at that moment. The
+  foreground rerun gave examples OK (`plot.postexport` 1.07 s elapsed) and
+  the 2 NOTEs above. This was not a package issue.
+
+### E.7 Release tarball (official candidate asset)
+
+| Field | Value |
+|---|---|
+| file | `postexportKinetics_0.1.0.tar.gz` |
+| built by | GitHub Actions `release-candidate` run `36132703379`, `R CMD build .` on a clean checkout (working tree verified clean) |
+| commit | `62226fb36228e70639920f6a1d6b38606f19d2d0` |
+| R | R 4.6.1 (2026-06-24), x86_64-pc-linux-gnu |
+| runner | Ubuntu 24.04.5 LTS (image ubuntu24 20260920.314.1) |
+| **SHA256** | **`7de6e84396a6e94806a58f22532813fd053d8c2cdc679646d5689aa9437dd2d0`** |
+
+- The `Packaged:` field is the normal one written by R on the runner, and
+  it was not edited.
+- The local build of `9fcc735` (SHA256 differs because of build time and
+  user) was used for the local comparison checks only.
+
+### E.8 Tarball hygiene
+
+`tools/ci/inspect_tarball.R` **PASSED** on the CI-built tarball (in run
+`36132703379`) and on the local build:
+
+- 86 files. The top-level entries are only `DESCRIPTION`, `LICENSE`,
+  `NAMESPACE`, `NEWS.md`, `README.md`, `R/`, `man/`, `data/`, `inst/`,
+  `vignettes/`, `build/` and `tests/`.
+- None of: phase reports, `PACKAGE_PLAN.md`, `STOP_CONDITION_REPORT.md`,
+  `PROJECT_STATE.md`, `RELEASE_*`, `CLAUDE.md`, `tools/`, `data-raw/`,
+  `.github/`, `.zenodo.json`, `CITATION.cff`, scratch, check, log or backup
+  files.
+- **Binary fixture scan:** 20 `.rds`/`.rda` files and 4,063 distinct
+  strings (names, values, factor levels, attributes, hidden objects). There
+  are **0** user or temporary paths and **0** credential-like strings.
+  - The only other absolute paths are the system R framework LAPACK/BLAS
+    library paths
+    (`/Library/Frameworks/R.framework/Versions/4.6/Resources/lib/…`). These
+    are fixture provenance used for platform matching and are not
+    user-specific.
+- `tests/testthat/fixtures` is kept, as approved.
+
+### E.9 Clean installation
+
+- **CI-built tarball**, in run `36132703379` (`tools/ci/smoke_install.R`):
+  **SMOKE TEST PASSED**. The tarball was installed into an empty library
+  and loaded from it, in a fresh `--vanilla` process. The run covered:
+  `library()`; `data(postexport_example)`; a minimal fit; a bootstrap test
+  with B = 49; a simulation; the operational-domain check (exact match);
+  `citation("postexportKinetics")`; and vignette availability.
+- **Local tarball (`9fcc735`)**, same script: PASSED. Results: fit
+  `sigma_c` 0.674601, IR 0.0641111; bootstrap p = 0.02; 15 simulated rows;
+  domain exact; citation printed with "R package version 0.1.0"; vignette
+  available. It also passed with three library paths, the regression test
+  for E.4.
+- **GitHub at the RC SHA:**
+  `remotes::install_github("bioinformatics-sannio/postexportKinetics@9fcc735b5fcfb0ed87dbf0d2f7e25f6cb11f7919", build_vignettes = TRUE)`
+  (remotes 2.5.0) into an empty library: **OK**.
+  - Version 0.1.0; `RemoteSha` matches.
+  - The vignette was built and available; a minimal fit ran with status ok
+    and `sigma_c` 0.674601.
+  - `9fcc735` has the same package content as `62226fb`, which differs only
+    in `tools/ci/`.
+
+### E.10 Citation and DOI audit (on the RC commit)
+
+- **Version:** 0.1.0 everywhere. `DESCRIPTION`; `CITATION.cff`
+  (`version: "0.1.0"`, no `date-released`); `NEWS.md` heading;
+  `inst/CITATION` via `meta$Version` ("R package version 0.1.0"). No
+  `0.0.0.9000` in package files.
+- **No package DOI anywhere.** `CITATION.cff` has no top-level `doi` or
+  `identifiers`. There is no `.zenodo.json` in the repository.
+- **`10.5281/zenodo.22944109`** appears only as the frozen manuscript
+  implementation, explicitly labelled "not this package" / "not a DOI of
+  postexportKinetics". It appears in `CITATION.cff` (references),
+  `inst/CITATION` (third entry), README, NEWS and the vignette.
+- **Manuscript status:** submitted/unpublished (`type: manuscript`,
+  `Unpublished`, "Revised manuscript submitted to Bioinformatics"). There is
+  no accepted, published or in-press wording.
+- **Syntax:** `CITATION.cff` parses as valid YAML, and `citation()` renders
+  its three entries.
+
+### E.11 Proposed release
+
+- **Tag:** `v0.1.0`, annotated. Recommendation: tag the `--no-ff` merge of
+  `release-0.1.0` into `main`, after approval and green main CI. Its
+  package content equals `62226fb`, and the asset below is attached.
+- **Title:** `postexportKinetics 0.1.0`.
+- **Assets:**
+  - `postexportKinetics_0.1.0.tar.gz`, SHA256 `7de6e843…2d0` (E.7), and
+    its `.sha256`;
+  - `validate_against_manuscript_full.log`, from the CI artifact of run
+    `36132703379`.
+- **No Zenodo step** (maintainer policy).
+
+**Final release notes:**
+
+> First public release of postexportKinetics, an R package for
+> compartment-resolved four-state kinetic modelling of nuclear and
+> cytoplasmic, unprocessed and processed RNA.
+>
+> **Model and inference.**
+> - A constrained nested-model comparison of a null model (`sigma_c = 0`)
+>   against a full model (`sigma_c >= 0`).
+> - Fitting by trapezoidal interval balances, propagated and regularised
+>   covariance, and whitened NNLS.
+> - A replicate-level generative bootstrap with an add-one p-value and an
+>   explicit boundary rule. This is not a likelihood-ratio test.
+>
+> **Also included.** Simulation with the manuscript simulator; design
+> diagnostics against the manuscript benchmark; multiple-testing
+> adjustment; exploratory ranking; tidy tables and plots; a vignette and a
+> synthetic example dataset.
+>
+> **Interpretation.** `sigma_c` is a phenomenological post-export
+> conversion rate. Statistical support indicates kinetic patterns
+> consistent with an additional post-export conversion component. It does
+> not identify a molecular mechanism.
+>
+> **Scientific reference.** The numerical core reproduces the frozen
+> manuscript implementation: postexport-kinetics, tag
+> `manuscript-revision-v1.0`, commit `65c3b73`. It is archived as
+> doi:10.5281/zenodo.22944109, which is the DOI of the frozen manuscript
+> implementation, not of this package.
+>
+> **Validation.** The package numerical core is regression-tested against
+> the frozen manuscript implementation. Detailed provenance and known
+> frozen-reference notes are documented in the repository validation
+> records. Full manuscript validation: EQUIVALENT. Tested on Linux, macOS
+> and Windows (R 4.6.1), and on R 4.1.3 and R 4.5.3.
+>
+> **Reproducibility.** Results are bitwise reproducible only within a
+> matched numerical environment. Bootstrap draws depend on LAPACK/BLAS
+> through `MASS::mvrnorm()`.
+>
+> **Distribution.** This is a GitHub software release and has no DOI. It
+> is not yet a Bioconductor release; Bioconductor is the intended future
+> distribution channel. The interface may still evolve.
+>
+> **Not yet included.** Parallel execution, rMATS conversion, comparator
+> methods and SummarizedExperiment input.
+
+### E.12 Remaining items (none blocking)
+
+- **Ubuntu 26 migration** from 2026-10-19. If the tag is created after the
+  migration, rerun the Linux scientific gate first (B.12).
+- **Node.js 20 deprecation warning** for `actions/upload-artifact@v4`: a
+  CI maintenance item.
+- **Manuscript Availability statement** (author action): cite the
+  manuscript-code repository and DOI 10.5281/zenodo.22944109, and
+  optionally the postexportKinetics repository once v0.1.0 is public.
