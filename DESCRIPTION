@@ -36,7 +36,10 @@ Imports:
     utils
 Suggests:
     expm,
+    knitr,
+    rmarkdown,
     testthat (>= 3.0.0)
+VignetteBuilder: knitr
 Config/testthat/edition: 3
 biocViews: Software, Transcriptomics, RNASeq, AlternativeSplicing,
     TimeCourse, StatisticalMethod, Visualization

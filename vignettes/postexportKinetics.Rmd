@@ -1,0 +1,416 @@
+---
+title: "Kinetic model comparison for post-export RNA conversion"
+author: "Luca Faretra, Francesco Napolitano, Massimo Pancione, Luigi Cerulo"
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    mathjax: null
+vignette: >
+  %\VignetteIndexEntry{Kinetic model comparison for post-export RNA conversion}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7,
+                      fig.height = 5, dpi = 72)
+```
+
+# Overview
+
+`postexportKinetics` fits a compartment-resolved kinetic model to time
+courses of nuclear and cytoplasmic, unprocessed and processed RNA. It asks
+whether an additional post-export conversion component improves the fit to
+the data beyond what the model explains without it.
+
+The package implements the method of the accompanying manuscript. Its
+numerical core is ported verbatim from the frozen manuscript implementation
+(tag `manuscript-revision-v1.0`) and is regression-tested against it.
+
+This vignette works through one small synthetic dataset:
+
+- data formatting and validation;
+- fitting, testing, interpretation, multiple testing and exploratory ranking;
+- plotting, simulation and design diagnostics;
+- limitations.
+
+```{r load}
+library(postexportKinetics)
+```
+
+# The four-state model
+
+Each event (for example a retained-intron event) is described by four
+states:
+
+| State | Compartment | Processing |
+|---|---|---|
+| `N`   | nuclear     | unprocessed |
+| `N_s` | nuclear     | processed   |
+| `C`   | cytoplasmic | unprocessed |
+| `C_s` | cytoplasmic | processed   |
+
+with dynamics
+
+```
+dN/dt   = R(t) - (sigma_n + tau) N
+dN_s/dt = sigma_n N - tau_s N_s
+dC/dt   = tau N - (sigma_c + alpha) C
+dC_s/dt = tau_s N_s + sigma_c C - alpha_s C_s
+```
+
+The rates are:
+
+- `R(t)`: transcription;
+- `sigma_n`: nuclear processing;
+- `tau` and `tau_s`: export of unprocessed and processed RNA;
+- `alpha` and `alpha_s`: cytoplasmic decay;
+- `sigma_c`: the **post-export conversion rate** from `C` to `C_s`.
+
+Two nested models are compared:
+
+- the **null model**, with `sigma_c = 0`: no post-export conversion
+  component;
+- the **full model**, with `sigma_c >= 0`: a non-negative post-export
+  conversion rate.
+
+`sigma_c` is a *phenomenological* parameter. A positive estimate, or a small
+p-value, indicates kinetic patterns consistent with an additional
+post-export conversion component *within this model*. It does not identify a
+unique molecular mechanism, and it is not by itself evidence of cytoplasmic
+splicing.
+
+Transcription follows a schedule with a transcriptional onset and a common
+intervention time `t_star`. After `t_star`, transcription stops completely
+(shutoff) in the analyses shown here.
+
+# Example data and input format
+
+The package ships a small **synthetic** dataset, `postexport_example`. It was
+simulated with the package's simulator (see `?postexport_example` and
+`data-raw/postexport_example.R` in the source repository):
+
+- eight events: four simulated with `sigma_c > 0` (`alt_*`) and four with
+  `sigma_c = 0` (`null_*`);
+- complete shutoff at `t_star = 332` min;
+- 5 time points and 5 destructive replicates per time point;
+- RNA-seq-type noise.
+
+```{r data}
+data(postexport_example)
+head(postexport_example)
+```
+
+The canonical **wide** format has one row per destructive sample, with
+columns `event`, `time`, `replicate`, `N`, `N_s`, `C` and `C_s`.
+
+- Replicate labels identify samples *within* a time point. They are never
+  used to pair samples across time points.
+- `time_unit` is required, because all rates, including `sigma_c`, are per
+  this unit.
+
+```{r data-object}
+x <- postexport_data(postexport_example, time_unit = "min")
+x
+```
+
+The **long** format has one row per sample and state, with columns
+`compartment` (`nuclear`/`cytoplasmic`), `state`
+(`unprocessed`/`processed`) and `abundance`. The same observations are
+installed as a CSV file:
+
+```{r data-long}
+path <- system.file("extdata", "postexport_example_long.csv",
+                    package = "postexportKinetics")
+long <- read.csv(path)
+head(long, 4)
+x_long <- postexport_data(long, time_unit = "min", format = "long")
+```
+
+Different column names can be declared with `columns`, for example
+`columns = c(event = "event_id", time = "minutes")`.
+
+For retained-intron events, the mapping of inclusion to *unprocessed* and
+skipping to *processed* is the user's responsibility. It is not inferred.
+
+# Validation
+
+`postexport_data()` validates its input. `validate_postexport_data()` reports
+the findings without constructing an object, and never modifies the data.
+
+```{r validate}
+validate_postexport_data(postexport_example, t_star = 332)
+```
+
+- **Errors:** missing states, missing or non-finite values, duplicated
+  samples, fewer than two time points, or no time point with at least two
+  replicates. Missing values are never set to zero or imputed.
+- **Warnings:** negative abundances and an intervention time outside the
+  sampled window.
+- **Notes:** diagnostic information.
+
+# Fitting the full and null models
+
+`fit_postexport_model()` fits both models without bootstrap. The estimation
+uses:
+
+- trapezoidal interval balances between consecutive time points;
+- within-time covariance estimation with shrinkage and an eigenvalue floor;
+- covariance propagation and whitening;
+- non-negative least squares.
+
+The intervention time `t_star` is always an explicit argument.
+
+```{r fit}
+sel <- postexport_example$event == "alt_3"
+one <- postexport_data(postexport_example[sel, ], time_unit = "min")
+fit <- fit_postexport_model(one, t_star = 332)
+fit
+```
+
+`summary()` shows the full and null coefficients, the residual sums of
+squares, the boundary information and numerical diagnostics such as
+condition numbers and ranks.
+
+```{r fit-summary}
+summary(fit)
+```
+
+# Inference: bootstrap test of `sigma_c = 0`
+
+`test_postexport_conversion()` compares the models with the statistic
+`T = max(0, RSS0 - RSS1)`, a difference of whitened non-negative
+least-squares residual sums of squares. This is **not** a likelihood-ratio
+test.
+
+The null distribution of `T` comes from a replicate-level generative
+bootstrap under the fitted null model. The interval system is rebuilt in
+every bootstrap replicate, and the p-value uses the add-one rule
+`(1 + #{T* >= T_obs}) / (B + 1)`. The alternative is one-sided,
+`sigma_c > 0`.
+
+Several events can be tested in one call. They are processed sequentially,
+and each event gets its own named seed:
+
+```{r test}
+events <- unique(x$event)
+seeds <- setNames(seq_along(events), events)
+res <- test_postexport_conversion(
+    x, t_star = 332,
+    control = postexport_control(B = 499, seed = seeds))
+res
+```
+
+`B = 499` keeps this vignette fast. The smallest attainable p-value is
+`1 / (B + 1)`. The package default is `B = 1999`, and the manuscript's final
+real-data analyses used larger values.
+
+With an explicit seed, the caller's random-number state is restored
+afterwards. With `seed = NULL`, the global stream is used and consumed.
+
+# Interpreting the results
+
+The result table is easiest to read with the simulation truth next to it
+(available here only because the data are synthetic):
+
+```{r interpret}
+data(postexport_example_truth)
+tab <- as.data.frame(res)
+cmp <- merge(postexport_example_truth[, c("event", "truth", "sigma_c")],
+             tab[, c("event", "sigma_c", "IR", "p_value", "at_boundary")],
+             by = "event", suffixes = c("_true", "_est"))
+cmp
+```
+
+- **`sigma_c`** is the full-model estimate of the post-export conversion
+  rate, per minute. It is an effect-size estimate, not a test.
+  - Estimates can be positive for events simulated under the null.
+  - Estimates can differ strongly from the simulated value. In `alt_3`, for
+    example, the full fit trades `sigma_c` against the cytoplasmic decay
+    rate `alpha`, since both remove `C`. The manuscript's practical
+    identifiability analysis examines this.
+- **`IR`**, `(RSS0 - RSS1) / RSS0`, is the relative improvement in fit
+  from adding `sigma_c`.
+- **`p_value`** is the per-event bootstrap p-value, before any
+  multiple-testing adjustment.
+- **Boundary status.** When the full fit does not improve on the null
+  (`T_obs` at or below the frozen tolerance
+  `1e-10 * max(1, |RSS0|, |RSS1|)`), the event is *at the boundary*.
+  - `sigma_c` is then typically estimated as 0.
+  - The p-value is set to 1 by the frozen boundary rule.
+  - Such an event gives no kinetic support for an additional conversion
+    component.
+- **`status`** reports numerical failures, such as a failed observed fit or
+  an unstable bootstrap. Only events with status `"ok"` are valid tests.
+
+In this design only one of the four simulated alternatives has a small
+p-value. That is expected: in the manuscript benchmark, this design had
+empirical Type-I error close to 0.05 but power of only about 0.24 (see the
+design diagnostics below).
+
+# Multiple testing
+
+Adjustment is an explicit step. It is never performed inside the test.
+`adjust_postexport_pvalues()`:
+
+- uses Benjamini-Hochberg by default, via `stats::p.adjust()`;
+- adjusts only valid tests (status `"ok"` and a finite p-value);
+- adds `q_value` and leaves raw p-values unchanged.
+
+```{r adjust}
+adj <- adjust_postexport_pvalues(res)
+adj$summary[, c("event", "status", "p_value", "q_value")]
+```
+
+The testing family should follow the analysis plan. The manuscript adjusted
+each dataset separately; `groups` gives one family per label. A single test
+can also be adjusted, as a family of size one.
+
+# Exploratory ranking
+
+`rank_postexport_candidates()` orders the tested events by the manuscript's
+exploratory composite score
+
+```
+score = sigma_c * IR * min(-log10(max(q, 1e-10)), 6)
+```
+
+- It requires q-values; raw p-values are never substituted.
+- Ranks are computed within each adjustment family.
+- Ties share the minimum rank.
+- Failed events are kept, with no score.
+
+The ranking is a prioritisation aid for follow-up. It is not an inferential
+quantity and not an optimised discrimination score.
+
+```{r rank}
+rank_postexport_candidates(adj)
+```
+
+# Plots
+
+All plots are `ggplot2` objects. They never refit or modify results.
+
+The fit plot shows the observations, time-point means, sampling times,
+`t_star`, and the fitted full and null models. The fitted curves are display
+reconstructions, propagated with the ODE model from the observed
+replicate-mean state at the first sampled time. Inference does not use them;
+it uses the interval-balance / Crank-Nicolson machinery.
+
+```{r plot-fit, fig.height = 6}
+plot(res$results$alt_3)
+```
+
+The bootstrap plot shows the bootstrap distribution of `T`, the observed
+statistic and the fraction of bootstrap replicates at the boundary:
+
+```{r plot-boot}
+plot(res$results$alt_3, type = "bootstrap")
+```
+
+Set-level plots are descriptive:
+
+- `"status"`, `"boundary"` and `"sigma_IR"`;
+- after adjustment, `"sigma_q"`, `"IR_q"` and `"score"`.
+
+```{r plot-set}
+plot(adj, type = "sigma_q")
+```
+
+# Simulation
+
+`simulate_postexport_kinetics()` exposes the manuscript simulator. It
+supports:
+
+- a transcriptional onset and a common intervention time;
+- `"NONE"`, `"SHUTOFF"` and `"PSEUDO_SHUTOFF"` regimes;
+- replicate-level rate variability;
+- the benchmark assay-noise presets (Gaussian, RNA-seq, RT-qPCR).
+
+```{r simulate}
+p <- c(R = 100, tau = 0.03, tau_s = 0.015, sigma_c = 0.1, sigma_n = 0.1,
+       alpha = 0.2, alpha_s = 0.08)
+sim <- simulate_postexport_kinetics(
+    p, times = c(90, 100, 110, 120, 130), onset_time = 0, t_star = 100,
+    regime = "SHUTOFF", time_unit = "min", n_replicates = 3,
+    param_cv = 0.05, noise = list(platform = "rnaseq", level = "low"),
+    seed = 1)
+sim
+plot(sim)
+```
+
+`sim$observed` has the wide input format and can be passed directly to
+`postexport_data()`. Simulating with `sigma_c > 0` generates data from the
+kinetic model; it does not represent any molecular mechanism.
+
+# Operational-domain diagnostics
+
+Calibration of the bootstrap test depends on the design: the regime,
+sampling times, replicates and noise. `check_operational_domain()` compares a
+design with the designs of the manuscript's corrected factorial benchmark
+and reports their empirical Type-I error and power.
+
+```{r domain}
+dom <- check_operational_domain(x, regime = "SHUTOFF", t_star = 332,
+                                platform = "rnaseq", noise_level = "very_low")
+dom
+plot(dom)
+```
+
+The check is diagnostic only. Similarity to a benchmark design is not a
+calibration guarantee for any real dataset, and the check never blocks
+inference.
+
+Continuous transcription was strongly anti-conservative in the benchmark:
+
+```{r domain-none}
+check_operational_domain(regime = "NONE", n_time_points = 5, n_replicates = 5,
+                         sampling_interval = 10, time_unit = "min")
+```
+
+# Limitations
+
+- **Phenomenological rate.** `sigma_c` is phenomenological. Statistical
+  support for `sigma_c > 0` indicates kinetic patterns consistent with
+  additional post-export conversion within the four-state model. It does
+  not establish cytoplasmic splicing or any unique molecular mechanism.
+- **Design-dependent calibration.** In the manuscript benchmark, Type-I
+  error and power varied strongly with the regime, the sampling interval,
+  the number of time points and replicates, and the noise. Several designs
+  were anti-conservative.
+- **Pseudo-shutoff assumptions matter.** The analysis assumes the
+  transcription schedule given by `t_star` (complete shutoff here).
+  Residual transcription after the intervention, or misassigned fractions,
+  can bias the test. Pseudo-shutoff designs are reported as
+  `not_benchmarked` by the operational-domain check.
+- **Benchmark similarity is not a calibration guarantee.** The benchmark
+  used simulated data from the model itself.
+- **Continuous transcription.** Without an intervention, the test was
+  anti-conservative in the manuscript benchmark.
+- **Exploratory ranking.** The composite score is a prioritisation aid, not
+  a test.
+
+# Reproducibility and provenance
+
+The numerical core reproduces the frozen manuscript implementation:
+
+- tag `manuscript-revision-v1.0`, commit
+  `65c3b7368fb7686bfde3dab857f98c393bb534c5`, in
+  <https://github.com/bioinformatics-sannio/postexport-kinetics>;
+- archived at <https://doi.org/10.5281/zenodo.22944109>.
+
+Results are bitwise reproducible only within a matched numerical
+environment. The bootstrap draws use `MASS::mvrnorm()`, whose output depends
+on the LAPACK/BLAS build. Across platforms, bootstrap p-values are
+different Monte-Carlo realisations of the same bootstrap distribution. The
+deterministic fit quantities agree to rounding level.
+
+Use `citation("postexportKinetics")` to cite the package and the
+manuscript.
+
+# Session information
+
+```{r session}
+sessionInfo()
+```
