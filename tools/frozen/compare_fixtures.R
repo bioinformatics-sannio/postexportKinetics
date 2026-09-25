@@ -56,7 +56,7 @@ for (f in files) {
       next
     }
 
-    if (fixture == "fx_source") {
+    if (startsWith(fixture, "fx_source")) {
       record(fixture, key, "source",
              if (identical(r$output, c$output)) character() else "source text differs",
              character())
