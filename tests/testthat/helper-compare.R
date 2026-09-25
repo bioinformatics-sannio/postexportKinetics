@@ -150,13 +150,19 @@ max_differences <- function(actual, expected) {
 CROSS_REL <- 1e-10
 RSS_SCALED_LEAVES <- c("T", "T.obs", "RSS0", "RSS1", "boundary.tolerance")
 
-# Fields of test_sigma_nested() that depend on bootstrap draws (MASS::mvrnorm)
-# and therefore on LAPACK/BLAS; reported, never compared, across platforms.
+# Fields that depend on random draws in a platform-sensitive way (bootstrap
+# draws via MASS::mvrnorm, which depends on LAPACK/BLAS; simulated assay
+# noise); reported, never compared, across platforms (level C).
 BOOT_FIELDS <- c("T.boot", "bootstrap.condition", "bootstrap.rank", "p.value",
                  "atom.zero", "bootstrap.failure.rate", "n.bootstrap.valid",
                  "bootstrap.condition.median", "bootstrap.condition.q95",
                  "bootstrap.condition.max",
-                 "bootstrap.rank.deficient.fraction")
+                 "bootstrap.rank.deficient.fraction",
+                 # Simulated assay noise (Phase 3): count and Ct draws are
+                 # value dependent, so noisy observations computed from
+                 # latent states that differ at rounding level are
+                 # platform-sensitive stochastic output (level C).
+                 "observed")
 
 # Deliberately extreme-conditioning fixture families (numerical stress tests).
 EXTREME_PATTERN <- "lambda=none|/none$|indefinite_Sigma|/rank1/|/zero_diag/"

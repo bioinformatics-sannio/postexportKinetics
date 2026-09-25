@@ -29,12 +29,17 @@
 #'   \item [fit_postexport_model()]: full and `sigma_c = 0` null fits
 #'     without bootstrap;
 #'   \item [test_postexport_conversion()]: bootstrap test of the null
-#'     `sigma_c = 0` against `sigma_c > 0`.
+#'     `sigma_c = 0` against `sigma_c > 0`;
+#'   \item [simulate_postexport_kinetics()]: simulation with the frozen
+#'     manuscript simulator (onset, common intervention time, replicates,
+#'     assay noise);
+#'   \item [check_operational_domain()]: diagnostic comparison of a design
+#'     with the manuscript benchmark (not a calibration guarantee).
 #' }
 #'
 #' @section Development status:
-#' Development version. Simulation, operational-domain diagnostics,
-#' exploratory ranking, plotting and batch execution are not yet available.
+#' Development version. Exploratory ranking, plotting and batch execution are
+#' not yet available.
 #'
 #' @keywords internal
 "_PACKAGE"

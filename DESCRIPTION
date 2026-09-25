@@ -24,9 +24,11 @@ Encoding: UTF-8
 Depends:
     R (>= 4.1.0)
 Imports:
+    deSolve,
     MASS,
     nnls,
-    stats
+    stats,
+    utils
 Suggests:
     expm,
     testthat (>= 3.0.0)

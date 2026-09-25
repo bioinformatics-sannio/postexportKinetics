@@ -93,6 +93,9 @@ jobs:
           FROZEN=$(sh tools/frozen/export_frozen.sh "$RUNNER_TEMP/postexport-kinetics" "$RUNNER_TEMP/frozen-export")
           Rscript tools/frozen/recompute_fixtures.R "$FROZEN" tests/testthat/fixtures "$RUNNER_TEMP/fixtures-linux"
 
+      - name: Packaged benchmark metadata matches the frozen benchmark files
+        run: Rscript tools/ci/check_benchmark_provenance.R "$RUNNER_TEMP/frozen-export"
+
       - name: Install package
         run: R CMD INSTALL .
 
