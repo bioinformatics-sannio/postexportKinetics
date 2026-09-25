@@ -176,12 +176,25 @@ continuous transcription (no intervention) was anti-conservative.
 
 ## Scientific reference
 
-The package reproduces the frozen manuscript implementation:
+The package reproduces the frozen manuscript implementation, which is a
+separate repository:
 
 - repository <https://github.com/bioinformatics-sannio/postexport-kinetics>;
 - tag `manuscript-revision-v1.0`, commit
   `65c3b7368fb7686bfde3dab857f98c393bb534c5`;
 - archived at [doi:10.5281/zenodo.22944109](https://doi.org/10.5281/zenodo.22944109).
+  This DOI identifies the frozen manuscript implementation, **not** this
+  package.
+
+## Distribution and identifiers
+
+- `postexportKinetics` is distributed as GitHub software releases from
+  <https://github.com/bioinformatics-sannio/postexportKinetics>. **The
+  package has no DOI.**
+- Its intended future distribution channel is **Bioconductor**. It is not
+  yet a Bioconductor package.
+- `10.5281/zenodo.22944109` is only the DOI of the frozen manuscript
+  implementation.
 
 The associated manuscript:
 

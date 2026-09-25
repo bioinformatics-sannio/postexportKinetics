@@ -4,7 +4,13 @@ Status: **stop point 1 reached** (B.1–B.3 done; results in §D). Stopped
 for review before B.4.
 
 - No release-version change: `DESCRIPTION` is still `0.0.0.9000`.
-- No tag, no GitHub release, no Zenodo archive, no `0.99.0`.
+- No tag, no GitHub release, no `0.99.0`.
+- **Maintainer policy (supersedes the earlier Zenodo plan):**
+  - postexportKinetics gets **no Zenodo archive and no DOI**;
+  - v0.1.0 is a GitHub software release, and Bioconductor is the intended
+    future distribution channel;
+  - `10.5281/zenodo.22944109` is only the DOI of the frozen manuscript
+    implementation.
 - No Bioconductor submission preparation.
 
 **Baseline:**
@@ -246,7 +252,7 @@ steps:
 |---|---|
 | `DESCRIPTION` | `Version: 0.1.0` |
 | `NEWS.md` | heading `# postexportKinetics 0.1.0`, first public release; keep content; remove "(development)" |
-| `CITATION.cff` | `version: "0.1.0"`; add `date-released` at release time; **no** package DOI |
+| `CITATION.cff` | `version: "0.1.0"`; no `date-released` until the tag date is fixed; **no** package DOI |
 | `inst/CITATION` | the version comes from `meta$Version`; change the note "(development version)" to plain "R package version 0.1.0" |
 | `README.md` | status banner: "first public release 0.1.0; not a Bioconductor release; interface may still evolve"; keep all interpretation caveats |
 | `PROJECT_STATE.md` / `RELEASE_CHECKLIST.md` | status updates |
@@ -332,7 +338,8 @@ install from GitHub at the RC commit:
   >
   > **Scientific reference.** The numerical core reproduces the frozen
   > manuscript implementation: tag `manuscript-revision-v1.0`, commit
-  > `65c3b73`, doi:10.5281/zenodo.22944109. Full manuscript validation:
+  > `65c3b73`, doi:10.5281/zenodo.22944109 (the DOI of the frozen
+  > implementation; the package itself has no DOI). Full manuscript validation:
   > EQUIVALENT. Regression is tested on Linux, macOS and Windows, and on
   > R 4.1 and oldrel-1.
   >
@@ -353,42 +360,22 @@ install from GitHub at the RC commit:
 - **Assets:** the source tarball `postexportKinetics_0.1.0.tar.gz`, built
   from the tagged commit, and the full validation log.
 
-### B.11 Zenodo archival plan (separate package DOI)
+### B.11 Identifiers and distribution (maintainer policy; replaces the Zenodo plan)
 
-1. **Link the repository.** A GitHub owner/admin of `bioinformatics-sannio`
-   signs in to Zenodo with GitHub (Account → GitHub), grants the
-   organisation access, and switches **on** the repository
-   `bioinformatics-sannio/postexportKinetics`. This must happen *before* the
-   release is published, because Zenodo archives only releases published
-   after activation.
-2. **Optional `.zenodo.json`** (proposed for a B.1 commit, subject to
-   approval). It controls the Zenodo metadata instead of letting Zenodo
-   derive it from `CITATION.cff`:
-   - title, the four authors (no ORCID unless the authors supply one), MIT,
-     `upload_type: software`, version `0.1.0`;
-   - keywords;
-   - `related_identifiers`:
-     - `10.5281/zenodo.22944109` with relation `isDerivedFrom`, or
-       `references` (the frozen manuscript implementation);
-     - the repository URL with relation `isSupplementTo`.
-   - The manuscript will be added once it has a DOI.
-3. **Publish** the GitHub release `v0.1.0` (B.10). Zenodo then creates the
-   archive and mints:
-   - a **version DOI** (0.1.0 specifically);
-   - a **concept DOI** (all versions).
-   Both are **new and separate** from `10.5281/zenodo.22944109`, which must
-   never be reused as the package DOI.
-4. **Verify the Zenodo record:** authors, license, version, files (the
-   GitHub source archive) and the related identifiers.
-5. **Post-release documentation commit** on `main`, without re-tagging:
-   - add the package DOI to `CITATION.cff` (`doi:` and/or `identifiers`,
-     concept and version DOI);
-   - add it to `inst/CITATION` (the package entry) and to a README badge;
-   - add a `NEWS.md` note.
-   - The archived v0.1.0 cannot contain its own DOI. This is normal for
-     Zenodo, and the DOI appears from the next version on.
-6. **Author action:** update the manuscript's Availability section with the
-   package repository and the package DOI (`RELEASE_CHECKLIST.md` §7).
+- **No Zenodo archive and no DOI for postexportKinetics.** The earlier plan
+  to enable the repository in Zenodo, mint a package DOI and add it in a
+  post-release commit is **withdrawn**. `.zenodo.json` has been removed.
+- **v0.1.0** is a GitHub software release: tag `v0.1.0` in
+  <https://github.com/bioinformatics-sannio/postexportKinetics>.
+- **Future archival and distribution** is intended through Bioconductor.
+- **`10.5281/zenodo.22944109`** identifies the frozen postexport-kinetics
+  manuscript implementation. It appears in the package citation metadata
+  only as that reference and is never presented as the package DOI.
+- **Manuscript Availability statement** (author action) cites:
+  - the manuscript-code repository
+    <https://github.com/bioinformatics-sannio/postexport-kinetics>;
+  - DOI 10.5281/zenodo.22944109;
+  - optionally, the postexportKinetics repository once v0.1.0 is public.
 
 ### B.12 Ubuntu runner
 
@@ -409,7 +396,7 @@ install from GitHub at the RC commit:
    especially any R 4.1 or macOS level-A finding.
 2. After B.4–B.9 (the version-synchronised RC, with all gates green): final
    RC report with the SHA to tag.
-3. Tagging, the GitHub release and Zenodo only after explicit approval.
+3. Tagging and the GitHub release only after explicit approval (no Zenodo step).
 
 ---
 
@@ -422,7 +409,7 @@ install from GitHub at the RC commit:
 | 3 | macOS/Windows CI not yet present | required by RC scope | **resolved**: both green (`1e9b365`; §D.4) |
 | 4 | Understated `ggplot2` / `testthat` minimum versions (A.3) | fix before release | **resolved** (`cdc4fb3`) |
 | 5 | Frozen-derived test fixtures in the tarball (A.2) | decision | **approved: keep**; documented in `tests/testthat/fixtures/README.md` |
-| 6 | `.zenodo.json` (B.11) | decision | **approved and added** (`55d37e7`) |
+| 6 | `.zenodo.json` (B.11) | decision | added in `55d37e7`, then **removed** by the maintainer policy (no package DOI or Zenodo archive) |
 | 7 | Support Site registration / BiocCheck ERRORs | not a GitHub-release blocker | later, Bioconductor phase |
 
 ---
@@ -435,12 +422,13 @@ Commits since the plan (`36881c1`):
 |---|---|
 | `379ae65` | normalise fixture provenance (relative MD5 names) and add `tools/frozen/normalise_fixture_provenance.R`; generators use relative names; fixtures documented |
 | `cdc4fb3` | `ggplot2 (>= 3.4.0)`, `testthat (>= 3.1.7)` |
-| `55d37e7` | `.zenodo.json` (excluded from the build) |
+| `55d37e7` | `.zenodo.json` (later removed by the maintainer policy; see B.11) |
 | `5c95dee` | `.github/workflows/r-compat.yml` (R 4.1, oldrel-1; ubuntu-22.04) |
 | `1e9b365` | `.github/workflows/platforms.yml` (macOS and Windows, R release) |
 
 `.Rbuildignore` excludes `RELEASE_CANDIDATE_*.md` (`36881c1`) and
-`.zenodo.json`. `linux-regression.yml` is unchanged. No R code, numerical
+`.zenodo.json` (that entry was removed together with the file under the
+maintainer policy). `linux-regression.yml` is unchanged. No R code, numerical
 code, tolerance or level classification changed.
 
 ### D.1 Fixture-normalisation proof

@@ -1,8 +1,11 @@
 cff-version: 1.2.0
 message: >-
-  If you use this package, please cite it and the associated manuscript. The
-  scientific method is archived as the frozen manuscript implementation
-  (doi:10.5281/zenodo.22944109).
+  If you use this package, please cite it and the associated manuscript.
+  postexportKinetics is released on GitHub and has no DOI of its own; its
+  intended future distribution channel is Bioconductor. The DOI
+  10.5281/zenodo.22944109 identifies the frozen manuscript implementation
+  (postexport-kinetics, tag manuscript-revision-v1.0), listed under
+  references; it is not the DOI of this package.
 type: software
 title: "postexportKinetics: Kinetic Model Comparison for Post-Export RNA Conversion"
 version: "0.0.0.9000"
@@ -69,4 +72,4 @@ references:
         given-names: "Massimo"
       - family-names: "Cerulo"
         given-names: "Luigi"
-    notes: "Frozen manuscript implementation, commit 65c3b7368fb7686bfde3dab857f98c393bb534c5; scientific reference of the package."
+    notes: "Frozen manuscript implementation (not this package), commit 65c3b7368fb7686bfde3dab857f98c393bb534c5; scientific reference of the package. This DOI is not the DOI of postexportKinetics."

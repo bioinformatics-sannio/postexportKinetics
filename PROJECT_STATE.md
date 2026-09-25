@@ -83,9 +83,9 @@ plot(x, ...)           # fit/test ("fit", "bootstrap"), fit_set/test_set
   - vignette `vignette("postexportKinetics")`;
   - `README.md`, `NEWS.md`;
   - `CITATION.cff` and `inst/CITATION` (`citation("postexportKinetics")`):
-    the package (development version, **no package DOI yet**), the submitted
-    manuscript, and the frozen manuscript implementation
-    (`10.5281/zenodo.22944109`, which is not the package DOI).
+    the package (**no package DOI**), the submitted manuscript, and the
+    frozen manuscript implementation (`10.5281/zenodo.22944109`, which is
+    not the package DOI).
 - **Maintainer validation:** `tools/validate_against_manuscript.R` (§5a).
 - **Not yet available:** parallel execution, rMATS conversion, comparators.
   SummarizedExperiment input is **deferred** (§5a).
@@ -192,10 +192,15 @@ plot(x, ...)           # fit/test ("fit", "bootstrap"), fit_set/test_set
   - Layout B (compartment libraries) needs pairing, normalisation and
     mapping decisions.
   - Revisit at Bioconductor submission preparation.
-- **Citation:** the manuscript stays unpublished/submitted, and there is no
-  package DOI yet. `10.5281/zenodo.22944109` is the frozen manuscript
-  implementation. A package DOI will be added only after the first GitHub
-  release is archived on Zenodo.
+- **Citation and identifiers** (maintainer policy, superseding the earlier
+  Zenodo plan):
+  - the manuscript stays unpublished/submitted;
+  - **postexportKinetics gets no Zenodo archive and no DOI.** Releases are
+    GitHub releases, and the intended future distribution channel is
+    Bioconductor;
+  - `10.5281/zenodo.22944109` is only the DOI of the frozen manuscript
+    implementation and is never presented as the package DOI;
+  - there is no `.zenodo.json`.
 - **Manuscript validation:** `tools/validate_against_manuscript.R`,
   documented in `tools/frozen/README.md`. It exits 1 on any failure. The
   full run is required for release; Linux CI runs it with `--quick`.
@@ -280,8 +285,7 @@ prepared and approved before any work begins. It will cover:
 - the full `tools/validate_against_manuscript.R`;
 - README, CITATION and NEWS synchronisation;
 - release tarball inspection;
-- GitHub release preparation;
-- Zenodo archival planning.
+- GitHub release preparation (no Zenodo archival: maintainer policy).
 
 **Not yet:**
 

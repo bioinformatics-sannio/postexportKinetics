@@ -10,7 +10,8 @@ interface may still change.
   * Repository: `bioinformatics-sannio/postexport-kinetics`.
   * Tag `manuscript-revision-v1.0`, commit
     `65c3b7368fb7686bfde3dab857f98c393bb534c5`.
-  * Archive: doi:10.5281/zenodo.22944109.
+  * Archive of the frozen manuscript implementation (not of this package):
+    doi:10.5281/zenodo.22944109.
 * Ported components:
   * four-state ODE model and transcription schedules;
   * trapezoidal interval balances;

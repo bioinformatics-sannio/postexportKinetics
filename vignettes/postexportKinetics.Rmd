@@ -407,7 +407,8 @@ The numerical core reproduces the frozen manuscript implementation:
 - tag `manuscript-revision-v1.0`, commit
   `65c3b7368fb7686bfde3dab857f98c393bb534c5`, in
   <https://github.com/bioinformatics-sannio/postexport-kinetics>;
-- archived at <https://doi.org/10.5281/zenodo.22944109>.
+- archived at <https://doi.org/10.5281/zenodo.22944109>. This DOI identifies
+  the frozen manuscript implementation, not this package, which has no DOI.
 
 Results are bitwise reproducible only within a matched numerical
 environment. The bootstrap draws use `MASS::mvrnorm()`, whose output depends
