@@ -296,10 +296,28 @@ Phase 5 final counts (BiocCheck 1.48.1): **2 ERRORs, 2 WARNINGs, 10 NOTEs**.
 
 ## 10. Next phase
 
-**Phase 6: Bioconductor preparation. Stop Point 0 (read-only audit) is in
-progress** on branch `bioconductor-prep`: `BIOCONDUCTOR_AUDIT.md`, awaiting
-review. No package change, no version change and no account action have
-been made. Earlier candidate topics:
+**Phase 6: Bioconductor preparation.**
+
+- Stop Point 0 audit (`BIOCONDUCTOR_AUDIT.md`) is approved.
+- **Phase 6A/6B** is on branch `bioconductor-prep`, reported in
+  `PHASE6_AB_REPORT.md` and awaiting review:
+  - version 0.99.0;
+  - build-ignore entries;
+  - vignette Introduction and Installation sections;
+  - the layout-A `postexport_data_from_se()`, with SummarizedExperiment
+    in Imports;
+  - the package-authored paste fix;
+  - `inst/scripts` provenance.
+- **Not done:** default-branch switch (policy P1 approved conceptually,
+  not implemented), submission, new release or tag.
+- **Pending maintainer actions** (`BIOCONDUCTOR_AUDIT.md` §9):
+  - Support Site Watched Tags;
+  - bioc-devel;
+  - SSH key;
+  - the later default-branch switch;
+  - optional ORCID or funder metadata.
+
+Earlier candidate topics:
 
 - the `0.99.x` version line;
 - BiocCheck remaining items:

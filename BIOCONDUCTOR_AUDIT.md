@@ -274,9 +274,12 @@ change to the science.
 
 ## 9. Maintainer actions (cannot be done by Claude)
 
-1. **Bioconductor Support Site registration** (support.bioconductor.org)
-   with the DESCRIPTION maintainer email `lcerulo@unisannio.it`. BiocCheck
-   currently returns HTTP 404. This clears ERROR #1.
+1. **Bioconductor Support Site.**
+   - Registration with `lcerulo@unisannio.it`: **done.** BiocCheck in
+     Phase 6A reports "Maintainer is registered at support site".
+   - **Pending:** add `postexportKinetics` to **Watched Tags** at
+     https://support.bioconductor.org/accounts/edit/profile. BiocCheck
+     ERROR: "Add package to Watched Tags in your Support Site profile".
 2. **bioc-devel mailing-list subscription**
    (https://stat.ethz.ch/mailman/listinfo/bioc-devel) with the same email
    (NOTE #13).
@@ -321,6 +324,41 @@ package-code failures.
 | Build hygiene | `BIOCONDUCTOR_AUDIT.md` not in `.Rbuildignore` | add the ignore entry | Claude | yes (trivial) | 6A |
 
 ---
+
+## 10a. Justifications for Bioconductor review (Phase 6A/6B)
+
+These are to be included in the submission issue, or given in answer to
+review comments.
+
+- **`set.seed()` in `R/inference.R` (frozen orchestrator).**
+  - The call belongs to the verbatim port of the frozen manuscript
+    implementation. The bootstrap RNG semantics are part of the validated
+    scientific behaviour: manuscript reproducibility, and the regression
+    fixtures, which include bootstrap draws at level A.
+  - It runs only when the user supplies `postexport_control(seed = ...)`,
+    and the public API restores the caller's `.Random.seed` afterwards.
+  - With `seed = NULL`, no seed is set and the caller's RNG stream is used
+    normally.
+- **`set.seed()` in `R/simulate.R` (`simulate_postexport_kinetics(seed =)`).**
+  - This is an explicit, user-requested reproducibility feature of an
+    exported function. It is part of the released 0.1.0 API and not internal
+    behaviour.
+  - The caller's RNG state is restored on exit (tested).
+  - `seed = NULL` (the default) leaves RNG control entirely to the caller,
+    for example via their own `set.seed()`.
+  - No `withr` dependency and no RNG redesign were introduced.
+- **Frozen-code style findings:** `=`, `paste` in conditions (5 frozen
+  sites), `<<-`, function length, long lines and indentation.
+  - The ten frozen ports are verbatim copies of the validated manuscript
+    implementation. `test-verbatim-port.R` enforces this, and
+    `tools/validate_against_manuscript.R` checks them against the frozen tag.
+  - Restyling them would break the verbatim-port guarantee without any
+    user benefit.
+  - Package-authored code follows the 4-space and 80-character rules. The
+    remaining package-side notes are argument-alignment indentation and
+    long validation-heavy functions, kept unchanged by decision.
+- **R version:** `Depends: R (>= 4.1.0)` is supported by CI on R 4.1.3 and
+  is intentionally not raised.
 
 ## 11. Proposed Phase 6 plan (not executed)
 
