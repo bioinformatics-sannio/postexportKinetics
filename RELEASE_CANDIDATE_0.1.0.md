@@ -1,9 +1,9 @@
 # Release candidate 0.1.0: plan and pre-release inspection
 
-Status: **plan and inspection only.** No release-version change has been
-made.
+Status: **stop point 1 reached** (B.1–B.3 done; results in §D). Stopped
+for review before B.4.
 
-- `DESCRIPTION` is still `0.0.0.9000`.
+- No release-version change: `DESCRIPTION` is still `0.0.0.9000`.
 - No tag, no GitHub release, no Zenodo archive, no `0.99.0`.
 - No Bioconductor submission preparation.
 
@@ -16,10 +16,12 @@ made.
   `65c3b7368fb7686bfde3dab857f98c393bb534c5`, verified. The frozen
   repository is unchanged (HEAD `5d06a93`, clean).
 
-This document has two parts:
+This document has four parts:
 
 - §A records what was inspected on the current `main` content.
-- §B is the concrete release plan, to be executed only after review.
+- §B is the release plan.
+- §C lists the blockers and decisions.
+- §D records the results of stop point 1.
 
 ---
 
@@ -331,15 +333,17 @@ install from GitHub at the RC commit:
   > **Scientific reference.** The numerical core reproduces the frozen
   > manuscript implementation: tag `manuscript-revision-v1.0`, commit
   > `65c3b73`, doi:10.5281/zenodo.22944109. Full manuscript validation:
-  > EQUIVALENT. Regression is tested on Linux, macOS and Windows.
+  > EQUIVALENT. Regression is tested on Linux, macOS and Windows, and on
+  > R 4.1 and oldrel-1.
   >
   > **Reproducibility.** Results are bitwise reproducible only within a
   > matched numerical environment. Bootstrap draws depend on LAPACK/BLAS
   > through `MASS::mvrnorm()`.
   >
-  > **Known provenance notes of the frozen tag.** Pseudo-shutoff real-data
-  > B = 4999 (SF-1); corrected-onset generator RNG (SF-2); pseudo-shutoff
-  > benchmark authority (SF-4).
+  > **Validation.** The package numerical core is regression-tested
+  > against the frozen manuscript implementation. Detailed provenance and
+  > known frozen-reference notes are documented in the repository
+  > validation records.
   >
   > **Status.** Not a Bioconductor release.
   >
@@ -413,10 +417,184 @@ install from GitHub at the RC commit:
 
 | # | Item | Type | Proposed action |
 |---|---|---|---|
-| 1 | Absolute scratch paths in `provenance$frozen_md5` names of all 16 fixtures (A.1) | **blocker** | normalise names only, with identity verification; fix generator scripts |
-| 2 | Compatibility CI on older R not yet present (Phase 5 decision 3) | **blocker** (by decision) | B.2 |
-| 3 | macOS/Windows CI not yet present | required by RC scope | B.3 |
-| 4 | Understated `ggplot2` / `testthat` minimum versions (A.3) | fix before release | declare `ggplot2 (>= 3.4.0)`, `testthat (>= 3.1.7)` |
-| 5 | Frozen-derived test fixtures in the tarball (A.2) | decision | keep (recommended) |
-| 6 | `.zenodo.json` (B.11) | decision | add (recommended) |
+| 1 | Absolute scratch paths in `provenance$frozen_md5` names of all 16 fixtures (A.1) | blocker | **resolved** (`379ae65`; §D.1) |
+| 2 | Compatibility CI on older R not yet present (Phase 5 decision 3) | blocker (by decision) | **resolved**: R 4.1 and oldrel-1 green (`5c95dee`; §D.3) |
+| 3 | macOS/Windows CI not yet present | required by RC scope | **resolved**: both green (`1e9b365`; §D.4) |
+| 4 | Understated `ggplot2` / `testthat` minimum versions (A.3) | fix before release | **resolved** (`cdc4fb3`) |
+| 5 | Frozen-derived test fixtures in the tarball (A.2) | decision | **approved: keep**; documented in `tests/testthat/fixtures/README.md` |
+| 6 | `.zenodo.json` (B.11) | decision | **approved and added** (`55d37e7`) |
 | 7 | Support Site registration / BiocCheck ERRORs | not a GitHub-release blocker | later, Bioconductor phase |
+
+---
+
+## D. Stop point 1 results (B.1–B.3), branch `release-0.1.0` @ `1e9b365`
+
+Commits since the plan (`36881c1`):
+
+| Commit | Content |
+|---|---|
+| `379ae65` | normalise fixture provenance (relative MD5 names) and add `tools/frozen/normalise_fixture_provenance.R`; generators use relative names; fixtures documented |
+| `cdc4fb3` | `ggplot2 (>= 3.4.0)`, `testthat (>= 3.1.7)` |
+| `55d37e7` | `.zenodo.json` (excluded from the build) |
+| `5c95dee` | `.github/workflows/r-compat.yml` (R 4.1, oldrel-1; ubuntu-22.04) |
+| `1e9b365` | `.github/workflows/platforms.yml` (macOS and Windows, R release) |
+
+`.Rbuildignore` excludes `RELEASE_CANDIDATE_*.md` (`36881c1`) and
+`.zenodo.json`. `linux-regression.yml` is unchanged. No R code, numerical
+code, tolerance or level classification changed.
+
+### D.1 Fixture-normalisation proof
+
+`tools/frozen/normalise_fixture_provenance.R` was run against a fresh
+`git archive` export of `manuscript-revision-v1.0` (commit marker verified):
+
+- **Check-only mode.** All 16 fixtures verified:
+  - each of the 43 names (3 per fixture, 1 in `fx_orchestrator` and
+    `fx_source_orchestrator`) maps to exactly one export file:
+    `commons/nested_test2.r`, `ode_model/ode.r`, `commons/platforms.r`,
+    `synthetic_dataset/run_benchmark_main_corrected_onset_revision.R`;
+  - every stored MD5 value equals the MD5 of that file in the fresh
+    export;
+  - restoring the original names on the normalised object gives an object
+    `identical()` to the committed one.
+- **Apply mode.** 16 rewritten (`saveRDS` version 3, as the generators do),
+  with the read-back identities re-checked. A second check-only run
+  reports all fixtures "already relative".
+- **Independent check** (a separate script, comparing against copies of
+  the original files). For every fixture:
+  - the object without `provenance$frozen_md5` is `identical()`;
+  - the MD5 values are `identical()`;
+  - `generated_at` is identical;
+  - no name is absolute.
+- **Negative test** (scratch copy with one tampered MD5): exit status 1,
+  "FAILED (nothing written)", and no file modified. After this test the
+  script was made all-or-nothing: it writes nothing unless every fixture
+  passes.
+- **Not a regeneration.** No input, output, reference or other provenance
+  field changed. Only the `.rds` file bytes changed, because of the
+  rewritten names.
+- **Generators.** `make_fixtures.R`, `make_fixtures_phase2.R`,
+  `make_fixtures_phase3.R` and `recompute_fixtures.R` now name MD5s by
+  export-relative path. `recompute_fixtures.R` was exercised (output names
+  `commons/nested_test2.r`); the generators were only parse-checked, not
+  run, since the fixtures are not regenerated.
+
+### D.2 Full manuscript validation
+
+`Rscript tools/validate_against_manuscript.R` (full, not `--quick`), after
+the normalisation, on macOS arm64 with R 4.6.0: **EQUIVALENT**, with all 10
+steps passing.
+
+- 4a: Ppp1r36dn and Nsd1, relative differences 5.5e-16 to 6.7e-15.
+- 4b: 28 mESC events, maximum relative difference 5.6e-13.
+- 6b: same-platform level A, including bootstrap draws.
+- 7: frozen repository unchanged.
+
+Local testthat: 3,677 expectations, 0 failures.
+
+### D.3 R compatibility (`r-compat`, run `36122217699`, ubuntu-22.04)
+
+| Job | Result |
+|---|---|
+| R 4.1 (`r-version: '4.1'`, the latest 4.1.x as resolved by `r-lib/actions/setup-r`) | **success**: dependencies installed, package installed, regression tests (cross-platform levels B/C) and `R CMD check --as-cran` (warnings blocking) passed |
+| R oldrel-1 | **success**, same steps |
+
+- No dependency or ecosystem failure (A) and no package incompatibility
+  (B). `Depends: R (>= 4.1.0)` is **supported by evidence** for R 4.1.
+  `DESCRIPTION` is unchanged.
+- Both jobs reported the expected non-blocking level-C notice: 37
+  bootstrap-draw-dependent differences, not compared across platforms.
+- The exact patch versions are in the job logs, which were not read
+  because they require authentication.
+
+### D.4 Platforms (`platforms`, run `36122217735`)
+
+| Job | Result |
+|---|---|
+| macos-latest, R release | **success**: installation, regression tests, `R CMD check --as-cran` (warnings blocking) |
+| windows-latest, R release | **success**, same steps; cross-platform level-C notice (37 bootstrap-draw differences, not compared) |
+
+**Platform-specific numerical finding (macOS):**
+
+- The macOS job emitted **no** cross-platform-difference notice. Every
+  cross-platform job (Linux, Windows, R 4.1, oldrel-1) emits one, because
+  bootstrap-draw fields are always reported there.
+- This indicates that the runner's LAPACK/BLAS, MASS, nnls and RNG
+  provenance matched the fixture platform. The **strict same-platform
+  level A**, including bootstrap draws, was then selected and passed on a
+  second machine.
+- This is an inference from the annotations; the job log was not read.
+- No level-A failure occurred, so there is nothing to stop for.
+
+### D.5 Linux scientific gate (`linux-regression`, run `36122217641`, ubuntu-latest)
+
+**Both jobs succeeded:**
+
+- **package:** level B/C and `R CMD check`.
+- **frozen-reference:**
+  - frozen outputs recomputed from the committed (normalised) inputs;
+  - benchmark MD5 matches;
+  - same-platform level A, including bootstrap draws;
+  - cross-platform comparison passed;
+  - quick validation step passed;
+  - frozen clone unchanged.
+- The notices are the known level-C differences and the Ubuntu 26
+  migration notice.
+
+### D.6 Local package checks (clean `git archive` of `1e9b365`)
+
+- `R CMD build`: OK, vignette built.
+- `R CMD check --as-cran`: **0 ERRORs, 0 WARNINGs, 2 NOTEs**. These are the
+  new submission with the development version number, and HTML-manual
+  validation skipped because of the local tools.
+- BiocCheck 1.48.1 (information only): **2 ERRORs, 2 WARNINGs, 10 NOTEs**,
+  the known set. The Support Site lookup returned HTTP 404 in this run.
+
+### D.7 Tarball hygiene (exhaustive scan of the `1e9b365` tarball)
+
+- **Contents:** 86 files. Top-level entries are only `DESCRIPTION`,
+  `LICENSE`, `NAMESPACE`, `NEWS.md`, `README.md`, `R/`, `man/`, `data/`,
+  `inst/`, `vignettes/`, `build/` and `tests/`.
+- **No development files:** no phase reports, plans, `PROJECT_STATE.md`,
+  `RELEASE_*`, `CLAUDE.md`, `tools/`, `data-raw/`, `.github/`,
+  `.zenodo.json` or `CITATION.cff`.
+- **No artefacts:** no scratch, check, log or backup files.
+- **Binary content:** every string, name, factor level and attribute of
+  every `.rds`/`.rda` object, including hidden objects in `R/sysdata.rda`,
+  was scanned for absolute paths (`/Users/`, `/private/tmp`, `/home/`,
+  Windows user paths) and for the local user and session identifiers.
+  Result: **0 hits** in 20 binary files.
+- **Text files:** no paths, credentials, tokens or keys.
+- **One observation:** `DESCRIPTION` contains the standard
+  `Packaged: <date>; luce` line, which `R CMD build` always writes with the
+  login name of the user who built the tarball. It is not a path, and every
+  R source tarball has it.
+  - **Options for the release asset (decision):**
+    - (a) accept it;
+    - (b) build the attached release tarball in CI, where it would record
+      the GitHub runner user.
+  - Recommendation: (b), a small CI job at release time. It is not a
+    content issue.
+- **Installation test:** repeated from this tarball in an empty temporary
+  library, and passed. It loaded from the temporary library and ran the
+  fit (`sigma_c` 0.674601, IR 0.0641111), the bootstrap test (p = 0.02,
+  B = 49), a simulation, the domain check (exact match) and the vignette
+  check.
+
+### D.8 Release notes
+
+Revised as approved (B.10): the individual SF items are replaced by the
+general validation statement. The detailed SF records remain in
+`PROJECT_STATE.md`, `STOP_CONDITION_REPORT.md` and `tools/frozen/README.md`.
+
+### D.9 Remaining blockers and decisions before B.4
+
+- **No remaining release blockers** from the plan (C.1–C.4 resolved; C.5
+  and C.6 approved and done).
+- **Decision:** how to build the release tarball asset (D.7: local, or CI
+  for a neutral `Packaged` line).
+- **To confirm at B.4:** the exact R 4.1 and oldrel-1 versions tested,
+  from the job logs (for example `gh run view --log`, with authentication),
+  so the README can state them precisely.
+- **Still pending** (unchanged): the Ubuntu 26 migration from 2026-10-19.
+  If it happens before tagging, rerun the Linux scientific gate (B.12).
