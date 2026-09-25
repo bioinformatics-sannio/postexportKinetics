@@ -17,6 +17,7 @@ only read. It is never modified.
 | `../ci/run_tests_ci.R` | Runs the test suite in CI; publishes failures, skips and reported differences as annotations. |
 | `../ci/diagnose_platform_diffs.R` | Diagnostic only: per-leaf elementwise and normwise differences between two fixture sets. |
 | `../validate_against_manuscript.R` | End-to-end maintainer validation (below). |
+| `normalise_fixture_provenance.R` | One-off, approved normalisation of `names(provenance$frozen_md5)` from absolute to export-relative paths. It verifies the MD5s against a fresh export and proves that nothing else changes. It writes nothing unless every fixture passes. |
 
 ## End-to-end manuscript validation
 
@@ -170,6 +171,13 @@ never set in CI.
 
 A regeneration of the committed fixtures that changes any stored value must
 be reported and reviewed before it is committed.
+
+The fixtures are shipped in the package tarball (`tests/testthat/fixtures/`,
+documented in its `README.md`), so that `R CMD check` runs the regression
+suite. MD5s of frozen files are named by their path relative to the frozen
+export, never by a machine-specific absolute path. The generators and
+`recompute_fixtures.R` do this directly, and the committed fixtures were
+normalised once with `normalise_fixture_provenance.R`.
 
 ## Validation notes (provenance of the frozen tag)
 
