@@ -17,7 +17,7 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7,
                       fig.height = 5, dpi = 72)
 ```
 
-# Overview
+# Introduction
 
 `postexportKinetics` fits a compartment-resolved kinetic model to time
 courses of nuclear and cytoplasmic, unprocessed and processed RNA. It asks
@@ -34,6 +34,30 @@ This vignette works through one small synthetic dataset:
 - fitting, testing, interpretation, multiple testing and exploratory ranking;
 - plotting, simulation and design diagnostics;
 - limitations.
+
+# Installation
+
+Once the package has been accepted and released through Bioconductor, it
+will be installed with `BiocManager`. This route does not work before
+acceptance:
+
+```{r install-bioc, eval = FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("postexportKinetics")
+```
+
+In the current development state, install from GitHub, either the released
+version 0.1.0 or the development line:
+
+```{r install-github, eval = FALSE}
+# install.packages("remotes")
+remotes::install_github("bioinformatics-sannio/postexportKinetics@v0.1.0")
+remotes::install_github("bioinformatics-sannio/postexportKinetics",
+                        build_vignettes = TRUE)
+```
+
+Load the package:
 
 ```{r load}
 library(postexportKinetics)
