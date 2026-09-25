@@ -1,0 +1,38 @@
+{
+  "title": "postexportKinetics: Kinetic Model Comparison for Post-Export RNA Conversion",
+  "upload_type": "software",
+  "version": "0.1.0",
+  "creators": [
+    {"name": "Faretra, Luca"},
+    {"name": "Napolitano, Francesco"},
+    {"name": "Pancione, Massimo"},
+    {"name": "Cerulo, Luigi"}
+  ],
+  "license": "MIT",
+  "access_right": "open",
+  "description": "<p>R package for compartment-resolved four-state kinetic modelling of nuclear and cytoplasmic, unprocessed and processed RNA. It implements a constrained nested-model comparison between a null model without a post-export conversion rate (sigma_c = 0) and a full model with a non-negative post-export conversion rate (sigma_c &gt;= 0), using trapezoidal interval balances, propagated and regularised covariance, whitened non-negative least squares and a replicate-level generative bootstrap with an add-one p-value. It also provides simulation, design diagnostics against the manuscript benchmark, multiple-testing adjustment, exploratory ranking, tidy tables and plots.</p><p>sigma_c is a phenomenological post-export conversion rate: statistical support indicates kinetic patterns consistent with an additional post-export conversion component and does not identify a specific molecular mechanism.</p><p>The numerical core reproduces the frozen manuscript implementation (tag manuscript-revision-v1.0, commit 65c3b7368fb7686bfde3dab857f98c393bb534c5), archived separately at doi:10.5281/zenodo.22944109. The associated manuscript has been submitted and is not yet published. This package is not a Bioconductor release.</p>",
+  "keywords": [
+    "RNA kinetics",
+    "post-export conversion",
+    "compartment-resolved RNA",
+    "nuclear and cytoplasmic RNA",
+    "transcriptomics",
+    "kinetic modelling",
+    "nested model comparison",
+    "bootstrap inference",
+    "R package"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "10.5281/zenodo.22944109",
+      "relation": "isDerivedFrom",
+      "resource_type": "software",
+      "scheme": "doi"
+    },
+    {
+      "identifier": "https://github.com/bioinformatics-sannio/postexportKinetics",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    }
+  ]
+}

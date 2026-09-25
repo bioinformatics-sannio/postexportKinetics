@@ -15,3 +15,4 @@
 ^CITATION\.cff$
 ^vignettes/.*\.html$
 ^RELEASE_CANDIDATE_.*\.md$
+^\.zenodo\.json$
