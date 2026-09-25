@@ -1,7 +1,8 @@
 # Phase 4 Report: batch usability, multiple testing, ranking, plotting, tables
 
-Status: **Phase 4 implemented on branch `phase4-batch`; stopped for review.
-Phase 5 not started. Not merged to `main`.**
+Status: **Phase 4 approved, with the decisions recorded in §12. The
+approved single-test adjustment change is implemented. Phase 5 not
+started.**
 
 - **Baseline:** `main` @ `1965404`. The branch starts from `9de2958`, which
   adds only the approved documentation update to `PROJECT_STATE.md` on top
@@ -15,6 +16,10 @@ Commits on `phase4-batch`:
   tables
 - `e857e4c` Add ggplot2 plot methods for fits, tests, sets, simulations and
   domain checks
+- `1e5188f` Add PHASE4_REPORT.md for review
+- `1d18013` Accept single tests in adjust_postexport_pvalues(); document
+  families, ties and display curves (approved change, decision 7)
+- this report update
 
 **No frozen fixture, ported frozen function (`R/constants.R`,
 `matrix-utils.R`, `covariance.R`, `interval-balance.R`, `fit.R`,
@@ -99,6 +104,16 @@ Existing public fields were neither removed nor renamed. The additions are:
   documented.
 - Raw p-values are never modified (tested). p- and q-values are separate
   columns and fields.
+- **Single tests** (approved decision 7): a single `postexport_test` is
+  accepted and adjusted as a multiple-testing family of size one.
+  - `stats::p.adjust()` is applied normally, so under BH `q = p`.
+  - `q_value` and `adjustment_method` are stored in `inference`, exactly as
+    for sets, and `$adjustment` is added.
+  - The raw p-value is preserved, and no warning is emitted for a family of
+    size one.
+  - An invalid single test gets `q_value = NA`.
+  - The documentation explains that multi-event studies should define their
+    testing family according to the experimental or dataset analysis plan.
 
 ---
 
@@ -151,7 +166,7 @@ Ranking output columns: `rank`, `event`, `status`, `score`, `evidence`,
 
 | Class | Types | Content |
 |---|---|---|
-| `postexport_fit` | `"fit"` | Four states faceted (`N`, `N_s`, `C`, `C_s`, labelled with compartment and processing), replicate observations, time-point means (`show_means`), sampling-time rug and `t_star`. The fitted full (`sigma_c >= 0`) and null (`sigma_c = 0`) models are propagated from the observed first-time mean with the ported frozen `simulate_scheduled_trajectory()` (display only; stated in the caption). Title: "Post-export kinetic model fit". |
+| `postexport_fit` | `"fit"` | Four states faceted (`N`, `N_s`, `C`, `C_s`, labelled with compartment and processing), replicate observations, time-point means (`show_means`), sampling-time rug and `t_star`. The fitted full (`sigma_c >= 0`) and null (`sigma_c = 0`) models are display reconstructions: propagated from the observed replicate-mean state at the first sampled time with the fitted coefficients, using the ported frozen `simulate_scheduled_trajectory()`. The caption and documentation state that inference uses the frozen interval-balance / Crank-Nicolson machinery, not these curves. Title: "Post-export kinetic model fit". |
 | `postexport_test` | `"fit"` (default), `"bootstrap"` | As above; `"bootstrap"` shows the T* histogram with the boundary atom highlighted, observed T, p-value, valid count, failure fraction and `atom.zero` in the subtitle. |
 | `postexport_fit_set` | `"status"` (default), `"boundary"`, `"sigma_IR"` | Counts or scatter; descriptive. |
 | `postexport_test_set` | adds `"sigma_q"`, `"IR_q"`, `"score"` (these require adjustment) | Axes name effect size, fit improvement and adjusted evidence separately. There is no "volcano" type. |
@@ -200,8 +215,9 @@ adjustment.
 
 ## 8. Tests and mutation checks
 
-Local suite (macOS), 15 files: **3,626 expectations, 0 failures, no
-unexpected warnings.**
+Final local suite (macOS), 15 files: **3,654 expectations, 0 failures, 0
+errors, 0 warnings, 0 skipped.** The initial Phase 4 run had 3,626; the
+difference comes from the single-test and caption tests.
 
 - `test-batch.R`, 9 `test_that` blocks:
   - batch results equal single-event results;
@@ -217,12 +233,18 @@ unexpected warnings.**
   - tied scores share the minimum rank in input order; failed events are
     retained;
   - boundary events get score 0; ranking within families;
-  - table columns and roles.
+  - table columns and roles;
+  - a single test adjusted as a family of size one: equals
+    `stats::p.adjust()` for BH, holm and bonferroni, BH gives `q = p`, no
+    warning, raw p and `$raw` preserved, an invalid test gets NA, the tidy
+    table gains `q_value`, and ranking still requires a set.
 - `test-plot.R`, 4 `test_that` blocks (95 expectations):
   - every method returns a buildable `ggplot` and does not modify its
     input;
   - the fit plot has four state facets, two model curves, the rug and a
-    `t_star` line at the right position, with the "display only" caption;
+    `t_star` line at the right position, and a caption stating display reconstruction from the first sampled
+    time and inference by the frozen interval-balance / Crank-Nicolson
+    machinery;
   - bootstrap-plot subtitle content;
   - set plot types, with q required where needed;
   - simulation onset and `t_star` markers at the correct times, no smoothing
@@ -255,7 +277,7 @@ it.
 ## 9. R CMD check
 
 `R CMD build` + `R CMD check --as-cran --no-manual` (macOS, R 4.6.0):
-**0 ERRORs, 0 WARNINGs, 2 NOTEs.**
+**0 ERRORs, 0 WARNINGs, 2 NOTEs** (final code, after the approved change).
 
 - The NOTEs are the new submission and `pandoc` unavailable.
 - Examples OK, including the adjustment, ranking and plot examples; tests OK
@@ -265,16 +287,20 @@ it.
 
 ## 10. BiocCheck (1.48.1, bioconductor.org reachable)
 
-**3 ERRORs, 3 WARNINGs, 12 NOTEs.** These are the same findings as in
-Phase 3.
+Final code: **3 ERRORs, 2 WARNINGs, 12 NOTEs**, counted by BiocCheck
+check. There are no new findings.
+
+The draft of this report listed 3 WARNINGs because it counted the version
+format separately; BiocCheck reports version format under the ERROR only.
+The `set.seed` warning has two occurrences in one check.
 
 | Finding | Type | Status |
 |---|---|---|
-| version not `x.99.z`; version format | ERROR / WARNING | intentional (`0.0.0.9000`) |
+| version not `x.99.z` | ERROR | intentional (`0.0.0.9000`) |
 | no vignettes | ERROR | later phase |
-| Support Site email lookup (HTTP 504) | ERROR | maintainer registration and network |
+| Support Site email lookup (HTTP 404 in the final run, 504 earlier) | ERROR | maintainer registration |
 | no Bioconductor dependencies | WARNING | open (SummarizedExperiment not approved) |
-| `set.seed` (2) | WARNING | frozen orchestrator; public simulator (documented) |
+| `set.seed` (2 occurrences) | WARNING | frozen orchestrator; public simulator (documented) |
 | function length (25 functions > 50 lines) | NOTE | now includes new plot/validation helpers; advisory (decision 9 of Phase 2) |
 | `=`, `paste` in conditions, `<<-`, long lines (6), indentation (22%) | NOTE | frozen code only; new code uses 4 spaces and ≤ 80 characters |
 | R version, biocViews, ORCID, `fnd`, NEWS, bioc-devel | NOTE | metadata |
@@ -283,7 +309,14 @@ Phase 3.
 
 ## 11. Linux CI
 
-Run `36097861393` on `e857e4c` (`ubuntu-latest`, Linux regression
+The run on the final Phase 4 code change (`1d18013`) and the runs on
+`main` are listed in `PROJECT_STATE.md` and in the completion report.
+
+- Run `36099416762` on `1d18013` (final Phase 4 code): **both jobs
+  succeeded**, `package` and `frozen-reference`, with every step
+  successful.
+
+Earlier run `36097861393` on `e857e4c` (`ubuntu-latest`, Linux regression
 workflow): **both jobs succeeded.**
 
 - `package`: deterministic regression tests on committed fixtures and
@@ -306,27 +339,33 @@ The Phase 1–3 regression is green on Linux.
 
 ---
 
-## 12. Unresolved decisions
+## 12. Approved decisions (review of this report)
 
-1. **`event_error` status.** This is a new, package-level status used only in
-   multi-event runs for unexpected R errors outside the frozen code's own
-   failure handling. Please confirm the name and semantics.
-2. **Tie handling.** The minimum ("competition") rank is used, with input
-   order kept for display. Alternatives are dense ranks or first-occurrence
-   ranks.
-3. **Ranking across families.** Ranks are computed within each adjustment
-   family, as the frozen code does per dataset; there is no global rank.
-4. **Default set plot.** The default is `"status"`, which is always
-   available and descriptive. q-based plots require adjustment.
-5. **Display trajectories.** Fitted curves are ODE propagations
-   (`simulate_scheduled_trajectory`, default `lsoda` tolerances) from the
-   observed first-time mean with the fitted coefficients. The bootstrap itself uses Crank–Nicolson null means at the
-   sampled times, which are not plotted by default. Please confirm, or ask
-   for a CN overlay.
-6. **`ggplot2` in Imports** rather than Suggests.
-7. **Single adjusted results.** `adjust_postexport_pvalues()` accepts sets
-   only. A single test has no family, so a single `postexport_test` is
-   rejected.
-8. **Merge.** `phase4-batch` is not merged to `main`, pending review.
-   `PROJECT_STATE.md` will be updated after approval and merge, as
-   instructed.
+1. **`event_error`:** approved.
+   - Used exclusively for unexpected R-level errors while processing one
+     event inside a multi-event run.
+   - Not used for frozen scientific or numerical failure statuses, malformed
+     package-level input, or validation errors, which stop before batch
+     processing.
+   - The original error message is preserved in `error_message`.
+2. **Ties:** `ties.method = "min"` (competition rank). Stable input order is
+   kept for display among ties. First-occurrence and dense ranks are not
+   used.
+3. **Ranking families:** ranks are computed independently within each
+   adjustment group; there is no global rank across distinct families. The
+   documentation states that a common ranking requires one common
+   multiple-testing family before adjustment and ranking.
+4. **Default set plot:** `type = "status"` for fit and test sets.
+5. **Fitted trajectories:**
+   - ODE-based display reconstructions are the default and only fitted
+     trajectory representation in v0.1; there is no Crank-Nicolson overlay.
+   - The caption and documentation state that the curves are display
+     reconstructions propagated from the observed replicate-mean state at
+     the first sampled time with the fitted coefficients, and that
+     inference uses the validated frozen interval-balance / Crank-Nicolson
+     machinery.
+   - Plotting stays separate from inference.
+6. **`ggplot2`** stays in Imports; no other plotting dependencies.
+7. **Single-test adjustment:** changed as approved (§3). A single
+   `postexport_test` is a family of size one, adjusted with
+   `stats::p.adjust()`. Tested.
