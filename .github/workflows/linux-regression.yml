@@ -112,6 +112,10 @@ jobs:
         if: always()
         run: Rscript tools/ci/diagnose_platform_diffs.R tests/testthat/fixtures "$RUNNER_TEMP/fixtures-linux"
 
+      - name: End-to-end manuscript validation script (quick)
+        if: always()
+        run: Rscript tools/validate_against_manuscript.R --frozen-repo "$RUNNER_TEMP/postexport-kinetics" --quick
+
       - name: Verify frozen repository was not modified
         if: always()
         run: |

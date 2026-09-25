@@ -96,6 +96,12 @@ sim <- simulate_postexport_kinetics(
     param_cv = 0.05, noise = list(platform = "gaussian", level = "low"),
     seed = 1)
 plot(sim)
+
+data(postexport_example)
+x <- postexport_data(
+    postexport_example[postexport_example$event == "alt_3", ],
+    time_unit = "min")
+plot(fit_postexport_model(x, t_star = 332))
 x <- postexport_data(sim$observed, time_unit = "min")
 plot(fit_postexport_model(x, t_star = 100))
 }

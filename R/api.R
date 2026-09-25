@@ -340,15 +340,12 @@
 #'   [postexport_control()]
 #'
 #' @examples
-#' set.seed(1)
-#' tab <- expand.grid(replicate = 1:3, time = c(-15, 0, 30, 60, 120))
-#' tab$event <- "event_1"
-#' tab$N <- 60 * exp(-0.03 * pmax(tab$time, 0)) * exp(rnorm(nrow(tab), 0, 0.05))
-#' tab$N_s <- 20 * exp(-0.01 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
-#' tab$C <- 25 * exp(-0.02 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
-#' tab$C_s <- 40 * exp(-0.005 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
-#' x <- postexport_data(tab, time_unit = "min")
-#' fit <- fit_postexport_model(x, t_star = 0)
+#' # Synthetic example data (simulated; see ?postexport_example).
+#' data(postexport_example)
+#' x <- postexport_data(
+#'     postexport_example[postexport_example$event == "alt_3", ],
+#'     time_unit = "min")
+#' fit <- fit_postexport_model(x, t_star = 332)
 #' fit
 #' summary(fit)
 #'
@@ -464,18 +461,19 @@ fit_postexport_model <- function(data, t_star, control = postexport_control(),
 #' @seealso [fit_postexport_model()], [postexport_control()]
 #'
 #' @examples
-#' set.seed(1)
-#' tab <- expand.grid(replicate = 1:3, time = c(-15, 0, 30, 60, 120))
-#' tab$event <- "event_1"
-#' tab$N <- 60 * exp(-0.03 * pmax(tab$time, 0)) * exp(rnorm(nrow(tab), 0, 0.05))
-#' tab$N_s <- 20 * exp(-0.01 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
-#' tab$C <- 25 * exp(-0.02 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
-#' tab$C_s <- 40 * exp(-0.005 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
-#' x <- postexport_data(tab, time_unit = "min")
+#' # Synthetic example data (simulated; see ?postexport_example).
+#' data(postexport_example)
+#' x <- postexport_data(
+#'     postexport_example[postexport_example$event == "alt_3", ],
+#'     time_unit = "min")
+#' # B = 99 is used only to keep the example fast and is not recommended for
+#' # final scientific analysis: use the default B = 1999 or more (the
+#' # smallest attainable p-value is 1 / (B + 1)).
 #' res <- test_postexport_conversion(
-#'     x, t_star = 0, control = postexport_control(B = 19, seed = 1)
+#'     x, t_star = 332, control = postexport_control(B = 99, seed = 1)
 #' )
 #' res
+#' summary(res)
 #'
 #' @export
 test_postexport_conversion <- function(data, t_star,

@@ -7,20 +7,24 @@ Authors@R: c(
     person("Massimo", "Pancione", role = "aut"),
     person("Luigi", "Cerulo", email = "lcerulo@unisannio.it",
            role = c("aut", "cre")))
-Description: Compartment-resolved four-state RNA kinetic modelling of
+Description: Compartment-resolved four-state kinetic modelling of
     nuclear and cytoplasmic, unprocessed and processed RNA. Implements a
     constrained nested-model comparison between a null model without a
     post-export conversion rate and a full model with a non-negative
     post-export conversion rate, using trapezoidal interval balances,
     propagated and regularised measurement covariance, whitened
     non-negative least squares and a replicate-level generative bootstrap
-    with an add-one p-value. The post-export conversion rate is a
-    phenomenological parameter and does not identify a specific molecular
-    mechanism.
+    with an add-one p-value. Also provides simulation with the manuscript
+    simulator and assay-noise models, diagnostic comparison of sampling
+    designs with the manuscript benchmark, multiple-testing adjustment,
+    exploratory candidate ranking, tidy result tables and plots. The
+    post-export conversion rate is a phenomenological parameter and does
+    not identify a specific molecular mechanism.
 License: MIT + file LICENSE
 URL: https://github.com/bioinformatics-sannio/postexportKinetics
 BugReports: https://github.com/bioinformatics-sannio/postexportKinetics/issues
 Encoding: UTF-8
+LazyData: false
 Depends:
     R (>= 4.1.0)
 Imports:
@@ -32,9 +36,12 @@ Imports:
     utils
 Suggests:
     expm,
+    knitr,
+    rmarkdown,
     testthat (>= 3.0.0)
+VignetteBuilder: knitr
 Config/testthat/edition: 3
 biocViews: Software, Transcriptomics, RNASeq, AlternativeSplicing,
-    TimeCourse, StatisticalMethod
+    TimeCourse, StatisticalMethod, MultipleComparison, Visualization
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 8.0.0

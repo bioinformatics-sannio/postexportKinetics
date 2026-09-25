@@ -95,15 +95,12 @@ The fit is on the boundary when \verb{T <= 1e-10 * max(1, |RSS0|, |RSS1|)}
 }
 
 \examples{
-set.seed(1)
-tab <- expand.grid(replicate = 1:3, time = c(-15, 0, 30, 60, 120))
-tab$event <- "event_1"
-tab$N <- 60 * exp(-0.03 * pmax(tab$time, 0)) * exp(rnorm(nrow(tab), 0, 0.05))
-tab$N_s <- 20 * exp(-0.01 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
-tab$C <- 25 * exp(-0.02 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
-tab$C_s <- 40 * exp(-0.005 * tab$time) * exp(rnorm(nrow(tab), 0, 0.05))
-x <- postexport_data(tab, time_unit = "min")
-fit <- fit_postexport_model(x, t_star = 0)
+# Synthetic example data (simulated; see ?postexport_example).
+data(postexport_example)
+x <- postexport_data(
+    postexport_example[postexport_example$event == "alt_3", ],
+    time_unit = "min")
+fit <- fit_postexport_model(x, t_star = 332)
 fit
 summary(fit)
 

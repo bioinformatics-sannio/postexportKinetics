@@ -1,7 +1,7 @@
 ^CLAUDE\.md$
 ^PACKAGE_PLAN\.md$
 ^STOP_CONDITION_REPORT\.md$
-^PHASE[0-9]+_REPORT\.md$
+^PHASE[0-9_]+_REPORT\.md$
 ^RELEASE_CHECKLIST\.md$
 ^LICENSE\.md$
 ^tools$
@@ -12,3 +12,5 @@
 ^\.github$
 ^data-raw$
 ^PROJECT_STATE\.md$
+^CITATION\.cff$
+^vignettes/.*\.html$

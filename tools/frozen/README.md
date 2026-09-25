@@ -16,6 +16,41 @@ only read. It is never modified.
 | `compare_report.R` | Reports bitwise identity and maximum differences, installed package vs fixtures. |
 | `../ci/run_tests_ci.R` | Runs the test suite in CI; publishes failures, skips and reported differences as annotations. |
 | `../ci/diagnose_platform_diffs.R` | Diagnostic only: per-leaf elementwise and normwise differences between two fixture sets. |
+| `../validate_against_manuscript.R` | End-to-end maintainer validation (below). |
+
+## End-to-end manuscript validation
+
+`tools/validate_against_manuscript.R` is the single maintainer entry point.
+Run it from the package root:
+
+```sh
+Rscript tools/validate_against_manuscript.R                  # full (about 1.5 min)
+Rscript tools/validate_against_manuscript.R --quick          # skip same-platform recomputation
+Rscript tools/validate_against_manuscript.R --frozen-repo /path/to/postexport-kinetics
+```
+
+It needs a local clone of `postexport-kinetics` that contains the tag (by
+default `$HOME/postexport-kinetics`) and no network access. It works through
+these steps:
+
+1. Verifies the tag commit.
+2. Exports the tag read-only and installs the package source into a
+   temporary library, so the validated code is the current working tree.
+3. Checks the MD5 provenance of the packaged benchmark table.
+4. Reproduces, through the public API, the deposited `sigma_c` and IR of
+   Ppp1r36dn and Nsd1 and of all 28 mESC events with FDR < 0.10 (1e-8
+   relative).
+5. Runs the regression suite against the committed fixtures.
+6. Unless `--quick`, recomputes the frozen outputs on the current platform
+   and runs the strict same-platform (level A) and cross-platform
+   (levels B/C) comparisons.
+7. Verifies that the frozen repository's HEAD, status and refs are
+   unchanged.
+
+It prints PASS/FAIL per step and an overall equivalence status. It exits
+with status 1 on any failure. It does not rerun the 1,152-configuration
+benchmark. Linux CI runs it with `--quick`, since the frozen-reference job
+already performs step 6.
 
 ## Three kinds of reproducibility
 

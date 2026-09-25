@@ -1,0 +1,38 @@
+bibentry(
+    bibtype = "Manual",
+    header = "To cite the package, please use:",
+    title = paste("postexportKinetics: Kinetic Model Comparison for",
+                  "Post-Export RNA Conversion"),
+    author = c(person("Luca", "Faretra"), person("Francesco", "Napolitano"),
+               person("Massimo", "Pancione"), person("Luigi", "Cerulo")),
+    year = "2026",
+    note = paste("R package version", meta$Version,
+                 "(development version)"),
+    url = "https://github.com/bioinformatics-sannio/postexportKinetics"
+)
+
+bibentry(
+    bibtype = "Unpublished",
+    header = "Please also cite the associated manuscript:",
+    title = paste("Kinetic model comparison identifies RNA trajectories",
+                  "consistent with post-export processing"),
+    author = c(person("Luca", "Faretra"), person("Francesco", "Napolitano"),
+               person("Massimo", "Pancione"), person("Luigi", "Cerulo")),
+    year = "2026",
+    note = paste("Revised manuscript submitted to Bioinformatics",
+                 "(BIOINF-2026-0699)")
+)
+
+bibentry(
+    bibtype = "Misc",
+    header = "The frozen manuscript implementation is archived as:",
+    title = paste("Post-export RNA kinetics: reproducibility code for",
+                  "compartment-resolved kinetic inference"),
+    author = c(person("Luca", "Faretra"), person("Francesco", "Napolitano"),
+               person("Massimo", "Pancione"), person("Luigi", "Cerulo")),
+    year = "2026",
+    note = "Tag manuscript-revision-v1.0",
+    publisher = "Zenodo",
+    doi = "10.5281/zenodo.22944109",
+    url = "https://doi.org/10.5281/zenodo.22944109"
+)

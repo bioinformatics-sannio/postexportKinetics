@@ -87,6 +87,8 @@ define the manuscript procedure; non-default values change the analysis.
 
 \examples{
 postexport_control()
+# A smaller B shortens computation but coarsens the p-value (minimum
+# 1 / (B + 1)); it is not recommended for final scientific analysis.
 postexport_control(B = 199, seed = 1)
 
 }
