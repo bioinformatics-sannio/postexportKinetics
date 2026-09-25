@@ -1,7 +1,7 @@
 # Phase 3 Report: simulation and operational-domain diagnostics
 
-Status: **Phase 3 implemented on branch `phase3-sim`; stopped for review.
-Phase 4 not started. Not merged to `main`.**
+Status: **Phase 3 approved and completed (§16); merged to `main`.
+Phase 4 not started.**
 
 Baseline: `main` @ `d88d4b04f540f00b684cba6925548d02d7295c1b`. The
 validated Phase 1/2 numerical core was not changed.
@@ -455,3 +455,54 @@ simulator and all earlier components.
 8. **`data.table` removal** in the assay ports is proven bitwise identical;
    please confirm it is acceptable as a mechanical edit.
 9. **Merge.** `phase3-sim` is not merged to `main`, pending review.
+
+
+---
+
+## 16. Phase 3 completion: approved decisions and final results
+
+The review decisions were implemented in `56b5970`:
+
+| # | Decision | Implementation |
+|---|---|---|
+| 1 | `horizon` kept (default `max(times)`) | documented as an integration-grid / numerical-reproducibility parameter; it does not change the model |
+| 2 | Deterministic defaults kept | a *Manuscript benchmark settings* section documents `param_cv = 0.05`, 3/5/10 replicates, `origin = 0`, `grid_step = 1`, `horizon = 1000`, `y0 = 0`, `t_star = 332`, onsets −100..100 |
+| 3 | One public seed | unchanged. Benchmark per-gene/per-stream seeding and the ineffective restore (SF-2) are not reproduced; this is documented. |
+| 4 | Nearest designs: return the full set | For every ordering of the design dimensions, the configurations at the nearest evaluated level of each dimension in turn are kept (ties included), and **the union is returned**. Rows are sorted lexicographically for display and carry `differs_in`. The wording is "nearest evaluated benchmark designs (not equivalent designs)". There is no score and no interpolation. |
+| 5 | Design derivation | unchanged (minimum replicates; exactly regular interval; minutes only; no unit conversion) |
+| 6 | Pseudo-shutoff domain | unchanged: `not_benchmarked` with an explanation; no external files |
+| 7 | Vocabulary | the 1:1 mapping to the manuscript labels is documented in both functions |
+| 8 | `data.table` removal | kept |
+
+**New tests:**
+
+- **All tied nearest designs are returned.** For 7 time points × 4
+  replicates at interval 15: intervals 10 and 20, replicates 3 and 5, all
+  platforms and noise levels, 48 configurations.
+- **Per-dimension nearest levels that are not evaluated together.** For
+  16 time points at interval 10, with gaussian/low and 5 replicates, both
+  (20 time points, interval 10) and (15 time points, interval 50) are
+  returned.
+
+**Final results:**
+
+- **Local tests:** 3,448 expectations, 0 failures.
+- **`R CMD check --as-cran --no-manual`:** 0 ERRORs, 0 WARNINGs, 2 NOTEs.
+- **BiocCheck:** bioconductor.org was unreachable from the development
+  machine at completion time (HTTP timeouts), and BiocCheck stopped while
+  fetching its package-status file. It was re-run with only the
+  network-dependent checks disabled (`no-check-deprecated`,
+  `no-check-bioc-help`, `no-check-CRAN`, `no-check-dependencies`): **2
+  ERRORs (version format, no vignettes), 3 WARNINGs (version format, no
+  Bioconductor dependencies, `set.seed` ×2), 10 NOTEs**. These are the same
+  package findings as in §13; the support-site and bioc-devel lookups were
+  not performed.
+- **Linux CI on `phase3-sim`:**
+
+  | Run | Commit | Result |
+  |---|---|---|
+  | 36094542304 | `7635b10` | success |
+  | **36095554467** | **`56b5970`** (final) | **success**, both jobs |
+
+**Final Phase 3 commits:** `3e1c797`, `7635b10`, `756debf`, `56b5970`, and
+this report update.
