@@ -1,0 +1,66 @@
+# macOS and Windows package checks with the current R release
+# (release-candidate requirement). The scientific release gate stays in
+# linux-regression.yml (unchanged).
+#
+# Regression level: selected by the fixture provenance
+# (tests/testthat/helper-fixtures.R). On Windows the committed macOS
+# fixtures are compared at the cross-platform levels B/C. On a macOS arm64
+# runner whose LAPACK/BLAS, MASS, nnls and RNG provenance match the fixtures
+# exactly, the strict level A (including bootstrap draws) applies. A level-A
+# failure there is a finding to report; tolerances and the provenance
+# classification are not changed to make a platform pass.
+
+name: platforms
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  R_KEEP_PKG_SOURCE: yes
+
+jobs:
+  check:
+    name: ${{ matrix.os }} (R release)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck, any::testthat, any::expm
+          needs: check
+
+      - name: Session and linear-algebra provenance
+        run: |
+          Rscript -e 'print(sessionInfo()); print(La_library()); print(La_version()); print(extSoftVersion()["BLAS"]); print(RNGkind()); prov <- readRDS("tests/testthat/fixtures/fx_fit.rds")$provenance; cat("fixture platform:", prov$platform, prov$La_version, basename(prov$La_library), "\n")'
+
+      - name: Install package
+        run: R CMD INSTALL .
+
+      - name: Regression tests (committed fixtures)
+        run: Rscript tools/ci/run_tests_ci.R
+
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          args: 'c("--no-manual", "--as-cran")'
+          error-on: '"warning"'
+          upload-snapshots: false
