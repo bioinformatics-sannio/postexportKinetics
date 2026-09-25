@@ -41,7 +41,25 @@ dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 core_file <- file.path(snap, "commons", "nested_test2.r")
 frozen <- new.env(parent = globalenv())
 sys.source(core_file, envir = frozen)
-core_lines <- readLines(core_file, warn = FALSE)
+
+# Simulation layer (Phase 3): frozen ODE simulator, assay models and the two
+# benchmark-runner objects (parsed individually; no script code is run).
+suppressPackageStartupMessages({
+  library(data.table)
+  library(deSolve)
+})
+sys.source(file.path(snap, "ode_model", "ode.r"), envir = frozen)
+sys.source(file.path(snap, "commons", "platforms.r"), envir = frozen)
+for (e in parse(file.path(snap, "synthetic_dataset",
+                          "run_benchmark_main_corrected_onset_revision.R"),
+                keep.source = FALSE)) {
+  if (is.call(e) && identical(e[[1]], as.name("<-")) &&
+      as.character(e[[2]]) %in% c("RANGE_GAUSS_NOISE",
+                                   "add_platform_noise_main")) {
+    eval(e, envir = frozen)
+  }
+}
+source(file.path("tools", "frozen", "frozen_compositions.R"))
 
 capture <- function(expr) {
   tryCatch(list(value = expr), error = function(e) list(error = conditionMessage(e)))
@@ -69,7 +87,7 @@ current_provenance <- function(committed) {
     BLAS = unname(extSoftVersion()["BLAS"]),
     RNGkind = RNGkind(),
     packages = vapply(
-      c("nnls", "MASS"),
+      c("nnls", "MASS", "deSolve", "data.table"),
       function(p) as.character(utils::packageVersion(p)),
       character(1)
     )
@@ -103,7 +121,12 @@ run_frozen_real <- function(d) {
 recompute_case <- function(fixture, case) {
   inp <- case$input
   if (startsWith(fixture, "fx_source")) {
-    return(list(text = core_lines[inp$lines[1]:inp$lines[2]]))
+    file <- if (is.null(inp$file)) "commons/nested_test2.r" else inp$file
+    txt <- readLines(file.path(snap, file), warn = FALSE)
+    return(list(text = txt[inp$lines[1]:inp$lines[2]]))
+  }
+  if (identical(inp$fun, "frozen_simulation")) {
+    return(capture(frozen_simulation(frozen, inp$args)))
   }
   if (fixture == "fx_test_sigma_nested") {
     return(run_frozen_test(inp$data, inp$t_star, inp$B_n, inp$seed))
@@ -124,7 +147,13 @@ recompute_case <- function(fixture, case) {
   # Phase 2 orchestration cases: the frozen call used seed = NULL after
   # set.seed(pre_seed) on the global RNG.
   if (!is.null(inp$pre_seed)) set.seed(inp$pre_seed)
-  capture(do.call(f, inp$args))
+  out <- capture(do.call(f, inp$args))
+  # Phase 3 assay-noise fixtures store frozen data.table results converted
+  # with as.data.frame() (tools/frozen/make_fixtures_phase3.R).
+  if (fixture == "fx_noise" && is.data.frame(out$value)) {
+    out$value <- as.data.frame(out$value)
+  }
+  out
 }
 
 for (file in sort(list.files(in_dir, pattern = "\\.rds$"))) {
