@@ -449,7 +449,7 @@ code, tolerance or level classification changed.
 `git archive` export of `manuscript-revision-v1.0` (commit marker verified):
 
 - **Check-only mode.** All 16 fixtures verified:
-  - each of the 43 names (3 per fixture, 1 in `fx_orchestrator` and
+  - each of the 44 names (3 per fixture, 1 in `fx_orchestrator` and
     `fx_source_orchestrator`) maps to exactly one export file:
     `commons/nested_test2.r`, `ode_model/ode.r`, `commons/platforms.r`,
     `synthetic_dataset/run_benchmark_main_corrected_onset_revision.R`;
