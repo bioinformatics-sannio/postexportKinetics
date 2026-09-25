@@ -25,9 +25,12 @@ stopifnot(identical(list.files(lib), "postexportKinetics"))
 cat("Installed", basename(tarball), "into empty library", lib, "\n")
 
 script <- tempfile(fileext = ".R")
+# One-line R literals: deparse() wraps long vectors (e.g. several library
+# paths on CI runners) across lines, which would break the generated code.
+lit <- function(x) paste(deparse(x, width.cutoff = 500L), collapse = " ")
 writeLines(c(
-    sprintf("lib <- %s", deparse(normalizePath(lib))),
-    sprintf(".libPaths(c(lib, %s))", deparse(.libPaths())),
+    sprintf("lib <- %s", lit(normalizePath(lib))),
+    sprintf(".libPaths(c(lib, %s))", lit(.libPaths())),
     "library(postexportKinetics)",
     "stopifnot(identical(normalizePath(find.package('postexportKinetics')),",
     "                    normalizePath(file.path(lib, 'postexportKinetics'))))",
