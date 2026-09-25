@@ -57,19 +57,35 @@ jobs:
       - name: Diagnose a dependency-installation failure (category A)
         if: failure()
         run: |
-          Rscript -e '
-            options(repos = c(CRAN = "https://cloud.r-project.org"))
-            if (!requireNamespace("pak", quietly = TRUE))
-              install.packages("pak", repos = sprintf(
-                "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
-                .Platform$pkgType, R.Version()$os, R.Version()$arch))
-            r <- tryCatch({ pak::lockfile_create("deps::.", lockfile = "diag.lock",
-                                                 dependencies = TRUE); "resolved" },
-                          error = function(e) conditionMessage(e))
-            cat("PAK RESOLUTION:", r, "\n")' > diag.log 2>&1 || true
-          tail -c 3000 diag.log > diag_tail.log
-          MSG=$(sed -e 's/%/%25/g' diag_tail.log | awk 'BEGIN{ORS="%0A"}{print}')
-          echo "::error title=R ${{ matrix.r }} dependency resolution::$MSG"
+          cat > diag.R <<'RS'
+          options(repos = c(CRAN = "https://cloud.r-project.org"))
+          ann <- function(title, x) {
+            x <- gsub("%", "%25", paste(utils::tail(x, 25), collapse = "\n"))
+            cat(sprintf("::error title=%s::%s\n", title, gsub("\n", "%0A", x)))
+          }
+          if (!requireNamespace("pak", quietly = TRUE))
+            install.packages("pak", repos = sprintf(
+              "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+              .Platform$pkgType, R.Version()$os, R.Version()$arch))
+          e <- tryCatch({ pak::pkg_deps("deps::."); NULL },
+                        error = function(e) e)
+          ann("pak resolution (R 4.1)", if (is.null(e)) "resolved" else
+            c(conditionMessage(e), if (!is.null(e$parent)) conditionMessage(e$parent)))
+          if (!requireNamespace("BiocManager", quietly = TRUE))
+            install.packages("BiocManager")
+          cat(sprintf("::notice title=Bioconductor version for R %s::%s\n",
+                      getRversion(), as.character(BiocManager::version())))
+          out <- suppressWarnings(system2(
+            file.path(R.home("bin"), "Rscript"),
+            c("-e", shQuote(paste(
+              "BiocManager::install('SummarizedExperiment', ask = FALSE,",
+              "update = FALSE);",
+              "cat('SummarizedExperiment installed:',",
+              "requireNamespace('SummarizedExperiment', quietly = TRUE), '\\n')"))),
+            stdout = TRUE, stderr = TRUE))
+          ann("BiocManager SummarizedExperiment (R 4.1)", out)
+          RS
+          Rscript diag.R 2>&1 | grep -E "^::(error|notice)" || true
 
       - name: Session and dependency versions
         run: |
