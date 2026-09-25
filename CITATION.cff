@@ -1,0 +1,77 @@
+cff-version: 1.2.0
+message: >-
+  If you use this package, please cite it and the associated manuscript.
+  postexportKinetics is released on GitHub and has no DOI of its own; its
+  intended future distribution channel is Bioconductor. The DOI
+  10.5281/zenodo.22944109 identifies the frozen manuscript implementation
+  (postexport-kinetics, tag manuscript-revision-v1.0), listed under
+  references; it is not the DOI of this package.
+type: software
+title: "postexportKinetics: Kinetic Model Comparison for Post-Export RNA Conversion"
+version: "0.99.0"
+license: MIT
+repository-code: "https://github.com/bioinformatics-sannio/postexportKinetics"
+url: "https://github.com/bioinformatics-sannio/postexportKinetics"
+authors:
+  - family-names: "Faretra"
+    given-names: "Luca"
+  - family-names: "Napolitano"
+    given-names: "Francesco"
+  - family-names: "Pancione"
+    given-names: "Massimo"
+  - family-names: "Cerulo"
+    given-names: "Luigi"
+    email: "lcerulo@unisannio.it"
+abstract: >-
+  R package for compartment-resolved four-state kinetic modelling of nuclear
+  and cytoplasmic, unprocessed and processed RNA. It implements a
+  constrained nested-model comparison between a null model without a
+  post-export conversion rate and a full model with a non-negative
+  post-export conversion rate. Estimation uses trapezoidal interval
+  balances, propagated and regularised covariance and whitened non-negative
+  least squares; inference uses a replicate-level generative bootstrap with
+  an add-one p-value. The package also provides simulation, design
+  diagnostics against the manuscript benchmark, multiple-testing adjustment,
+  exploratory ranking and plots. The post-export conversion rate is a
+  phenomenological parameter and does not identify a specific molecular
+  mechanism. Version 0.99.0 is the Bioconductor submission development
+  line (not yet a Bioconductor release); the released GitHub version is
+  0.1.0.
+keywords:
+  - RNA kinetics
+  - post-export conversion
+  - compartment-resolved RNA
+  - transcriptomics
+  - kinetic modelling
+  - bootstrap inference
+  - R package
+references:
+  - type: manuscript
+    title: "Kinetic model comparison identifies RNA trajectories consistent with post-export processing"
+    authors:
+      - family-names: "Faretra"
+        given-names: "Luca"
+      - family-names: "Napolitano"
+        given-names: "Francesco"
+      - family-names: "Pancione"
+        given-names: "Massimo"
+      - family-names: "Cerulo"
+        given-names: "Luigi"
+    year: 2026
+    notes: "Revised manuscript submitted to Bioinformatics (BIOINF-2026-0699)."
+  - type: software
+    title: "Post-export RNA kinetics: reproducibility code for compartment-resolved kinetic inference"
+    version: "manuscript-revision-v1.0"
+    doi: "10.5281/zenodo.22944109"
+    repository-code: "https://github.com/bioinformatics-sannio/postexport-kinetics"
+    license: MIT
+    authors:
+      - family-names: "Faretra"
+        given-names: "Luca"
+      - family-names: "Napolitano"
+        given-names: "Francesco"
+      - family-names: "Pancione"
+        given-names: "Massimo"
+      - family-names: "Cerulo"
+        given-names: "Luigi"
+    notes: "Frozen manuscript implementation (not this package), commit 65c3b7368fb7686bfde3dab857f98c393bb534c5; scientific reference of the package. This DOI is not the DOI of postexportKinetics."
