@@ -4,14 +4,17 @@
 # exact commit in a clean GitHub-hosted environment, records the commit SHA,
 # R version, runner OS, file name and SHA256 (annotation and job summary),
 # inspects the tarball, installs it into an empty library and runs a smoke
-# test, runs the FULL manuscript validation, and uploads the tarball, its
-# checksum and the logs as an artifact. It never tags or publishes anything.
+# test, runs the citation/DOI/version audit and the FULL manuscript
+# validation, and uploads the tarball, its checksum and the logs as an
+# artifact. It runs on release-* branches and on main (so that the release
+# merge commit is built and gated). It never tags or publishes anything;
+# publish-release.yml reuses this artifact for a tag on a gated commit.
 
 name: release-candidate
 
 on:
   push:
-    branches: ['release-*']
+    branches: ['release-*', 'main']
   workflow_dispatch:
 
 permissions:
@@ -76,6 +79,12 @@ jobs:
           test "${PIPESTATUS[0]}" -eq 0
           grep -q "SMOKE TEST PASSED" smoke_install.log && echo "::notice title=Clean installation::SMOKE TEST PASSED"
 
+      - name: Citation, DOI and version audit
+        run: |
+          Rscript tools/ci/citation_audit.R 2>&1 | tee citation_audit.log
+          test "${PIPESTATUS[0]}" -eq 0
+          echo "::notice title=Citation audit::$(tail -1 citation_audit.log)"
+
       - name: Full manuscript validation (not --quick)
         run: |
           git clone --quiet "$FROZEN_REPO_URL" "$RUNNER_TEMP/postexport-kinetics"
@@ -93,6 +102,7 @@ jobs:
             postexportKinetics_*.tar.gz.sha256
             inspect_tarball.log
             smoke_install.log
+            citation_audit.log
             validate_against_manuscript_full.log
           if-no-files-found: warn
           retention-days: 90
