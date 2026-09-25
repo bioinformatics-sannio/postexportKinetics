@@ -48,8 +48,10 @@
 #' example data [postexport_example].
 #'
 #' @section Release status:
-#' Version 0.1.0 is the first public GitHub release; it is not a
-#' Bioconductor release, and the interface may still evolve. Batch execution is
+#' The released version is 0.1.0, the first public GitHub release. Version
+#' 0.99.x is the Bioconductor submission development line; the package is
+#' not yet a Bioconductor release, and the interface may still evolve.
+#' Batch execution is
 #' sequential; parallel execution, rMATS conversion and comparator methods
 #' are not available.
 #'

@@ -1,3 +1,12 @@
+# postexportKinetics 0.99.0
+
+Bioconductor submission development line. It is not a Bioconductor
+release. The released GitHub version remains 0.1.0 (tag `v0.1.0`,
+unchanged). The package has no DOI.
+
+* Version 0.99.0, the pre-release version required for a first
+  Bioconductor submission.
+
 # postexportKinetics 0.1.0
 
 First public release, published as a GitHub software release. It is not a

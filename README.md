@@ -2,9 +2,10 @@
 
 Kinetic model comparison for post-export RNA conversion.
 
-> **Release status.** Version `0.1.0` is the first public GitHub release.
-> It is **not yet a Bioconductor release** (Bioconductor is the intended
-> future distribution channel), and the interface may still evolve.
+> **Release status.** The released version is `0.1.0`, the first public
+> GitHub release (tag `v0.1.0`). The development line `0.99.x` prepares a
+> Bioconductor submission. The package is **not yet a Bioconductor
+> release**, and the interface may still evolve.
 
 `postexportKinetics` fits a compartment-resolved four-state kinetic model to
 time courses of nuclear and cytoplasmic, unprocessed and processed RNA. It
@@ -56,8 +57,8 @@ splicing.
 
 ## Installation
 
-From GitHub, the 0.1.0 release (once the `v0.1.0` tag is published) or the
-current development state:
+From GitHub, either the released version 0.1.0 or the current development
+state (0.99.x, the Bioconductor submission line):
 
 ```r
 # install.packages("remotes")

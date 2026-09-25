@@ -16,7 +16,9 @@ scientific-invariance rules.
 
 ## 2. Package state
 
-- Package: `postexportKinetics` **`0.1.0` (released)**. MIT license.
+- Package: `postexportKinetics`. The released version is **`0.1.0`** (tag
+  `v0.1.0`, immutable). The Bioconductor development line on branch
+  `bioconductor-prep` is **`0.99.0`** (Phase 6A). MIT license.
   Maintainer Luigi Cerulo `<lcerulo@unisannio.it>`.
 - **Released version 0.1.0**, the first public GitHub release:
   - GitHub tag: **`v0.1.0`**, annotated (tag object `303e2e1`);
