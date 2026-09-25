@@ -2,9 +2,9 @@
 
 Kinetic model comparison for post-export RNA conversion.
 
-> **Development status.** This package is under active development
-> (version `0.0.0.9000`). It is not yet a Bioconductor release, and its
-> interface may still change.
+> **Release status.** Version `0.1.0` is the first public GitHub release.
+> It is **not yet a Bioconductor release** (Bioconductor is the intended
+> future distribution channel), and the interface may still evolve.
 
 `postexportKinetics` fits a compartment-resolved four-state kinetic model to
 time courses of nuclear and cytoplasmic, unprocessed and processed RNA. It
@@ -56,10 +56,12 @@ splicing.
 
 ## Installation
 
-Development version from GitHub:
+From GitHub, the 0.1.0 release (once the `v0.1.0` tag is published) or the
+current development state:
 
 ```r
 # install.packages("remotes")
+remotes::install_github("bioinformatics-sannio/postexportKinetics@v0.1.0")
 remotes::install_github("bioinformatics-sannio/postexportKinetics")
 ```
 
@@ -70,10 +72,10 @@ remotes::install_github("bioinformatics-sannio/postexportKinetics",
                         build_vignettes = TRUE)
 ```
 
-- **R version:** `R (>= 4.1.0)` is declared provisionally. The package is
-  currently tested only with the current R release on macOS and Linux.
-  Compatibility with older R releases has not yet been checked.
-- **Runtime dependencies:** `deSolve`, `ggplot2`, `MASS`, `nnls`, `stats`,
+- **R version:** `R (>= 4.1.0)`. Continuous integration tests R 4.1 and
+  the previous minor R release (oldrel-1) on Linux, and the current
+  R release on Linux, macOS and Windows.
+- **Runtime dependencies:** `deSolve`, `ggplot2` (>= 3.4.0), `MASS`, `nnls`, `stats`,
   `utils`.
 - **Suggested:** `knitr` and `rmarkdown` for the vignette; `testthat` and
   `expm` for tests.
@@ -176,12 +178,25 @@ continuous transcription (no intervention) was anti-conservative.
 
 ## Scientific reference
 
-The package reproduces the frozen manuscript implementation:
+The package reproduces the frozen manuscript implementation, which is a
+separate repository:
 
 - repository <https://github.com/bioinformatics-sannio/postexport-kinetics>;
 - tag `manuscript-revision-v1.0`, commit
   `65c3b7368fb7686bfde3dab857f98c393bb534c5`;
 - archived at [doi:10.5281/zenodo.22944109](https://doi.org/10.5281/zenodo.22944109).
+  This DOI identifies the frozen manuscript implementation, **not** this
+  package.
+
+## Distribution and identifiers
+
+- `postexportKinetics` is distributed as GitHub software releases from
+  <https://github.com/bioinformatics-sannio/postexportKinetics>. **The
+  package has no DOI.**
+- Its intended future distribution channel is **Bioconductor**. It is not
+  yet a Bioconductor package.
+- `10.5281/zenodo.22944109` is only the DOI of the frozen manuscript
+  implementation.
 
 The associated manuscript:
 

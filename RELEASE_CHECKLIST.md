@@ -93,32 +93,41 @@ time; nothing below is claimed as done until it has been run.
 - [ ] Version: first public GitHub release `0.1.0` (decided); the
       Bioconductor submission line `0.99.x` comes later and is not used
       for the GitHub release.
-- [ ] Declared minimum R version (`R (>= 4.1.0)`, provisional) verified by
+- [ ] Declared minimum R version (`R (>= 4.1.0)`) verified by
       a compatibility CI job on at least one older supported R release. If
       a concrete incompatibility is found, report it before changing
       `DESCRIPTION`.
 - [ ] `NEWS.md` updated (created in Phase 5).
 - [ ] `CITATION.cff` and `inst/CITATION` versions match `DESCRIPTION`; no
-      package DOI is added before one is minted.
+      package DOI (the package has none; see §6).
 - [ ] Frozen tag and commit recorded in `NEWS.md` and package documentation.
 
 ## 5. GitHub release
 
 - [ ] Tagged release in the package repository.
-- [ ] Release notes include regression summary and known provenance
-      discrepancies (section 1).
+- [ ] Release notes include the regression summary. Known frozen-reference
+      provenance notes (section 1) are referenced generally ("documented in
+      the repository validation records"), not listed individually.
 
-## 6. Zenodo DOI
+## 6. Identifiers and distribution (maintainer policy)
 
-- [ ] Package release archived on Zenodo; DOI recorded in `CITATION.cff` only
-      after it has been minted. The manuscript implementation archive DOI
-      (10.5281/zenodo.22944109) is cited as the frozen scientific reference,
-      not as the package DOI.
+- [ ] **No Zenodo archive and no DOI for postexportKinetics.** Package
+      releases are GitHub releases (tag `vX.Y.Z`). The intended future
+      archival and distribution channel is Bioconductor.
+- [ ] `10.5281/zenodo.22944109` appears only as the DOI of the frozen
+      manuscript implementation (postexport-kinetics,
+      `manuscript-revision-v1.0`). It is never presented as the package DOI.
+- [ ] No `.zenodo.json` in the repository.
 
-## 7. Manuscript Availability update
+## 7. Manuscript Availability update (author action)
 
-- [ ] Manuscript Availability section updated with package repository and
-      DOI once they exist (author action).
+- [ ] The Availability statement cites:
+  - the manuscript-code GitHub repository
+    <https://github.com/bioinformatics-sannio/postexport-kinetics>;
+  - DOI 10.5281/zenodo.22944109;
+  - optionally, the postexportKinetics GitHub repository
+    <https://github.com/bioinformatics-sannio/postexportKinetics> once
+    v0.1.0 is public.
 
 ## 8. Bioconductor submission
 

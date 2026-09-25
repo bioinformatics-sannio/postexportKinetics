@@ -1,6 +1,6 @@
 Package: postexportKinetics
 Title: Kinetic Model Comparison for Post-Export RNA Conversion
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: c(
     person("Luca", "Faretra", role = "aut"),
     person("Francesco", "Napolitano", role = "aut"),
@@ -29,7 +29,7 @@ Depends:
     R (>= 4.1.0)
 Imports:
     deSolve,
-    ggplot2,
+    ggplot2 (>= 3.4.0),
     MASS,
     nnls,
     stats,
@@ -38,7 +38,7 @@ Suggests:
     expm,
     knitr,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.1.7)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 biocViews: Software, Transcriptomics, RNASeq, AlternativeSplicing,

@@ -6,8 +6,7 @@ bibentry(
     author = c(person("Luca", "Faretra"), person("Francesco", "Napolitano"),
                person("Massimo", "Pancione"), person("Luigi", "Cerulo")),
     year = "2026",
-    note = paste("R package version", meta$Version,
-                 "(development version)"),
+    note = paste("R package version", meta$Version),
     url = "https://github.com/bioinformatics-sannio/postexportKinetics"
 )
 
@@ -25,13 +24,16 @@ bibentry(
 
 bibentry(
     bibtype = "Misc",
-    header = "The frozen manuscript implementation is archived as:",
+    header = paste("The frozen manuscript implementation (a separate",
+                    "repository; its DOI is not a DOI of this package):"),
     title = paste("Post-export RNA kinetics: reproducibility code for",
                   "compartment-resolved kinetic inference"),
     author = c(person("Luca", "Faretra"), person("Francesco", "Napolitano"),
                person("Massimo", "Pancione"), person("Luigi", "Cerulo")),
     year = "2026",
-    note = "Tag manuscript-revision-v1.0",
+    note = paste("Frozen manuscript implementation, tag",
+                 "manuscript-revision-v1.0; this DOI is not a DOI of",
+                 "postexportKinetics"),
     publisher = "Zenodo",
     doi = "10.5281/zenodo.22944109",
     url = "https://doi.org/10.5281/zenodo.22944109"

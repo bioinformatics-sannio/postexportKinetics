@@ -16,11 +16,16 @@ scientific-invariance rules.
 
 ## 2. Package state
 
-- Package: `postexportKinetics` `0.0.0.9000` (development). MIT license.
+- Package: `postexportKinetics`. `main` is at `0.0.0.9000`; the release
+  candidate on branch `release-0.1.0` is at **`0.1.0`**. MIT license.
   Maintainer Luigi Cerulo `<lcerulo@unisannio.it>`.
-- **Planned first public GitHub release: `0.1.0`** (approved). The
-  Bioconductor submission line `0.99.0` comes later and is not used for the
-  GitHub release. No release has been created or tagged yet.
+- **First public GitHub release: `0.1.0`** (approved). It has **no DOI**
+  and no Zenodo archive (maintainer policy). The Bioconductor line `0.99.0`
+  comes later and is not used for the GitHub release. No release or tag has
+  been created yet.
+- **RC status:** stop point 1 (B.1–B.3) is approved. B.4–B.9 (version
+  sync, final gates) are on `release-0.1.0` and stop for explicit release
+  approval (`RELEASE_CANDIDATE_0.1.0.md`).
 - Repository: `https://github.com/bioinformatics-sannio/postexportKinetics`.
 - **Current approved main:** `f7e23ee` (Phase 5 merge, `--no-ff`) plus the
   documentation-only commit that updates this file.
@@ -83,9 +88,9 @@ plot(x, ...)           # fit/test ("fit", "bootstrap"), fit_set/test_set
   - vignette `vignette("postexportKinetics")`;
   - `README.md`, `NEWS.md`;
   - `CITATION.cff` and `inst/CITATION` (`citation("postexportKinetics")`):
-    the package (development version, **no package DOI yet**), the submitted
-    manuscript, and the frozen manuscript implementation
-    (`10.5281/zenodo.22944109`, which is not the package DOI).
+    the package (**no package DOI**), the submitted manuscript, and the
+    frozen manuscript implementation (`10.5281/zenodo.22944109`, which is
+    not the package DOI).
 - **Maintainer validation:** `tools/validate_against_manuscript.R` (§5a).
 - **Not yet available:** parallel execution, rMATS conversion, comparators.
   SummarizedExperiment input is **deferred** (§5a).
@@ -94,9 +99,10 @@ plot(x, ...)           # fit/test ("fit", "bootstrap"), fit_set/test_set
   - Suggests: expm, knitr, rmarkdown, testthat;
   - VignetteBuilder: knitr.
 - **Metadata:**
-  - `Depends: R (>= 4.1.0)` is **provisional**, pending a compatibility CI
-    job on an older R release before `0.1.0`. It is tested only with the
-    current R release.
+  - `Depends: R (>= 4.1.0)` is **supported by CI evidence**: the r-compat
+    workflow (R 4.1, oldrel-1) is green on the release branch. The minimums
+    `ggplot2 (>= 3.4.0)` and `testthat (>= 3.1.7)` are declared on the
+    release branch.
   - biocViews: Software, Transcriptomics, RNASeq, AlternativeSplicing,
     TimeCourse, StatisticalMethod, **MultipleComparison**, Visualization.
   - `LazyData: false`.
@@ -192,10 +198,15 @@ plot(x, ...)           # fit/test ("fit", "bootstrap"), fit_set/test_set
   - Layout B (compartment libraries) needs pairing, normalisation and
     mapping decisions.
   - Revisit at Bioconductor submission preparation.
-- **Citation:** the manuscript stays unpublished/submitted, and there is no
-  package DOI yet. `10.5281/zenodo.22944109` is the frozen manuscript
-  implementation. A package DOI will be added only after the first GitHub
-  release is archived on Zenodo.
+- **Citation and identifiers** (maintainer policy, superseding the earlier
+  Zenodo plan):
+  - the manuscript stays unpublished/submitted;
+  - **postexportKinetics gets no Zenodo archive and no DOI.** Releases are
+    GitHub releases, and the intended future distribution channel is
+    Bioconductor;
+  - `10.5281/zenodo.22944109` is only the DOI of the frozen manuscript
+    implementation and is never presented as the package DOI;
+  - there is no `.zenodo.json`.
 - **Manuscript validation:** `tools/validate_against_manuscript.R`,
   documented in `tools/frozen/README.md`. It exits 1 on any failure. The
   full run is required for release; Linux CI runs it with `--quick`.
@@ -269,8 +280,8 @@ Phase 5 final counts (BiocCheck 1.48.1): **2 ERRORs, 2 WARNINGs, 10 NOTEs**.
 
 ## 10. Next phase
 
-**Release candidate `0.1.0`.** A separate release-candidate plan must be
-prepared and approved before any work begins. It will cover:
+**Release candidate `0.1.0`**, in progress on branch `release-0.1.0` (see
+`RELEASE_CANDIDATE_0.1.0.md`). It covers:
 
 - the version bump to `0.1.0`;
 - compatibility CI on at least one older R release, to verify the
@@ -280,8 +291,7 @@ prepared and approved before any work begins. It will cover:
 - the full `tools/validate_against_manuscript.R`;
 - README, CITATION and NEWS synchronisation;
 - release tarball inspection;
-- GitHub release preparation;
-- Zenodo archival planning.
+- GitHub release preparation (no Zenodo archival: maintainer policy).
 
 **Not yet:**
 

@@ -43,6 +43,9 @@ jobs:
           r-version: release
           use-public-rspm: true
 
+      - name: Record R provenance
+        run: Rscript tools/ci/record_r_provenance.R "linux-regression package"
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck, any::testthat, any::expm
@@ -74,6 +77,9 @@ jobs:
         with:
           r-version: release
           use-public-rspm: true
+
+      - name: Record R provenance
+        run: Rscript tools/ci/record_r_provenance.R "linux-regression frozen-reference"
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:

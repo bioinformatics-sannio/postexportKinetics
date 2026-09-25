@@ -47,8 +47,9 @@
 #' See the vignette, `vignette("postexportKinetics")`, and the synthetic
 #' example data [postexport_example].
 #'
-#' @section Development status:
-#' Development version, not yet a Bioconductor release. Batch execution is
+#' @section Release status:
+#' Version 0.1.0 is the first public GitHub release; it is not a
+#' Bioconductor release, and the interface may still evolve. Batch execution is
 #' sequential; parallel execution, rMATS conversion and comparator methods
 #' are not available.
 #'

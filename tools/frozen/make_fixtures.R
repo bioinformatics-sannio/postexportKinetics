@@ -67,14 +67,18 @@ sys.source(platforms_file, envir = sim)
 # Provenance
 # -----------------------------------------------------------------------------
 
+# MD5 of frozen files, named by their path relative to the export (never by
+# a machine-specific absolute path).
+frozen_md5 <- function(files) {
+  md5 <- tools::md5sum(files)
+  names(md5) <- substring(normalizePath(files), nchar(snap) + 2L)
+  md5
+}
+
 provenance <- list(
   frozen_tag = FROZEN_TAG,
   frozen_commit = FROZEN_COMMIT,
-  frozen_md5 = tools::md5sum(c(
-    core = core_file,
-    ode = ode_file,
-    platforms = platforms_file
-  )),
+  frozen_md5 = frozen_md5(c(core_file, ode_file, platforms_file)),
   generated_by = "tools/frozen/make_fixtures.R",
   generated_at = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"),
   R_version = R.version.string,
