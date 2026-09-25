@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # =============================================================================
 # plot() methods (ggplot2). Plotting only reads result objects: it never
 # modifies them, never refits and never runs inference. Fitted curves are

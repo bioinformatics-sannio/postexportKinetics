@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # Operational-domain diagnostics against the packaged manuscript benchmark
 # table (built from synthetic_dataset/benchmark_main_corrected_onset_summary.tsv
 # of the frozen tag by data-raw/benchmark_domain.R).

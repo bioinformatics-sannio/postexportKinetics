@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # =============================================================================
 # Public inference API: fit_postexport_model() and test_postexport_conversion()
 #

@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # Regression: whitened NNLS full/null fits, statistic and diagnostics against
 # the frozen core. Tolerance tier T2; ranks are integers and compared exactly
 # (class integer is enforced by compare_close()).

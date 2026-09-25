@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # =============================================================================
 # Public simulation API: simulate_postexport_kinetics()
 #

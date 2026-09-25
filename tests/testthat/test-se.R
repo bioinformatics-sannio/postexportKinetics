@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # SummarizedExperiment (layout A) input: conversion, errors, and identity of
 # all downstream results with the canonical wide-table input.
 

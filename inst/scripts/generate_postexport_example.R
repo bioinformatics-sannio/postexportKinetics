@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # =============================================================================
 # Provenance of the example data distributed with postexportKinetics:
 #   data/postexport_example.rda          observations (wide format)

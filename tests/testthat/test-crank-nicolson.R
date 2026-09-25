@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # Regression: kinetic matrix, Crank-Nicolson step and null trajectory against
 # the frozen core. Tolerance tier T1 (small linear solves, no
 # eigendecomposition).

@@ -1,3 +1,5 @@
+# Assisted-by: Claude Code (Anthropic)
+
 #' postexportKinetics: kinetic model comparison for post-export RNA conversion
 #'
 #' Compartment-resolved four-state RNA kinetics (`N`, `N_s`, `C`, `C_s`) and a

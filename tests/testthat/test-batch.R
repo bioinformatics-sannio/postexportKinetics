@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # Batch usability, multiple-testing adjustment, exploratory ranking and tidy
 # tables. None of these change the single-event computation.
 

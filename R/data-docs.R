@@ -1,3 +1,5 @@
+# Assisted-by: Claude Code (Anthropic)
+
 #' Small synthetic example dataset
 #'
 #' Simulated compartment-resolved time courses for eight events, in the

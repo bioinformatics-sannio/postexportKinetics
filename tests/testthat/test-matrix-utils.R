@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # Regression: make_spd() and inverse_sqrt_matrix() against the frozen core.
 # Tolerance tier T2 (eigendecomposition).
 

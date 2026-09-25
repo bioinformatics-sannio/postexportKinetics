@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # plot() methods: return ggplot objects, never modify their input, show the
 # required elements and use cautious wording. Image snapshots are not used.
 
