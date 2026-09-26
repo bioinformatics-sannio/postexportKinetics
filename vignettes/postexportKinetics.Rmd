@@ -13,10 +13,8 @@ vignette: >
 ---
 
 ```{r setup, include = FALSE}
-# Figures use base R's svg() device (vector output) so that the rendered
-# vignette is byte-reproducible across builds; no extra dependency.
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7,
-                      fig.height = 5, dpi = 72, dev = "svg")
+                      fig.height = 5, dpi = 72)
 ```
 
 # Introduction
