@@ -116,9 +116,17 @@ for (i in seq_along(pay_a)) {
                 paste(dim(ib), collapse = "x"))
     }
     if (!identical(ia, ib)) {
+        # Diagnostic detail only (the verdict is DIFFERENT regardless):
+        # where the differing pixels are and how large the differences are.
+        dpix <- apply(ia != ib, c(1, 2), any)
+        rr <- range(which(rowSums(dpix) > 0))
+        cc <- range(which(colSums(dpix) > 0))
         verdict("DIFFERENT", "embedded PNG #", i, " pixels differ (",
-                sum(ia != ib), " values; dim ",
-                paste(dim(ia), collapse = "x"), ")")
+                sum(ia != ib), " values in ", sum(dpix), " pixels; dim ",
+                paste(dim(ia), collapse = "x"), "; bounding box rows ",
+                rr[1], "-", rr[2], ", cols ", cc[1], "-", cc[2],
+                "; max abs difference ",
+                signif(max(abs(ia - ib)), 3), ")")
     }
 }
 verdict("VIGNETTE_PNG_ENCODING_ONLY",
