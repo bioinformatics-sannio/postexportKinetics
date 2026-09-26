@@ -1,7 +1,8 @@
 # Bioconductor readiness report (Phase 6C/6D)
 
-Status: **deterministic-rendering attempt (§13) FAILED the repeated-build
-proof. Stopped before trying another device, as instructed. NO-GO (§11).**
+Status: **the base `svg` attempt (§13) is reverted; the base `pdf`
+experiment (§14) is unsuitable and reverted. Stopped before svglite, as
+instructed. NO-GO (§11).**
 
 - The Contributions issue has not been opened, and nothing was submitted.
 - The GitHub default branch is unchanged (`main`).
@@ -678,3 +679,62 @@ adding this section shows whether it recurs.
   3. Another policy for documentation-build reproducibility.
 - Until a decision is made: no merge, no default-branch switch, no
   Contributions issue.
+
+## 14. Base R `pdf()` device experiment (2026-09-26)
+
+### 14.1 Setup
+
+- **Base `svg` reverted on the development branch.** Commit `b899ab3`
+  (revert of `9159c6d`, approved) restores the portable PNG vignette; the
+  vignette is byte-identical to its pre-SVG state.
+  - `devel` was refreshed to **`a8239a9`** ← Source-Commit **`b899ab3`**,
+    tree `45ba02e…` (identical to the earlier `05ba5a8` tree).
+  - It verifies A–E locally and in CI (bioc-devel run `36230234646`,
+    `package-branch` job: B strict IDENTICAL; BiocCheckGitClone 0/0/0).
+- **Experiment only**, on the separate branch `experiment/vignette-pdf`:
+  - `5161328` sets `knitr::opts_chunk$set(..., dev = "pdf")` in the
+    vignette setup chunk;
+  - the branch tip reverts it.
+  - Nothing from the experiment is on `bioconductor-prep` or `devel`.
+
+### 14.2 Findings
+
+| Question | Result |
+|---|---|
+| How figures appear in the html_vignette | pandoc embeds each figure as `<embed role="img" src="data:application/pdf;base64,…">` (5 figures) |
+| Renders correctly in a standard browser context | **No (as tested).** WebKit (macOS QuickLook, the Safari engine) renders only an **empty placeholder frame** for the embedded PDF. Display depends on a browser PDF plugin accepting `data:` PDFs inside `<embed>`; this is not guaranteed in standard browsers, mobile browsers or static vignette viewers. |
+| `R CMD build` / `R CMD check` | build and vignette re-build succeed: locally, on Linux, **macOS and Windows** (platforms run `36230359619` success) and in the Bioconductor devel container (`R CMD check` OK); no extra system software needed |
+| Repeated-build determinism (Bioconductor devel container, 1 + 10 builds; bioc-devel run `36230359639`) | **0 of 10 strictly IDENTICAL** |
+| PDF byte differences (two local builds, decoded) | Surrounding HTML identical once the PDF payloads are masked. Every one of the 5 PDFs differs in exactly 4 bytes, all inside **`/CreationDate (D:…)` and `/ModDate (D:…)`**. All graphical content is byte-identical. R's `pdf()` always writes these timestamps. |
+| BiocCheck on the experiment branch | the BiocCheck step exited without its summary annotation, apparently a BiocCheck/network crash like the earlier bioconductor.org cache failures; not investigated further (experiment only) |
+
+- **Conclusion:** base `pdf()` is **not suitable**. The figures are not
+  reliably renderable inside an HTML vignette, and builds are never strictly
+  identical, because of PDF creation/modification timestamps; the graphical
+  content itself is identical.
+- As instructed, no PDF-metadata exception was introduced, check B was not
+  weakened, the experiment was reverted, and svglite was not tried.
+
+### 14.3 New localisation of the original PNG nondeterminism
+
+The PNG baseline run on `b899ab3` (bioc-devel run `36230234646`,
+`vignette-determinism` job: **5 of 10 identical**) captured the pixel
+differences with the new diagnostic.
+
+- Every differing build has the **same** difference: embedded PNG #5 (the
+  operational-domain plot, 360×504×3), **3,355 values in 1,183 pixels**.
+  - **Bounding box: rows 323–329, columns 206–425**, a thin horizontal
+    strip about 7 px high near the bottom of the figure.
+  - Maximum absolute difference 0.996 (full intensity).
+- So the rendering alternates between **two stable variants of one text
+  line** (axis title, legend or caption region). This is text rasterisation
+  in the container's cairo/font stack, not plotted data.
+- The domain-plot strings are plain ASCII, so non-ASCII font fallback is
+  ruled out.
+- **Options (for decision):**
+  1. **svglite** (Suggests, vignette only; writes SVG without cairo, then the
+     same 10-build proof and platform checks).
+  2. Stay on PNG and pin the text rendering. Examples: an explicit font
+     family for the vignette figures, a knitr `dev.args` / `png(type = …)`
+     choice, or `ragg` if you approve it.
+  3. Another policy.
