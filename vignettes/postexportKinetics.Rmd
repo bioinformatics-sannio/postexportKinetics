@@ -13,8 +13,9 @@ vignette: >
 ---
 
 ```{r setup, include = FALSE}
+# EXPERIMENT (branch experiment/vignette-pdf only): base R pdf() device.
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7,
-                      fig.height = 5, dpi = 72)
+                      fig.height = 5, dpi = 72, dev = "pdf")
 ```
 
 # Introduction
