@@ -1,9 +1,14 @@
 # Bioconductor readiness report (Phase 6C/6D)
 
-Status: **check B RESOLVED and CLOSED (§17). `set.seed` accepted with a
-reviewer-exception request (§18). The ONLY remaining blocker is Watched
-Tags** (maintainer): networked BiocCheck of 2026-09-26 still reports
-`checkWatchedTag`. NO-GO until 0 ERRORs.
+Status: **GO FOR FINAL SUBMISSION PREPARATION (§19).**
+
+- Full networked BiocCheck: **0 ERRORs / 1 WARNING (`set.seed`, accepted
+  with a reviewer-exception request) / 10 NOTEs**.
+- `bioconductor-prep` is merged into `main` (`236f509`), and all workflows
+  are green.
+- `devel` is verified A–E.
+- **Stopped for explicit approval to switch the default branch and
+  submit.** The Contributions issue is not opened.
 
 - The Contributions issue has not been opened, and nothing was submitted.
 - The GitHub default branch is unchanged (`main`).
@@ -1070,3 +1075,91 @@ Tags and a full networked BiocCheck shows **0 ERRORs**.
    - E PASS.
 3. Stop before changing the GitHub default branch. No Contributions issue,
    no change to `v0.1.0`, no `set.seed` change, no frozen-port change.
+
+## 19. Final preparation: 0-ERROR BiocCheck, merge to main, devel verification (2026-09-26)
+
+### 19.1 Full networked BiocCheck (after the maintainer set Watched Tags)
+
+BiocCheck 1.48.1, bioconductor.org reachable, run on the `devel` tarball
+(`d099ac7` ← `deccdde`, content identical to `main`):
+
+- "Maintainer is registered at support site."
+- "**Package is in the Support Site Watched Tags.**"
+- **Result: 0 ERRORs | 1 WARNING | 10 NOTEs.**
+
+| Level | Finding |
+|---|---|
+| WARNING | `checkCodingPractice`: "Remove set.seed usage (found 2 times)": `R/inference.R` (frozen orchestrator) and `R/simulate.R` (explicit user seed). **Accepted, with justification and a reviewer-exception request** (§7.1, §18). |
+| NOTE | R version dependency 4.1.0 → 4.6.0 (kept by decision; CI-verified on R 4.1.3) |
+| NOTE | ORCID for the maintainer (optional; not invented) |
+| NOTE | no `fnd` role (optional) |
+| NOTE | `=` assignment (frozen `assay.R`) |
+| NOTE | `paste` in condition signals (5 frozen sites) |
+| NOTE | `<<-` (2, frozen `inference.R`) |
+| NOTE | 26 functions > 50 lines (13 frozen; 13 package-authored) |
+| NOTE | 6 lines > 80 characters (frozen `ode.R`) |
+| NOTE | 4-space indentation, 1,686 lines (frozen ports; argument-alignment continuation lines) |
+| NOTE | bioc-devel subscription cannot be determined by BiocCheck (maintainer subscribed) |
+
+### 19.2 Merge to main
+
+- **`main` = `236f5091a7624361804fe1259dd533b03c453490`**: `--no-ff` merge
+  of `bioconductor-prep` (`4b97549`) into `main` (`de5f722`), pushed. The
+  merged tree equals the `bioconductor-prep` tree. This report update is
+  added on top as documentation only.
+- `v0.1.0` (→ `04c4407`) is untouched.
+- The frozen ports, fixtures, `R/sysdata.rda` and data are unchanged versus
+  `v0.1.0`.
+
+### 19.3 CI on `main` @ `236f509` (all green)
+
+| Workflow | Run | Result |
+|---|---|---|
+| linux-regression (frozen-reference scientific gate; package) | `36239890846` | **success** (frozen-reference, package) |
+| platforms (macOS, Windows; R 4.6.1) | `36239890842` | **success** |
+| r-compat (R 4.1.3 / Bioconductor 3.14; R 4.5.3) | `36239890879` | **success** |
+| bioc-devel (`bioc-devel`, `vignette-determinism`, `package-branch`) | `36239890852` | **success**: vignette determinism **10 of 10** strictly identical; package-branch A–E PASS; check-B rule tests 14/14 |
+| release-candidate (`main`) | `36239890868` | **success**: tarball inspection PASSED; clean installation PASSED; citation audit PASSED (0.99.0, no package DOI); **full manuscript validation EQUIVALENT**; CI tarball `postexportKinetics_0.99.0.tar.gz`, sha256 `78a1ab36c0d5443117b9217fded18c17bbfd8fc0d7559033db4af452ef6026c…` (see the run annotation for the full digest) |
+
+The container BiocCheck annotation of the bioc-devel job was not retrieved:
+the GitHub API rate limit was reached. The job succeeded; its gate fails on
+any ERROR other than the maintainer-side checks. The authoritative
+networked result is §19.1.
+
+### 19.4 `devel` re-export and verification
+
+- **Re-export from the final `main` commit.** `make_package_branch.sh
+  236f509` reported "already the package-only export of this content (tree
+  `5ccfbac…`)", so no new commit was created. The package-distribution
+  tree of `main` `236f509`, computed independently, is exactly
+  `5ccfbac4851b6550998fb7e6ecee6d063f0dabf9`, the tree of `devel`. There
+  is no package-distribution difference between `deccdde` and `236f509`.
+- **Mapping:** **`devel` = `d099ac79d1bacc8edd24a5d9aa4f3ffaea67ee0f`**, with
+  `Source-Commit: deccddef91a3cd9858244e280a4194e857299874`. `deccdde` is
+  an ancestor of `main` `236f509`, whose export tree is identical.
+- **`verify_package_branch.sh devel`**, locally and in CI (run
+  `36239890852`):
+
+| Check | Result |
+|---|---|
+| A tree | **PASS** (`5ccfbac…`) |
+| B tarball | **strict PASS** (IDENTICAL, 90 files; only `Packaged:` differs) |
+| C hygiene | **PASS** |
+| D BiocCheckGitClone | **0 ERRORS / 0 WARNINGS / 0 NOTES** |
+| E version / citation / API | **PASS** (0.99.0; 10 exports) |
+
+### 19.5 Technical readiness
+
+**GO FOR FINAL SUBMISSION PREPARATION.**
+
+Remaining steps, **each requiring explicit approval**:
+
+1. The maintainer switches the GitHub default branch to `devel` (§8,
+   steps 4–5).
+2. Open the Bioconductor Contributions issue with the §9 text. It states
+   honestly: R CMD check 0/0; BiocCheck 0 ERRORs / 1 WARNING (`set.seed`,
+   exception requested); the AI-assistance disclosure; the frozen DOI
+   labelled correctly; no package DOI.
+
+**Not done:** default-branch switch, Contributions issue, any `set.seed`
+change, any `v0.1.0` or frozen-code change.
