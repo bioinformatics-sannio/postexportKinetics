@@ -1,10 +1,9 @@
 # Bioconductor readiness report (Phase 6C/6D)
 
-Status: **check B RESOLVED (§17)**: explicit legend guide order in the
-operational-domain plot. The vignette is 10/10 byte-identical over repeated
-builds in the Bioconductor devel container, and B passes strictly.
-**Still NO-GO:** Watched Tags (maintainer) and the `set.seed` bioc-devel
-policy answer are open. Stopped for review.
+Status: **check B RESOLVED and CLOSED (§17). `set.seed` accepted with a
+reviewer-exception request (§18). The ONLY remaining blocker is Watched
+Tags** (maintainer): networked BiocCheck of 2026-09-26 still reports
+`checkWatchedTag`. NO-GO until 0 ERRORs.
 
 - The Contributions issue has not been opened, and nothing was submitted.
 - The GitHub default branch is unchanged (`main`).
@@ -251,9 +250,15 @@ Confirm the following by editing each check box to '[x]'
   Package Guidelines.
 - [x] I understand Bioconductor Package Naming Policy and acknowledge
   Bioconductor may retain use of package name.
-- [ ] I understand that a minimum requirement for package acceptance
+- [x] I understand that a minimum requirement for package acceptance
   is to pass R CMD check and R CMD BiocCheck with no ERROR or WARNINGS.
-  ...   <-- see note A below
+  Passing these checks does not result in automatic acceptance. The
+  package will then undergo a formal review and recommendations for
+  acceptance regarding other Bioconductor standards will be addressed.
+  **Current status, stated explicitly:** R CMD check: 0 ERRORs /
+  0 WARNINGs. BiocCheck: 0 ERRORs / **1 WARNING** (`set.seed`, 2 sites).
+  We request a reviewer exception for this intentional, documented
+  warning; the justification is under "Additional information" below.
 - [x] I understand Bioconductor's AI and Third Party Code policy and will
   acknowledge accordingly if applicable.   <-- see note B below
 - [x] My package addresses statistical or bioinformatic issues related
@@ -285,10 +290,13 @@ molecular mechanism. SummarizedExperiment input is supported through
 postexport_data_from_se() (four state assays, events by destructive
 samples).
 
-- R CMD check: OK (Bioconductor devel). BiocCheckGitClone: 0/0/0.
-  BiocCheck: 0 ERRORs once the Watched Tag is set; 1 WARNING (set.seed),
-  justified below; NOTEs relate to the verbatim ported scientific core.
-- set.seed justification: [text of section 7.1]
+- R CMD check: 0 ERRORs / 0 WARNINGs (Bioconductor devel: Status OK).
+  BiocCheckGitClone: 0 / 0 / 0.
+- BiocCheck: 0 ERRORs / 1 WARNING (set.seed) / NOTEs, listed below. The
+  WARNING is intentional and documented, and we request a reviewer
+  exception. The NOTEs relate mainly to the verbatim-ported scientific
+  core. [Exact counts to be filled from the final networked BiocCheck.]
+- set.seed justification (reviewer exception request): [text of section 7.1]
 - Frozen-code style: [table of section 7.2]
 - Provenance: the numerical core is ported verbatim from the frozen
   manuscript implementation (github.com/bioinformatics-sannio/postexport-kinetics,
@@ -304,29 +312,20 @@ samples).
   regression-tested against it.
 ```
 
-**Note A (blocking decision).** The template states that "a minimum
-requirement for package acceptance is to pass R CMD check and R CMD
-BiocCheck with no ERROR or WARNINGS".
+**Note A (the "no ERROR or WARNINGS" checklist item): RESOLVED BY
+DECISION (2026-09-26).**
 
-- **Status: AWAITING bioc-devel policy guidance.** The maintainer will ask
-  bioc-devel whether the two justified `set.seed` uses (§7.1) are acceptable
-  for a new-package submission.
-- Until an answer is received:
-  - both implementations stay unchanged;
-  - the WARNING is reported;
-  - this box stays **unticked**;
-  - the issue is not opened.
-- The `set.seed` WARNING remains by decision, so this box cannot honestly be
-  ticked without qualification.
-- **Options:**
-  - (a) submit with the WARNING and the §7.1 justification, leaving the box
-    unticked or annotated, and accept reviewer risk;
-  - (b) approve a change that removes the WARNING. This would be a
-    behaviour/API decision: for example, dropping the simulator's explicit
-    seed argument, or changing how the frozen orchestrator's seeding is
-    reached. It is not recommended without scientific review.
-- The frozen orchestrator's `set.seed` cannot be removed without changing
-  validated behaviour.
+- `set.seed` status: **accepted for submission with explicit
+  justification and a reviewer-exception request; no longer a blocker.**
+  - It is no longer awaiting bioc-devel guidance.
+  - Both implementations stay unchanged: the frozen orchestrator exactly;
+    `simulate_postexport_kinetics(seed =)`; caller-RNG restoration; the
+    `seed = NULL` semantics.
+- **Checkbox:** ticked as a statement of *understanding* of the
+  requirement. The adjacent text states the actual status explicitly (R CMD
+  check 0/0; BiocCheck 0 ERRORs / 1 WARNING) and requests the exception, so
+  the item is not represented falsely. BiocCheck is never described as
+  having zero warnings.
 
 **Note B (blocking decision).** The AI and Third Party Code policy says:
 
@@ -390,9 +389,8 @@ submission-policy question is unresolved. Open items, in order:
      - (c) another policy.
 2. **Watched Tags:** the maintainer confirms completion. Then re-run the
    full networked BiocCheck and require **0 ERRORs**.
-3. **`set.seed`:** **awaiting bioc-devel policy guidance** (Note A). No GO
-   before an answer, and no ticked checkbox whose literal statement is
-   false.
+3. **`set.seed`:** accepted for submission with explicit justification and
+   a reviewer-exception request (Note A); no longer a blocker.
 4. After items 1–3: merge `bioconductor-prep` into `main` (`--no-ff`);
    re-export and verify `devel` from the final commit (all of A–E); all
    workflows green.
@@ -534,7 +532,7 @@ The change is comment-only:
 reachable):
 
 - ERROR `checkWatchedTag` (maintainer, pending);
-- WARNING `set.seed` (awaiting bioc-devel guidance);
+- WARNING `set.seed` (at the time awaiting guidance; since 2026-09-26 accepted with a reviewer-exception request, see §18);
 - NOTEs as in §7.
 
 "Maintainer is registered at support site." The Bioconductor devel
@@ -578,7 +576,7 @@ the maintainer confirms Watched Tags.
 | Watched Tags | pending until the maintainer confirms completion |
 | Default-branch switch | pending |
 | ORCID / funder | optional |
-| `set.seed` policy question to bioc-devel | **awaiting guidance** |
+| `set.seed` | accepted with justification and reviewer-exception request (§18) |
 
 ## 13. Deterministic vignette rendering: option (a), first device attempt (2026-09-26)
 
@@ -807,7 +805,7 @@ Locally on macOS, every configuration gives 1 distinct output (3 of 3).
   0.99.0 line.
 - **Package:** no plot method, data, text, calculation or dependency
   change.
-- **Status:** Watched Tags is pending, and `set.seed` is awaiting bioc-devel
+- **Status (at the time; superseded by §18):** Watched Tags is pending, and `set.seed` is awaiting bioc-devel
   guidance. The Contributions issue is not opened.
 
 ## 16. Text/grob diagnostic of figure #5: before or during rasterisation? (2026-09-26)
@@ -898,7 +896,7 @@ unstable 7-px strip (rows 323–329) found in §14.3.
   by this diagnostic.
 - Check B is not weakened; no package, plotting, dependency or scientific
   change was made.
-- Watched Tags (pending) and `set.seed` (awaiting bioc-devel guidance)
+- (At the time; superseded by §18.) Watched Tags (pending) and `set.seed` (awaiting bioc-devel guidance)
   remain separate pending items.
 
 ## 17. Guide-order fix and determinism proof (2026-09-26)
@@ -1020,8 +1018,8 @@ builds 2–11 compared strictly with build 1 (bioc-devel run `36237806452`,
 
 1. **Watched Tags:** the maintainer confirms completion. Then re-run the full
    networked BiocCheck and require **0 ERRORs**.
-2. **`set.seed`:** **awaiting bioc-devel policy guidance**. No GO before an
-   answer; the checkbox stays unticked.
+2. **`set.seed`:** accepted with justification and a reviewer-exception
+   request (§18); no longer a blocker.
 3. Then:
    - merge `bioconductor-prep` into `main` (`--no-ff`);
    - re-export and verify `devel`;
@@ -1030,3 +1028,45 @@ builds 2–11 compared strictly with build 1 (bioc-devel run `36237806452`,
 
 The diagnostic branches `experiment/vignette-pdf` and `experiment/png-fonts`
 are records only and will not be merged.
+
+## 18. Policy update and current blocker (2026-09-26)
+
+### 18.1 `set.seed`
+
+- **Status:** accepted for submission with explicit justification and a
+  reviewer-exception request; **no longer a blocker**, and no longer
+  awaiting bioc-devel guidance.
+- No implementation change.
+- The issue states honestly: **R CMD check 0 ERRORs / 0 WARNINGs; BiocCheck
+  0 ERRORs / 1 WARNING (`set.seed`)**, with the §7.1 justification.
+- The "no ERROR or WARNINGS" checklist item is ticked as understanding,
+  with the adjacent explicit status and exception request (§9).
+
+### 18.2 The only remaining blocker: Watched Tags
+
+Full networked BiocCheck (BiocCheck 1.48.1; bioconductor.org reachable;
+`devel` tarball of `d099ac7` ← `deccdde`, 2026-09-26):
+
+- **1 ERROR:** `checkWatchedTag`, "Add package to Watched Tags in your
+  Support Site profile". It is still present; "Maintainer is registered at
+  support site".
+- **1 WARNING:** `checkCodingPractice` (`set.seed` ×2), accepted (§18.1).
+- **10 NOTEs.**
+
+The technical readiness recommendation is **not yet** "GO FOR FINAL
+SUBMISSION PREPARATION". It changes once the maintainer confirms Watched
+Tags and a full networked BiocCheck shows **0 ERRORs**.
+
+### 18.3 Prepared next steps (execute only after 0 ERRORs)
+
+1. Merge `bioconductor-prep` into `main` (`--no-ff`) and push. Require all
+   development and scientific workflows green.
+2. Re-export `devel` from the final `main` commit. Run
+   `verify_package_branch.sh devel` and require:
+   - A PASS;
+   - B strict PASS;
+   - C PASS;
+   - D 0/0/0;
+   - E PASS.
+3. Stop before changing the GitHub default branch. No Contributions issue,
+   no change to `v0.1.0`, no `set.seed` change, no frozen-port change.
