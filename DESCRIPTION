@@ -1,6 +1,6 @@
 Package: postexportKinetics
 Title: Kinetic Model Comparison for Post-Export RNA Conversion
-Version: 0.1.0
+Version: 0.99.0
 Authors@R: c(
     person("Luca", "Faretra", role = "aut"),
     person("Francesco", "Napolitano", role = "aut"),
@@ -33,6 +33,7 @@ Imports:
     MASS,
     nnls,
     stats,
+    SummarizedExperiment,
     utils
 Suggests:
     expm,

@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # =============================================================================
 # Public data model: postexport_data() and validate_postexport_data()
 #

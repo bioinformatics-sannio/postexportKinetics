@@ -1,0 +1,18 @@
+# Allowlist of package-distribution paths exported to the package-only
+# branch `devel` (policy P1). One git path per line; a trailing "/" means the
+# whole directory. Everything else (.github/, tools/, data-raw/, reports,
+# plans, PROJECT_STATE.md, CLAUDE.md, BIOCONDUCTOR_AUDIT.md, ...) is excluded.
+DESCRIPTION
+NAMESPACE
+LICENSE
+NEWS.md
+README.md
+CITATION.cff
+.Rbuildignore
+.gitignore
+R/
+man/
+data/
+inst/
+vignettes/
+tests/

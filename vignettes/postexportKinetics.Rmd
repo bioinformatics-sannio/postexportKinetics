@@ -17,7 +17,7 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7,
                       fig.height = 5, dpi = 72)
 ```
 
-# Overview
+# Introduction
 
 `postexportKinetics` fits a compartment-resolved kinetic model to time
 courses of nuclear and cytoplasmic, unprocessed and processed RNA. It asks
@@ -34,6 +34,30 @@ This vignette works through one small synthetic dataset:
 - fitting, testing, interpretation, multiple testing and exploratory ranking;
 - plotting, simulation and design diagnostics;
 - limitations.
+
+# Installation
+
+Once the package has been accepted and released through Bioconductor, it
+will be installed with `BiocManager`. This route does not work before
+acceptance:
+
+```{r install-bioc, eval = FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("postexportKinetics")
+```
+
+In the current development state, install from GitHub, either the released
+version 0.1.0 or the development line:
+
+```{r install-github, eval = FALSE}
+# install.packages("remotes")
+remotes::install_github("bioinformatics-sannio/postexportKinetics@v0.1.0")
+remotes::install_github("bioinformatics-sannio/postexportKinetics",
+                        build_vignettes = TRUE)
+```
+
+Load the package:
 
 ```{r load}
 library(postexportKinetics)
@@ -89,7 +113,8 @@ intervention time `t_star`. After `t_star`, transcription stops completely
 
 The package ships a small **synthetic** dataset, `postexport_example`. It was
 simulated with the package's simulator (see `?postexport_example` and
-`data-raw/postexport_example.R` in the source repository):
+the generation script `generate_postexport_example.R`, installed in the
+package's `scripts` directory):
 
 - eight events: four simulated with `sigma_c > 0` (`alt_*`) and four with
   `sigma_c = 0` (`null_*`);
@@ -141,6 +166,57 @@ Different column names can be declared with `columns`, for example
 
 For retained-intron events, the mapping of inclusion to *unprocessed* and
 skipping to *processed* is the user's responsibility. It is not inferred.
+
+# SummarizedExperiment input
+
+Data already held in a `SummarizedExperiment` can be converted with
+`postexport_data_from_se()`. The object must already be state-resolved
+(layout A):
+
+- rows are events;
+- columns are destructive samples;
+- `colData` holds `time` and `replicate`;
+- there are four assays, `N`, `N_s`, `C` and `C_s`.
+
+The converter builds the wide table and passes it to `postexport_data()`,
+so the result is exactly the canonical object:
+
+```{r se}
+events <- unique(postexport_example$event)
+samples <- unique(postexport_example[, c("time", "replicate")])
+rownames(samples) <- sprintf("t%g_r%d", samples$time, samples$replicate)
+cell <- cbind(match(postexport_example$event, events),
+              match(paste(postexport_example$time,
+                          postexport_example$replicate),
+                    paste(samples$time, samples$replicate)))
+state_matrix <- function(state) {
+    m <- matrix(NA_real_, length(events), nrow(samples),
+                dimnames = list(events, rownames(samples)))
+    m[cell] <- postexport_example[[state]]
+    m
+}
+se <- SummarizedExperiment::SummarizedExperiment(
+    assays = list(N = state_matrix("N"), N_s = state_matrix("N_s"),
+                  C = state_matrix("C"), C_s = state_matrix("C_s")),
+    colData = samples)
+se
+x_se <- postexport_data_from_se(se, time_unit = "min")
+identical(x_se, x)
+```
+
+Other assay or `colData` names can be given with the `assays`, `time` and
+`replicate` arguments.
+
+The converter does **not** do any of the following:
+
+- pair fraction-specific (nuclear and cytoplasmic) libraries;
+- normalise counts;
+- convert rMATS output;
+- decide which quantity is unprocessed or processed (inclusion or
+  skipping).
+
+These choices must be made before building the object. Missing values
+remain errors.
 
 # Validation
 

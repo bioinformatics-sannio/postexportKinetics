@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # =============================================================================
 # Batch results: multiple-testing adjustment, exploratory ranking and tidy
 # result tables.

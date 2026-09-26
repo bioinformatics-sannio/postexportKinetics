@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # Regression of the public API against the frozen tag.
 #
 # test_postexport_conversion() must return, in `$raw`, the frozen

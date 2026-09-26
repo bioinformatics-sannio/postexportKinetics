@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # =============================================================================
 # Public simulation API: simulate_postexport_kinetics()
 #
@@ -245,12 +246,12 @@ simulate_postexport_kinetics <- function(params, times, onset_time, t_star,
     missing_p <- setdiff(PARAM_NAMES, names(params))
     extra_p <- setdiff(names(params), PARAM_NAMES)
     if (length(missing_p) || length(extra_p) || anyDuplicated(names(params))) {
-        stop(sprintf(paste0(
-            "'params' must have exactly the names %s (missing: %s; ",
-            "unknown: %s)."), toString(PARAM_NAMES),
-            if (length(missing_p)) toString(missing_p) else "none",
-            if (length(extra_p)) toString(extra_p) else "none"),
-            call. = FALSE)
+        stop("'params' must have exactly the names ", toString(PARAM_NAMES),
+             " (missing: ",
+             if (length(missing_p)) toString(missing_p) else "none",
+             "; unknown: ",
+             if (length(extra_p)) toString(extra_p) else "none", ").",
+             call. = FALSE)
     }
     params <- params[PARAM_NAMES]
     if (any(!is.finite(params)) || any(params < 0)) {

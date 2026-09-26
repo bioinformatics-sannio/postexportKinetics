@@ -35,6 +35,9 @@ against fixtures generated from that tag.
 \itemize{
 \item \code{\link[=postexport_data]{postexport_data()}} and \code{\link[=validate_postexport_data]{validate_postexport_data()}}: validated
 input data;
+\item \code{\link[=postexport_data_from_se]{postexport_data_from_se()}}: input from an already state-resolved
+\code{SummarizedExperiment} (layout A: events by destructive samples, four
+state assays);
 \item \code{\link[=postexport_control]{postexport_control()}}: numerical and inferential settings
 (frozen defaults);
 \item \code{\link[=fit_postexport_model]{fit_postexport_model()}}: full and \code{sigma_c = 0} null fits
@@ -63,8 +66,10 @@ example data \link{postexport_example}.
 
 \section{Release status}{
 
-Version 0.1.0 is the first public GitHub release; it is not a
-Bioconductor release, and the interface may still evolve. Batch execution is
+The released version is 0.1.0, the first public GitHub release. Version
+0.99.x is the Bioconductor submission development line; the package is
+not yet a Bioconductor release, and the interface may still evolve.
+Batch execution is
 sequential; parallel execution, rMATS conversion and comparator methods
 are not available.
 }

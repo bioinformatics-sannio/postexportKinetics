@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # Regression: bootstrap primitives against the frozen core.
 #
 # 1. simulate_destructive_null() draws under a fixed seed.

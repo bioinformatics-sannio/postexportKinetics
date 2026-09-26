@@ -19,7 +19,8 @@ RNA (RNA-seq noise model, arbitrary scale).}
 }
 }
 \source{
-Simulated; see \code{data-raw/postexport_example.R}.
+Simulated with \code{\link[=simulate_postexport_kinetics]{simulate_postexport_kinetics()}}; see
+\code{inst/scripts/generate_postexport_example.R}.
 }
 \usage{
 data(postexport_example)
@@ -58,8 +59,8 @@ The script's seed, 20260925, was fixed a priori. Neither the design nor
 the data were chosen by searching over seeds.
 The true values are in \link{postexport_example_truth}. The draws reproduce the
 benchmark's parameter distributions, not its per-gene random streams.
-Generation code: \code{data-raw/postexport_example.R} in the package source
-repository.
+Generation code (distributed with the package):
+\code{system.file("scripts", "generate_postexport_example.R", package = "postexportKinetics")}.
 
 The same observations in long format are installed as
 \code{system.file("extdata", "postexport_example_long.csv", package = "postexportKinetics")}.

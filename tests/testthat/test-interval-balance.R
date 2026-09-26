@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # Regression: interval-balance system (A, b, Sigma_m, D, Sigma_b, col_norms,
 # summary) against the frozen core. Tolerance tier T2.
 

@@ -16,7 +16,9 @@ scientific-invariance rules.
 
 ## 2. Package state
 
-- Package: `postexportKinetics` **`0.1.0` (released)**. MIT license.
+- Package: `postexportKinetics`. The released version is **`0.1.0`** (tag
+  `v0.1.0`, immutable). The Bioconductor development line on branch
+  `bioconductor-prep` is **`0.99.0`** (Phase 6A). MIT license.
   Maintainer Luigi Cerulo `<lcerulo@unisannio.it>`.
 - **Released version 0.1.0**, the first public GitHub release:
   - GitHub tag: **`v0.1.0`**, annotated (tag object `303e2e1`);
@@ -294,9 +296,35 @@ Phase 5 final counts (BiocCheck 1.48.1): **2 ERRORs, 2 WARNINGs, 10 NOTEs**.
 
 ## 10. Next phase
 
-**Bioconductor preparation. NOT started.** Its scope must be specified and
-approved before any work begins. Expected topics, recorded as candidates
-only:
+**Phase 6: Bioconductor preparation.**
+
+- Stop Point 0 audit (`BIOCONDUCTOR_AUDIT.md`) is approved.
+- **Phase 6C/6D readiness:** `BIOCONDUCTOR_READINESS.md`, awaiting explicit
+  approval.
+  - Package-only branch `devel` @ `ad31ab9` (Source-Commit `271c573`), not
+    default.
+  - Export and verification tools in `tools/release/`.
+  - `bioc-devel` CI.
+  - The recommendation is NO-GO until Watched Tags and the Note A/B
+    decisions are resolved.
+- **Phase 6A/6B** (approved) is on branch `bioconductor-prep`, reported in
+  `PHASE6_AB_REPORT.md`:
+  - version 0.99.0;
+  - build-ignore entries;
+  - vignette Introduction and Installation sections;
+  - the layout-A `postexport_data_from_se()`, with SummarizedExperiment
+    in Imports;
+  - the package-authored paste fix;
+  - `inst/scripts` provenance.
+- **Not done:** default-branch switch (policy P1 approved conceptually,
+  not implemented), submission, new release or tag.
+- **Maintainer actions:**
+  - done: Support Site registration, bioc-devel, SSH key;
+  - pending: Support Site Watched Tags;
+  - the later default-branch switch;
+  - optional ORCID or funder metadata.
+
+Earlier candidate topics:
 
 - the `0.99.x` version line;
 - BiocCheck remaining items:

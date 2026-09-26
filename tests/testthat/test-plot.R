@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # plot() methods: return ggplot objects, never modify their input, show the
 # required elements and use cautious wording. Image snapshots are not used.
 
@@ -124,4 +125,55 @@ test_that("operational-domain plots describe benchmark designs only", {
     ps <- check_operational_domain(regime = "PSEUDO_SHUTOFF",
                                    n_time_points = 5, n_replicates = 3)
     check_plot(ps)
+})
+
+test_that("operational-domain legend order is explicit and deterministic", {
+    ex <- check_operational_domain(regime = "SHUTOFF", platform = "rnaseq",
+                                   noise_level = "low", n_time_points = 5,
+                                   n_replicates = 3, sampling_interval = 10,
+                                   time_unit = "min")
+    before <- ex
+    legend_order <- function(g) {
+        grDevices::pdf(NULL)
+        on.exit(grDevices::dev.off())
+        gt <- ggplot2::ggplotGrob(g)
+        box <- gt$grobs[[grep("guide-box-bottom", gt$layout$name)]]
+        idx <- which(box$layout$name == "guides")
+        idx <- idx[order(box$layout$l[idx], box$layout$t[idx])]
+        labels_of <- function(gr) {
+            out <- character()
+            walk <- function(z) {
+                if (inherits(z, "text")) out <<- c(out, as.character(z$label))
+                for (k in c(if (inherits(z, "gTree")) z$children,
+                            if (inherits(z, "gtable")) z$grobs)) walk(k)
+            }
+            walk(gr)
+            out
+        }
+        lapply(box$grobs[idx], labels_of)
+    }
+    g <- plot(ex)
+    expect_identical(ex, before)
+    # Explicit orders: colour (match type) first, shape (criterion) second.
+    expect_identical(g$scales$get_scales("colour")$guide$params$order, 1L)
+    expect_identical(g$scales$get_scales("shape")$guide$params$order, 2L)
+    ord <- legend_order(g)
+    expect_length(ord, 2L)
+    expect_true("exact match" %in% ord[[1]])
+    expect_true("Wilson interval contains 0.05" %in% ord[[2]])
+    # Repeated construction gives the same order.
+    for (k in 1:3) expect_identical(legend_order(plot(ex)), ord)
+    # Labels and plot data are unchanged by the explicit ordering.
+    expect_identical(g$labels$title, "Manuscript benchmark designs")
+    expect_identical(g$labels$x, "empirical Type-I error (benchmark)")
+    expect_null(g$scales$get_scales("colour")$name)
+    expect_null(g$scales$get_scales("shape")$name)
+    expect_identical(names(g$data), c("design", "match_type", "configuration",
+                                      "type1", "low", "high", "criterion"))
+    expect_identical(unique(g$data$match_type), "exact match")
+    b <- ggplot2::ggplot_build(g)
+    pts <- b$data[[which(vapply(g$layers, function(l)
+        class(l$geom)[1], "") == "GeomPoint")]]
+    expect_identical(pts$x, g$data$type1)
+    expect_identical(unique(pts$shape), 16)
 })

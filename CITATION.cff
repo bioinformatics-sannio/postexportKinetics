@@ -8,7 +8,7 @@ message: >-
   references; it is not the DOI of this package.
 type: software
 title: "postexportKinetics: Kinetic Model Comparison for Post-Export RNA Conversion"
-version: "0.1.0"
+version: "0.99.0"
 license: MIT
 repository-code: "https://github.com/bioinformatics-sannio/postexportKinetics"
 url: "https://github.com/bioinformatics-sannio/postexportKinetics"
@@ -34,7 +34,9 @@ abstract: >-
   diagnostics against the manuscript benchmark, multiple-testing adjustment,
   exploratory ranking and plots. The post-export conversion rate is a
   phenomenological parameter and does not identify a specific molecular
-  mechanism. First public GitHub release; not a Bioconductor release.
+  mechanism. Version 0.99.0 is the Bioconductor submission development
+  line (not yet a Bioconductor release); the released GitHub version is
+  0.1.0.
 keywords:
   - RNA kinetics
   - post-export conversion

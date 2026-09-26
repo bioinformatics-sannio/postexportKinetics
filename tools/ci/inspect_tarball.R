@@ -5,7 +5,8 @@
 #
 # FAILS (exit status 1) on:
 #   - top-level entries other than the intended package files;
-#   - development files (phase reports, plans, PROJECT_STATE.md,
+#   - development files (phase reports, plans, BIOCONDUCTOR_AUDIT.md,
+#     PROJECT_STATE.md,
 #     RELEASE_* files, CLAUDE.md, tools/, data-raw/, .github/, .zenodo.json,
 #     CITATION.cff), scratch, check or backup artefacts;
 #   - user-specific or temporary absolute paths (/Users/, /home/, /private/,
@@ -37,7 +38,8 @@ allowed_top <- c("DESCRIPTION", "NAMESPACE", "LICENSE", "NEWS.md",
 top <- unique(sub("/.*$", "", rel))
 for (t in setdiff(top, allowed_top)) fail("unexpected top-level entry: %s", t)
 
-forbidden <- paste(c("PHASE[0-9_]*_REPORT", "PACKAGE_PLAN", "STOP_CONDITION",
+forbidden <- paste(c("PHASE[0-9A-Za-z_]*_REPORT", "PACKAGE_PLAN", "STOP_CONDITION",
+                     "BIOCONDUCTOR_AUDIT", "BIOCONDUCTOR_READINESS",
                      "PROJECT_STATE", "RELEASE_", "CLAUDE\\.md", "^tools/",
                      "/tools/", "data-raw", "\\.github", "\\.zenodo\\.json",
                      "CITATION\\.cff", "\\.Rproj", "\\.DS_Store",

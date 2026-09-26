@@ -48,11 +48,62 @@ jobs:
       - name: Record R provenance
         run: Rscript tools/ci/record_r_provenance.R "r-compat R ${{ matrix.r }}"
 
+      # R 4.1 maps to Bioconductor 3.14, which pak's metadata no longer
+      # serves and which installs from source on Linux (RCurl needs the
+      # libcurl development headers). Install the Bioconductor dependencies
+      # for this R version with BiocManager first; environment setup only.
+      - name: Bioconductor dependencies for R 4.1 (BiocManager, Bioc 3.14)
+        if: matrix.r == '4.1'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libcurl4-openssl-dev
+          Rscript -e '
+            options(repos = c(CRAN = "https://cloud.r-project.org"))
+            install.packages("BiocManager")
+            BiocManager::install("SummarizedExperiment", ask = FALSE, update = FALSE)
+            stopifnot(requireNamespace("SummarizedExperiment", quietly = TRUE))
+            cat(sprintf("::notice title=Bioconductor for R %s::Bioconductor %s; SummarizedExperiment %s\n",
+                        getRversion(), BiocManager::version(),
+                        packageVersion("SummarizedExperiment")))'
+
       - name: Install dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck, any::testthat, any::expm
           needs: check
+
+      - name: Diagnose a dependency-installation failure (category A)
+        if: failure()
+        run: |
+          cat > diag.R <<'RS'
+          options(repos = c(CRAN = "https://cloud.r-project.org"))
+          ann <- function(title, x) {
+            x <- gsub("%", "%25", paste(utils::tail(x, 25), collapse = "\n"))
+            cat(sprintf("::error title=%s::%s\n", title, gsub("\n", "%0A", x)))
+          }
+          if (!requireNamespace("pak", quietly = TRUE))
+            install.packages("pak", repos = sprintf(
+              "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+              .Platform$pkgType, R.Version()$os, R.Version()$arch))
+          e <- tryCatch({ pak::pkg_deps("deps::."); NULL },
+                        error = function(e) e)
+          ann("pak resolution (R 4.1)", if (is.null(e)) "resolved" else
+            c(conditionMessage(e), if (!is.null(e$parent)) conditionMessage(e$parent)))
+          if (!requireNamespace("BiocManager", quietly = TRUE))
+            install.packages("BiocManager")
+          cat(sprintf("::notice title=Bioconductor version for R %s::%s\n",
+                      getRversion(), as.character(BiocManager::version())))
+          out <- suppressWarnings(system2(
+            file.path(R.home("bin"), "Rscript"),
+            c("-e", shQuote(paste(
+              "BiocManager::install('SummarizedExperiment', ask = FALSE,",
+              "update = FALSE);",
+              "cat('SummarizedExperiment installed:',",
+              "requireNamespace('SummarizedExperiment', quietly = TRUE), '\\n')"))),
+            stdout = TRUE, stderr = TRUE))
+          ann("BiocManager SummarizedExperiment (R 4.1)", out)
+          RS
+          Rscript diag.R 2>&1 | grep -E "^::(error|notice)" || true
 
       - name: Session and dependency versions
         run: |

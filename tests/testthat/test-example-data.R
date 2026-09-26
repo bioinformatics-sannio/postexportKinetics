@@ -1,3 +1,4 @@
+# Assisted-by: Claude Code (Anthropic)
 # Example dataset: structure, provenance and a smoke test of the documented
 # workflow. No numerical expectations are imposed beyond validity.
 

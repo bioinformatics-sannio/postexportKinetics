@@ -1,3 +1,5 @@
+# Assisted-by: Claude Code (Anthropic)
+
 #' postexportKinetics: kinetic model comparison for post-export RNA conversion
 #'
 #' Compartment-resolved four-state RNA kinetics (`N`, `N_s`, `C`, `C_s`) and a
@@ -24,6 +26,9 @@
 #' \itemize{
 #'   \item [postexport_data()] and [validate_postexport_data()]: validated
 #'     input data;
+#'   \item [postexport_data_from_se()]: input from an already state-resolved
+#'     `SummarizedExperiment` (layout A: events by destructive samples, four
+#'     state assays);
 #'   \item [postexport_control()]: numerical and inferential settings
 #'     (frozen defaults);
 #'   \item [fit_postexport_model()]: full and `sigma_c = 0` null fits
@@ -48,8 +53,10 @@
 #' example data [postexport_example].
 #'
 #' @section Release status:
-#' Version 0.1.0 is the first public GitHub release; it is not a
-#' Bioconductor release, and the interface may still evolve. Batch execution is
+#' The released version is 0.1.0, the first public GitHub release. Version
+#' 0.99.x is the Bioconductor submission development line; the package is
+#' not yet a Bioconductor release, and the interface may still evolve.
+#' Batch execution is
 #' sequential; parallel execution, rMATS conversion and comparator methods
 #' are not available.
 #'

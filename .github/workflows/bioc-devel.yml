@@ -1,0 +1,166 @@
+# Bioconductor-devel checks (Phase 6D). Supplements, never replaces,
+# linux-regression (the frozen-reference scientific gate), platforms and
+# r-compat.
+#
+# Runs in the official Bioconductor devel container:
+#   package installation; regression tests (committed fixtures, levels B/C);
+#   R CMD build; R CMD check (fails on ERROR or WARNING); BiocCheck on the
+#   tarball (fails on any ERROR other than the maintainer-side Support Site
+#   checks checkSupportReg / checkWatchedTag; warnings and notes are
+#   reported as annotations). A second job
+#   verifies the package-only branch `devel` against its Source-Commit
+#   (tools/release/verify_package_branch.sh, including BiocCheckGitClone),
+#   when that branch exists.
+
+name: bioc-devel
+
+on:
+  push:
+    branches-ignore: ['devel']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bioc-devel:
+    runs-on: ubuntu-latest
+    container: bioconductor/bioconductor_docker:devel
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Mark workspace safe for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Record R and Bioconductor provenance
+        run: |
+          Rscript tools/ci/record_r_provenance.R "bioc-devel"
+          Rscript -e 'cat(sprintf("::notice title=Bioconductor devel::Bioconductor %s (%s); BiocCheck %s\n", BiocManager::version(), if (BiocManager:::isDevel()) "devel" else "release", tryCatch(as.character(packageVersion("BiocCheck")), error = function(e) "not preinstalled")))'
+
+      - name: Install dependencies
+        run: |
+          Rscript -e '
+            BiocManager::install(c("BiocCheck", "remotes", "testthat", "expm",
+                                   "knitr", "rmarkdown"),
+                                 ask = FALSE, update = FALSE)
+            remotes::install_deps(dependencies = TRUE,
+                                  repos = BiocManager::repositories(),
+                                  upgrade = "never")'
+
+      - name: Install package
+        run: R CMD INSTALL .
+
+      - name: Regression tests (committed fixtures)
+        run: Rscript tools/ci/run_tests_ci.R
+
+      - name: R CMD build and R CMD check
+        run: |
+          mkdir -p "$RUNNER_TEMP/biocdevel" && cd "$RUNNER_TEMP/biocdevel"
+          R CMD build "$GITHUB_WORKSPACE"
+          T=$(ls postexportKinetics_*.tar.gz)
+          R CMD check --no-manual "$T" || true
+          STATUS=$(grep '^Status:' postexportKinetics.Rcheck/00check.log || echo "Status: check did not complete")
+          echo "::notice title=R CMD check (Bioconductor devel)::$STATUS"
+          if grep -Eq '^Status:.*(ERROR|WARNING)' postexportKinetics.Rcheck/00check.log || ! grep -q '^Status:' postexportKinetics.Rcheck/00check.log; then
+            grep -E '(WARNING|ERROR)$' -A6 postexportKinetics.Rcheck/00check.log | head -40
+            exit 1
+          fi
+
+      - name: BiocCheck
+        run: |
+          cd "$RUNNER_TEMP/biocdevel"
+          Rscript -e '
+            r <- BiocCheck::BiocCheck(list.files(pattern = "[.]tar[.]gz$"),
+                                      `quit-with-status` = FALSE)
+            fmt <- function(x) if (length(x)) paste(names(x), collapse = ", ") else "none"
+            cat(sprintf("::notice title=BiocCheck (Bioconductor devel)::%d ERRORS [%s] | %d WARNINGS [%s] | %d NOTES\n",
+                        length(r$error), fmt(r$error), length(r$warning),
+                        fmt(r$warning), length(r$note)))
+            # Maintainer-side Support Site checks (registration, Watched Tags).
+            unexpected <- setdiff(names(r$error), c("checkSupportReg", "checkWatchedTag"))
+            if (length(unexpected)) {
+              cat(sprintf("::error title=BiocCheck::unexpected ERROR(s): %s\n",
+                          paste(unexpected, collapse = ", ")))
+              quit(status = 1L)
+            }'
+
+  package-branch:
+    runs-on: ubuntu-latest
+    container: bioconductor/bioconductor_docker:devel
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Mark workspace safe for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Verify the package-only branch devel
+        run: |
+          if ! git ls-remote --exit-code --heads origin devel > /dev/null; then
+            echo "::notice title=Package-only branch::devel does not exist yet; nothing to verify"
+            exit 0
+          fi
+          git fetch --quiet origin devel:devel
+          # png and jsonlite are CI-only dependencies of the check-B image diagnostic.
+          Rscript -e 'BiocManager::install(c("BiocCheck", "remotes", "knitr", "rmarkdown", "png", "jsonlite"), ask = FALSE, update = FALSE); remotes::install_deps(dependencies = TRUE, repos = BiocManager::repositories(), upgrade = "never")'
+          sh tools/release/verify_package_branch.sh devel "$RUNNER_TEMP/verify" > verify.log 2>&1 || true
+          cat verify.log
+          grep -E "^\[(PASS|FAIL|INFO)\]" verify.log | cut -c1-900 | sed -e 's/^\[FAIL\]/::error title=Package-only branch::FAIL/' -e 's/^\[PASS\]/::notice title=Package-only branch::PASS/' -e 's/^\[INFO\]/::notice title=Package-only branch info::/'
+          if ! grep -q "^PACKAGE BRANCH VERIFICATION PASSED" verify.log; then
+            tail -30 verify.log | cut -c1-300 | sed -e 's/%/%25/g' | awk 'BEGIN{ORS="%0A"}{print}' | sed 's/^/::error title=Package-only branch log tail::/'; echo
+            exit 1
+          fi
+          echo "::notice title=Package-only branch::$(tail -1 verify.log)"
+
+      - name: Check-B decision-rule tests (negative / mutation)
+        run: |
+          Rscript tools/release/test_compare_built_packages.R "$RUNNER_TEMP/verify/xd/postexportKinetics/inst/doc/postexportKinetics.html" > cmp_tests.log 2>&1 || { cat cmp_tests.log; echo "::error title=Check-B rule tests::$(grep -c '^\[FAIL\]' cmp_tests.log) failing expectation(s)"; exit 1; }
+          cat cmp_tests.log
+          echo "::notice title=Check-B rule tests::$(tail -2 cmp_tests.log | head -1)"
+
+  vignette-determinism:
+    # Documentation-build reproducibility: build the SAME source 1 + 10 times
+    # in the Bioconductor devel container and require every repeated build
+    # to be strictly IDENTICAL to the reference build (check-B rule,
+    # tools/release/compare_built_packages.R; the PNG-encoding exception is
+    # not accepted here).
+    runs-on: ubuntu-latest
+    container: bioconductor/bioconductor_docker:devel
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Mark workspace safe for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Install dependencies
+        run: |
+          Rscript -e '
+            BiocManager::install(c("remotes", "knitr", "rmarkdown", "png", "jsonlite"),
+                                 ask = FALSE, update = FALSE)
+            remotes::install_deps(dependencies = TRUE,
+                                  repos = BiocManager::repositories(),
+                                  upgrade = "never")'
+
+      - name: Repeated builds of the same source (1 reference + 10)
+        run: |
+          mkdir -p "$RUNNER_TEMP/rep" && cd "$RUNNER_TEMP/rep"
+          for k in $(seq 0 10); do
+            mkdir -p "b$k" "x$k"
+            ( cd "b$k" && R CMD build "$GITHUB_WORKSPACE" > build.log 2>&1 ) || { tail -20 "b$k/build.log"; echo "::error title=Vignette determinism::build $k failed"; exit 1; }
+            tar -xzf "b$k"/*.tar.gz -C "x$k"
+          done
+          H="x0/postexportKinetics/inst/doc/postexportKinetics.html"
+          DEV=$(grep -o 'dev = "[a-z]*"' "$GITHUB_WORKSPACE/vignettes/postexportKinetics.Rmd" | head -1)
+          FORMATS=$(grep -o 'data:image/[a-z+]*;base64' "$H" | sort | uniq -c | tr -s ' ' | tr '\n' ';')
+          echo "::notice title=Vignette figures::knitr $DEV; embedded figures:$FORMATS"
+          fails=0
+          for k in $(seq 1 10); do
+            OUT=$(Rscript "$GITHUB_WORKSPACE/tools/release/compare_built_packages.R" x0/postexportKinetics "x$k/postexportKinetics" 2>&1) || true
+            V=$(printf '%s\n' "$OUT" | tail -1 | tr -d ' ')
+            echo "build $k vs build 0: $V $(printf '%s\n' "$OUT" | sed '$d' | tr '\n' ' ')"
+            [ "$V" = "IDENTICAL" ] || { fails=$((fails + 1)); echo "::error title=Vignette determinism::build $k: $V $(printf '%s\n' "$OUT" | sed '$d' | tr '\n' ' ' | cut -c1-300)"; }
+          done
+          echo "::notice title=Vignette determinism::$((10 - fails)) of 10 repeated builds strictly IDENTICAL to the reference build (surrounding HTML and all figures byte-identical; PNG exception not used)"
+          [ "$fails" -eq 0 ]
