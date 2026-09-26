@@ -1,8 +1,8 @@
 # Bioconductor readiness report (Phase 6C/6D)
 
-Status: **the base `svg` attempt (§13) is reverted; the base `pdf`
-experiment (§14) is unsuitable and reverted. Stopped before svglite, as
-instructed. NO-GO (§11).**
+Status: **the PNG font/device-pinning experiment (§15) did not produce
+deterministic figures. Stopped as instructed; ragg and svglite not tried.
+NO-GO (§11).**
 
 - The Contributions issue has not been opened, and nothing was submitted.
 - The GitHub default branch is unchanged (`main`).
@@ -738,3 +738,72 @@ differences with the new diagnostic.
      family for the vignette figures, a knitr `dev.args` / `png(type = …)`
      choice, or `ragg` if you approve it.
   3. Another policy.
+
+## 15. PNG font / device pinning experiment (2026-09-26)
+
+All work is on the diagnostic branch `experiment/png-fonts` (`c04f3cd`,
+`b2865b6`; workflow `font-inventory.yml`, scripts
+`tools/ci/font_inventory.R` and `tools/ci/render_probe.R`). **No vignette,
+package or dependency change** was made on `bioconductor-prep` or `devel`.
+
+### 15.1 Font and PNG-device inventory (verified, not assumed)
+
+| Environment | Fonts | "DejaVu Sans" | fontconfig matches | PNG devices |
+|---|---|---|---|---|
+| Bioconductor devel container (R 4.6.1, Linux) | 20 families: URW (Nimbus Sans, Nimbus Roman, …) and TeX Gyre (Heros, …) | **absent** (no font files) | `sans`, `Helvetica`, `Arial`, `DejaVu Sans` → Nimbus Sans | default `cairo`; `cairo` and `cairo-png` work; no Xlib, no quartz |
+| macOS runner (R 4.6.1) | 673 families, including Helvetica, Arial and Verdana | **absent** | `sans` → Verdana; `DejaVu Sans` → Verdana | default `quartz`; **`cairo` fails**: `cairo.so` needs XQuartz (`/opt/X11/lib/libXrender.1.dylib` not found) |
+| Windows runner (R 4.6.1) | Windows fonts, no fontconfig | **absent** ("font family not found in Windows font database") | — | `windows`, `cairo`, `cairo-png` work |
+
+- **No common explicit font family** exists across the three environments.
+  DejaVu Sans is absent everywhere; Nimbus Sans exists only on Linux;
+  Arial and Helvetica are not installed in the container.
+- **An explicit cairo PNG device is not portable:** it is unavailable on
+  stock macOS.
+
+### 15.2 Render probe in the Bioconductor devel container
+
+Figure #5 (the operational-domain plot, 504×360 px) was rendered **15
+times per configuration, each in a fresh R process**. The probe counts
+distinct decoded-pixel outputs.
+
+| Configuration | Distinct pixel outputs | Counts |
+|---|---|---|
+| default (`cairo`, family "sans" → Nimbus Sans) | **2** | 9 / 6 |
+| `family = "Nimbus Sans"` | **2** | 5 / 10 |
+| `family = "TeX Gyre Heros"` | **2** | 5 / 10 |
+| `type = "cairo-png"` | **2** | 6 / 9 |
+| `type = "cairo"` + `family = "Nimbus Sans"` | **2** | 12 / 3 |
+
+Locally on macOS, every configuration gives 1 distinct output (3 of 3).
+
+- **Result: explicit font-family and PNG-device pinning does not remove the
+  nondeterminism.** Every configuration alternates between two outputs in
+  the container.
+- Because no candidate is stable even for a single render, the vignette
+  11-build proof could not reach 10/10. No vignette change was committed
+  and the proof was not run with pinning. This is the stop condition.
+- **Figure #5 is still the only figure observed to vary** (§14.3: one
+  7-px text strip).
+- **What this implies:**
+  - The variation does not come from font-family mapping (fontconfig
+    matches are deterministic) or from the cairo surface type.
+  - It may come from the text layout path itself in that container, or from
+    the drawn content of that text line varying between processes.
+  - These two possibilities have not yet been told apart.
+- **Suggested next diagnostic (needs approval; diagnostic only):** in the
+  same container probe, record the plot's grid text grobs (strings,
+  positions, font metrics) per process. If they vary, the content or
+  metrics vary, and svglite would not help. If they are stable, it is
+  rasterisation.
+- Then the approved next experiment is **svglite**, as instructed; ragg is
+  not tried.
+
+### 15.3 Unchanged
+
+- **Branches:** the development branch is `bioconductor-prep`. `devel` is
+  `a8239a9` ← Source-Commit `b899ab3`, the PNG vignette as released in the
+  0.99.0 line.
+- **Package:** no plot method, data, text, calculation or dependency
+  change.
+- **Status:** Watched Tags is pending, and `set.seed` is awaiting bioc-devel
+  guidance. The Contributions issue is not opened.
