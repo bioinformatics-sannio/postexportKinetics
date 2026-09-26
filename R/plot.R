@@ -479,13 +479,17 @@ plot.postexport_domain_check <- function(x, ...) {
                                             xmax = .data$high),
                                width = 0.3, orientation = "y") +
         ggplot2::geom_point(size = 2) +
+        # Explicit guide order: with two untitled guides at the default
+        # order = 0, ggplot2's internal ordering was not stable across R
+        # processes (the colour and shape legends could swap).
         ggplot2::scale_colour_manual(
             values = c(`exact match` = .PAL[["exact"]],
                        `nearest evaluated design` = .PAL[["nearest"]]),
-            name = NULL) +
+            name = NULL, guide = ggplot2::guide_legend(order = 1)) +
         ggplot2::scale_shape_manual(
             values = c(`Wilson interval contains 0.05` = 16,
-                       `Wilson interval excludes 0.05` = 1), name = NULL) +
+                       `Wilson interval excludes 0.05` = 1), name = NULL,
+            guide = ggplot2::guide_legend(order = 2)) +
         ggplot2::facet_wrap(~design, scales = "free_y") +
         ggplot2::labs(
             title = title,
