@@ -19,8 +19,8 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           Rscript -e 'BiocManager::install(c("remotes", "png"), ask = FALSE, update = FALSE); remotes::install_deps(dependencies = NA, repos = BiocManager::repositories(), upgrade = "never")'
           R CMD INSTALL .
-      - name: Render probe (figure 5, fresh process per render)
-        run: Rscript tools/ci/render_probe.R 15
+      - name: Text/grob probe (figure 5, 15 fresh processes)
+        run: Rscript tools/ci/text_probe.R 15
   macos:
     runs-on: macos-latest
     steps:
