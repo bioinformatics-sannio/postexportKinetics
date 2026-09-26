@@ -1,6 +1,7 @@
 # Bioconductor readiness report (Phase 6C/6D)
 
-Status: **prepared; stopped for explicit human approval.**
+Status: **final pre-submission resolutions applied (§12, 2026-09-26);
+stopped for review. NO-GO (§11).**
 
 - The Contributions issue has not been opened, and nothing was submitted.
 - The GitHub default branch is unchanged (`main`).
@@ -12,11 +13,11 @@ Status: **prepared; stopped for explicit human approval.**
 | Item | Value |
 |---|---|
 | Development branch | `bioconductor-prep`; CI, tools, provenance infrastructure, reports and the scientific regression gates |
-| **Development source commit** of the current package-only export | **`f6e1bfb823e90a7f1aa8294f628aedb4950dc008`**. It adds `^BIOCONDUCTOR_READINESS\.md$` to `.Rbuildignore`, an allowlisted file, so the exported tree changed. Later development commits (this correction) change only reports, so no new `devel` commit is created. |
-| **`devel`** (package-only branch, pushed, **not default**) | **`e3202a89382e5b241baa5cfb7e881cf7de5b343d`**: "package-only export of f6e1bfb" / `Source-Commit: f6e1bfb823e90a7f1aa8294f628aedb4950dc008`; tree `f5000fb810b9387158256913e91b2e24aad62083`; parent `ad31ab9` |
-| Earlier export | `ad31ab97b9c2afe84d6503206329b9fc759af925` ("package-only export of 271c573", tree `a94294e…`). It differs from the current export only by that one `.Rbuildignore` line; package content is otherwise identical. |
+| **Development source commit** of the current package-only export | **`9fd96d9e68d15903eb492563d2ee0fde7f41fe9b`**: the AI-attribution commit (§12.4). Later development commits (`f313fb9`, this report) change only tools and reports, so no new `devel` commit is created. |
+| **`devel`** (package-only branch, pushed, **not default**) | **`05ba5a8cbc1b1e8dcc3ffa6fc9b3863a0038692e`**: "package-only export of 9fd96d9" / `Source-Commit: 9fd96d9e68d15903eb492563d2ee0fde7f41fe9b`; tree `45ba02ed208ec6647d981be289fbb27ecc1e32cb`; parent `e3202a8` |
+| Earlier exports | `e3202a8` ← `f6e1bfb` (tree `f5000fb…`) and `ad31ab9` ← `271c573` (tree `a94294e…`) |
 | `devel` content | `.Rbuildignore`, `.gitignore`, `CITATION.cff`, `DESCRIPTION`, `LICENSE`, `NAMESPACE`, `NEWS.md`, `README.md`, `R/`, `data/`, `inst/`, `man/`, `tests/`, `vignettes/` (allowlist `tools/release/package_allowlist.txt`) |
-| `devel` history | linear: `ad31ab9` (root) → `e3202a8`; normal pushes, no force |
+| `devel` history | linear: `ad31ab9` (root) → `e3202a8` → `05ba5a8`; normal pushes, no force |
 | GitHub default branch | `main` (unchanged) |
 
 ## 2. Tooling added (development branch only)
@@ -141,7 +142,7 @@ The earlier runs on this phase's commits:
 | Action | Status |
 |---|---|
 | Bioconductor Support Site registration | **done** (BiocCheck: "Maintainer is registered at support site") |
-| Add `postexportKinetics` to **Watched Tags** | **pending**. It is the only BiocCheck ERROR (`checkWatchedTag`). Do it at https://support.bioconductor.org/accounts/edit/profile, then re-run the final readiness check. |
+| Add `postexportKinetics` to **Watched Tags** | **pending until the maintainer confirms completion** (in progress). It is the only BiocCheck ERROR (`checkWatchedTag`, still present in the networked BiocCheck of 2026-09-26). The check is not simulated or bypassed. |
 | bioc-devel mailing list | **done** (maintainer). BiocCheck cannot verify it ("requires admin credentials"); this NOTE is not a package failure. |
 | GitHub SSH public key | **done** (maintainer) |
 | Default-branch switch to `devel` | **pending**, immediately before submission (§8) |
@@ -293,13 +294,25 @@ samples).
   and is regression-tested against it. The associated manuscript is
   submitted and not yet published. A GitHub release v0.1.0 exists; the
   package has no DOI.
-- AI assistance: [disclosure text, see note B]
+- AI assistance: Development of the package-authored code, tests and
+  documentation was assisted by Claude Code (Anthropic) under the authors'
+  direction and review. The scientific numerical core is ported verbatim
+  from the authors' frozen manuscript implementation and is
+  regression-tested against it.
 ```
 
 **Note A (blocking decision).** The template states that "a minimum
 requirement for package acceptance is to pass R CMD check and R CMD
 BiocCheck with no ERROR or WARNINGS".
 
+- **Status: AWAITING bioc-devel policy guidance.** The maintainer will ask
+  bioc-devel whether the two justified `set.seed` uses (§7.1) are acceptable
+  for a new-package submission.
+- Until an answer is received:
+  - both implementations stay unchanged;
+  - the WARNING is reported;
+  - this box stays **unticked**;
+  - the issue is not opened.
 - The `set.seed` WARNING remains by decision, so this box cannot honestly be
   ticked without qualification.
 - **Options:**
@@ -327,17 +340,17 @@ copied from: source" in the code itself.
   trailer).
 - The ten frozen ports already state "Ported verbatim from
   postexport-kinetics@manuscript-revision-v1.0": same authors, MIT.
-- **Proposal (needs approval; comment-only change):**
-  - add an `Assisted-by: Claude (Anthropic)` header line to the
-    package-authored `R/` files and tests;
-  - keep the existing "Ported verbatim from …" headers in the frozen ports;
-  - include this disclosure in the issue:
+- **Implemented, as approved (§12.4).** `# Assisted-by: Claude Code
+  (Anthropic)` is in the package-authored files; the frozen ports are
+  unchanged. The issue will include the approved disclosure:
 
-    > Development of the package-authored code, tests and documentation was
-    > assisted by an AI model (Claude, Anthropic) under the authors'
-    > direction and review; the scientific numerical core is ported
-    > verbatim from the authors' frozen manuscript implementation and is
-    > regression-tested against it.
+  > Development of the package-authored code, tests and documentation was
+  > assisted by Claude Code (Anthropic) under the authors' direction and
+  > review. The scientific numerical core is ported verbatim from the
+  > authors' frozen manuscript implementation and is regression-tested
+  > against it.
+
+  The human maintainer remains responsible for every submitted line.
 
 ## 10. Other items
 
@@ -356,30 +369,210 @@ copied from: source" in the code itself.
 
 ## 11. Go / no-go
 
-**Recommendation: NO-GO at this moment. GO once the following are
-resolved, in order:**
+**Recommendation: NO-GO.** GO is not recommended while the `set.seed`
+submission-policy question is unresolved. Open items, in order:
 
-0. **Check B**, package-only branch tarball equivalence: it fails
-   intermittently in CI on the rendered vignette HTML (§3). Approve the
-   pixel-wise diagnostic, then decide whether to accept a controlled image
-   exception or keep B strict.
-
-1. **Watched Tags** set by the maintainer. BiocCheck is then expected to
-   show 0 ERRORs; re-run the final networked BiocCheck to confirm.
-2. **Decision on Note A** (the `set.seed` WARNING versus the template's
-   "no ERROR or WARNINGS" requirement).
-3. **Decision and implementation of Note B** (AI-assistance attribution in
-   the code and the issue disclosure). This is comment-only and needs
-   approval.
-4. Merge the development branch into `main` (§10). Re-export and verify
-   `devel` from the final commit (§8, steps 1–3), with all four workflows
-   green.
-5. The maintainer switches the default branch to `devel` (§8, steps 4–5).
+1. **Check B:** intermittent **pixel-level rendering nondeterminism** of
+   one vignette figure in the Bioconductor devel container (§12.1). The
+   approved controlled exception correctly does **not** apply, because the
+   pixels differ, so B fails intermittently.
+   - It is not a branch or content difference: A passes, and two builds of
+     the same source differ.
+   - **Decision needed:** one of
+     - (a) make the vignette figures deterministic in that environment (a
+       vignette-only change, e.g. a different knitr graphics device); this
+       needs approval and must be shown effective across repeated runs;
+     - (b) keep B strict and treat a failure as a re-run trigger, with the
+       control diagnostic recorded each time;
+     - (c) another policy.
+2. **Watched Tags:** the maintainer confirms completion. Then re-run the
+   full networked BiocCheck and require **0 ERRORs**.
+3. **`set.seed`:** **awaiting bioc-devel policy guidance** (Note A). No GO
+   before an answer, and no ticked checkbox whose literal statement is
+   false.
+4. After items 1–3: merge `bioconductor-prep` into `main` (`--no-ff`);
+   re-export and verify `devel` from the final commit (all of A–E); all
+   workflows green.
+5. The maintainer switches the default branch to `devel` (§8).
 6. Explicit human approval to open the Contributions issue (§9).
 
 Package quality is otherwise ready:
 
 - Bioconductor-devel `R CMD check` OK; BiocCheckGitClone 0/0/0;
-- scientific validation EQUIVALENT;
-- all platforms and R 4.1 green;
+- full scientific validation EQUIVALENT;
+- Linux, macOS, Windows, R 4.1.3 and R 4.5.3 green;
+- AI attribution in place;
 - no package DOI, and the frozen DOI correctly labelled.
+
+## 12. Final pre-submission resolutions (2026-09-26)
+
+### 12.1 Check B: root-cause classification
+
+The decoded-image diagnostic `tools/release/compare_built_packages.R`
+(§12.2) replaced the plain `diff -r` verdict of check B in
+`verify_package_branch.sh`.
+
+**CI history of check B** (`package-branch` job, Bioconductor 3.24 devel
+container, R 4.6.1, Ubuntu 24.04), all on package-identical content:
+
+| Development commit (run) | `devel` checked | Check B | Evidence |
+|---|---|---|---|
+| `3ec0025` (`36180831285`) | `ad31ab9` | FAIL | only the vignette HTML differed (embedded PNG); before the image diagnostic existed |
+| `5daa6ba` (`36183026953`) | `ad31ab9` | PASS | strict, identical |
+| `f6d037f` (`36185810683`) | `e3202a8` | FAIL | only the vignette HTML differed; a second build of the source matched the first (plain-diff control) |
+| `9fd96d9` (`36202941565`) | `05ba5a8` | **FAIL** | decoded images: **embedded PNG #5 pixels differ, 3,355 values, image 360×504×3**. The **control** (two builds of the same source `9fd96d9`) **also differs** in PNG #5 pixels. |
+| `f313fb9` (`36204280117`) | `05ba5a8` | PASS | strict, identical (90 files) |
+
+- **Classification: `RENDERING_NONDETERMINISM` (pixel level)**, not
+  `VIGNETTE_PNG_ENCODING_ONLY`.
+  - Embedded figure #5 of the vignette is the operational-domain plot,
+    `plot(dom)` (layers: vline, errorbar, point; no jitter or random
+    positions in `R/plot.R` or `R/domain.R`).
+  - Its pixels intermittently differ between two renderings of **identical
+    source** in the container.
+  - It is therefore **not a difference between X and `devel`** (A: trees
+    identical).
+- **Local reproduction:** none. On macOS, R 4.6.0, the domain plot rendered
+  three times in each of two processes was pixel-identical with both the
+  quartz and the cairo `png()` devices.
+- The exact mechanism in the container, presumably the cairo/fontconfig
+  text or anti-aliasing path, is not yet localised. The comparator now
+  reports the bounding box and the maximum difference of the differing
+  pixels at the next recurrence. The last run (`f313fb9`) passed, so there
+  is no bounding box yet.
+- **Impact:** none on the science or on package behaviour. It affects only
+  the byte and pixel reproducibility of one rendered vignette figure in one
+  build environment.
+
+### 12.2 Decoded-image comparison and controlled-exception rule
+
+`compare_built_packages.R <dirA> <dirB>` gives one of three verdicts:
+
+- **IDENTICAL:** every file is byte-identical, ignoring only the
+  R-generated `Packaged:` line. B passes.
+- **VIGNETTE_PNG_ENCODING_ONLY (controlled exception):** B passes with an
+  explicit message only if **all** of the following hold:
+  - the sole differing file is `inst/doc/postexportKinetics.html`;
+  - the HTML is byte-identical once each embedded
+    `data:image/png;base64,…` payload is replaced by a placeholder;
+  - both files contain the same number of embedded PNGs;
+  - every differing pair decodes (`png::readPNG`) to arrays with identical
+    dimensions and channel structure and **exactly identical pixel
+    values**.
+- **DIFFERENT:** anything else. This includes any other differing, missing
+  or additional file, surrounding-HTML changes, differing image count,
+  dimensions or channels, any pixel difference, or an undecodable image.
+  B fails.
+
+Check A (the source-tree identity) is required separately. Checks A, C, D
+and E are unchanged.
+
+- **Dependencies:** `png` and `jsonlite` are CI/development-only; they are
+  installed in the bioc-devel `package-branch` job and are **not** package
+  dependencies.
+- **Activation:** the exception has **not been triggered by any real run**.
+  The only observed real differences were pixel-level (§12.1), and B
+  correctly failed on them.
+
+### 12.3 Mutation and negative tests
+
+`tools/release/test_compare_built_packages.R` has **14 of 14 expectations
+met**, locally and in CI (the bioc-devel `package-branch` job, runs
+`36202941565` and `36204280117`):
+
+| Case | Expected verdict | Result |
+|---|---|---|
+| identical content, only `Packaged:` differs | IDENTICAL | met |
+| byte-different, pixel-identical PNG (re-encoded with a PNG text chunk) | VIGNETTE_PNG_ENCODING_ONLY | met |
+| one-pixel difference | DIFFERENT | met |
+| surrounding HTML changed (PNGs identical) | DIFFERENT | met |
+| surrounding HTML changed and a PNG re-encoded | DIFFERENT | met |
+| non-vignette file changed | DIFFERENT | met |
+| non-vignette file changed and a PNG re-encoded | DIFFERENT | met |
+| image dimensions differ | DIFFERENT | met |
+| channel structure differs (RGB vs RGBA) | DIFFERENT | met |
+| image count differs | DIFFERENT | met |
+| additional file | DIFFERENT | met |
+| real vignette: figure 1 re-encoded, pixel-identical | VIGNETTE_PNG_ENCODING_ONLY | met |
+| real vignette: figure 1 one-pixel difference | DIFFERENT | met |
+| real vignette: one character of text changed | DIFFERENT | met |
+
+The earlier branch-level negative test (a tampered README on a throwaway
+branch) failed A and B, as required.
+
+### 12.4 AI-assistance attribution (implemented)
+
+Commit `9fd96d9` adds the single comment line
+`# Assisted-by: Claude Code (Anthropic)` at the top of **32 files**:
+
+- the 12 package-authored `R/` files: `api.R`, `batch.R`, `control.R`,
+  `data-docs.R`, `data.R`, `domain.R`, `globals.R`, `methods.R`, `plot.R`,
+  `postexportKinetics-package.R`, `se.R`, `simulate.R`;
+- the 19 test files `tests/testthat/*.R`;
+- `inst/scripts/generate_postexport_example.R`.
+
+No model or version is stated. The **ten frozen ports are unchanged** and
+keep "Ported verbatim from postexport-kinetics@manuscript-revision-v1.0".
+
+The change is comment-only:
+
+- 35 inserted lines (32 attributions and 3 blank separators before roxygen
+  blocks);
+- roxygen regeneration leaves `man/` and `NAMESPACE` unchanged;
+- tests: 3,708 expectations, 0 failures;
+- `R CMD check`: 2 NOTEs;
+- full validation: EQUIVALENT;
+- the example data are still reproduced byte-for-byte by the provenance
+  script.
+
+### 12.5 Full networked BiocCheck (2026-09-26, `devel` tarball)
+
+**1 ERROR, 1 WARNING, 10 NOTEs** (BiocCheck 1.48.1; bioconductor.org
+reachable):
+
+- ERROR `checkWatchedTag` (maintainer, pending);
+- WARNING `set.seed` (awaiting bioc-devel guidance);
+- NOTEs as in §7.
+
+"Maintainer is registered at support site." The Bioconductor devel
+container gives the same ERROR and WARNING, with 9 NOTEs. The **0 ERRORs**
+required for GO has **not** been reached; the run will be repeated after
+the maintainer confirms Watched Tags.
+
+### 12.6 Current package-only branch and verification
+
+- **`devel` = `05ba5a8`**, Source-Commit
+  **`9fd96d9e68d15903eb492563d2ee0fde7f41fe9b`**, tree `45ba02e…`.
+  It was refreshed because `R/`, `tests/` and `inst/` changed (attribution).
+- **`verify_package_branch.sh devel`:**
+  - locally (macOS): A PASS; B PASS (strict IDENTICAL, 90 files); C PASS;
+    D BiocCheckGitClone 0/0/0; E PASS (0.99.0, 10 exports);
+  - CI `f313fb9` (run `36204280117`): all PASS, B strict;
+  - CI `9fd96d9` (run `36202941565`): B FAIL (pixel-level, §12.1), A, C,
+    D and E PASS.
+
+### 12.7 Scientific and platform gates (latest)
+
+| Gate | Result |
+|---|---|
+| testthat (local) | 17 files, 3,708 expectations, 0 failures |
+| `R CMD check --as-cran` (local) | 0 ERRORs, 0 WARNINGs, 2 NOTEs |
+| `R CMD check` (Bioconductor 3.24 devel) | Status: OK |
+| full `tools/validate_against_manuscript.R` | **EQUIVALENT** (local, `9fd96d9`) |
+| linux-regression (scientific gate), platforms (macOS, Windows), r-compat (R 4.1.3 / Bioc 3.14; R 4.5.3) | **success** on `f313fb9` (`36204280071`, `36204280067`, `36204280147`) and on `9fd96d9` |
+| bioc-devel | success on `f313fb9` (`36204280117`); failure on `9fd96d9` (check B only) |
+| frozen repository | tag → `65c3b7368fb7686bfde3dab857f98c393bb534c5`; unchanged |
+| `v0.1.0` | untouched (→ `04c4407`) |
+| default branch | `main` (not switched) |
+
+### 12.8 Maintainer status
+
+| Item | Status |
+|---|---|
+| Support Site registration | DONE |
+| bioc-devel subscription | DONE |
+| GitHub SSH public key | DONE |
+| Watched Tags | pending until the maintainer confirms completion |
+| Default-branch switch | pending |
+| ORCID / funder | optional |
+| `set.seed` policy question to bioc-devel | **awaiting guidance** |
