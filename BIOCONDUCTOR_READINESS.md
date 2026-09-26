@@ -1,7 +1,8 @@
 # Bioconductor readiness report (Phase 6C/6D)
 
-Status: **the PNG font/device-pinning experiment (§15) did not produce
-deterministic figures. Stopped as instructed; ragg and svglite not tried.
+Status: **root cause of the check-B nondeterminism found (§16): it is
+upstream of rasterisation, in the ordering of the two legend guides of the
+operational-domain plot. Decision rule A: stopped; svglite not tried.
 NO-GO (§11).**
 
 - The Contributions issue has not been opened, and nothing was submitted.
@@ -807,3 +808,94 @@ Locally on macOS, every configuration gives 1 distinct output (3 of 3).
   change.
 - **Status:** Watched Tags is pending, and `set.seed` is awaiting bioc-devel
   guidance. The Contributions issue is not opened.
+
+## 16. Text/grob diagnostic of figure #5: before or during rasterisation? (2026-09-26)
+
+**Setup.** Diagnostic branch `experiment/png-fonts`, commit `f56a9ce`,
+scripts `tools/ci/text_probe_one.R` and `tools/ci/text_probe.R`, workflow
+`font-inventory.yml`, run `36236726879`.
+
+- The environment is the Bioconductor devel container (R 4.6.1).
+- There were 15 fresh R processes. Each one:
+  - built `plot(dom)` for the vignette's operational-domain check without
+    mutating it (`ggplot_build()`, `ggplotGrob()`);
+  - wrote a canonical record of:
+    - labels and the resolved theme text elements (family, face, size,
+      line height, colour, hjust, vjust, angle);
+    - scale breaks and labels;
+    - all built layer data;
+    - the gtable layout, widths and heights;
+    - every text grob: path, label, x/y, justification, rotation, font
+      family, face, size, line height, colour, and measured width/height
+      on the same `png()` device;
+  - rendered the 504×360 PNG;
+  - separately recorded sessionInfo, capabilities, locale and fontconfig
+    resolution.
+- No vignette, package or plotting-code change.
+
+### 16.1 Result
+
+| Measure | Result |
+|---|---|
+| PNG classes (decoded pixels) | **2** (7 and 8 runs) |
+| Distinct text/grob records | **2**, one per PNG class (`c0967612…` for class 1, `e1ec7283…` for class 2) |
+| Distinct environment records | **1** (identical sessionInfo, capabilities, locale and font resolution) |
+| **Verdict** | **A: the text/grob records differ between the PNG classes.** The nondeterminism is upstream of rasterisation. |
+
+**The exact differing property is the order of the two legend guides** in
+the bottom legend box (`gt/guide-box/layout/...`):
+
+| PNG class | first guide | second guide |
+|---|---|---|
+| 1 | colour guide, label "exact match" (`guide.label.titleGrob.79`) | shape guide, label "Wilson interval contains 0.05" (`guide.label.titleGrob.90`) |
+| 2 | shape guide, "Wilson interval contains 0.05" (`guide.label.titleGrob.79`) | colour guide, "exact match" (`guide.label.titleGrob.89`) |
+
+Everything else is identical: the strings, positions, justification,
+rotation, font family, face, size, line height, colour and measured
+text widths, the scales, and the layer data. The swapped legend row is the
+unstable 7-px strip (rows 323–329) found in §14.3.
+
+### 16.2 Interpretation
+
+- In `plot.postexport_domain_check()` (`R/plot.R`), the colour
+  (`match_type`) and shape (`criterion`) scales both have `name = NULL`.
+  They give two separate, untitled guides with the default `order = 0`.
+- ggplot2 documents that with `order = 0` the order of multiple guides is
+  decided internally. In the Bioconductor devel container that order is not
+  stable across R processes.
+- The figure *content* (which legend comes first) therefore varies between
+  builds before any rasterisation.
+- This also explains the earlier results: the base-SVG builds varied
+  (§13), and font or PNG-device pinning could not help (§15).
+- It is **not** a scientific issue. The data, values and labels are the
+  same; only the left-to-right order of the two legend keys changes.
+
+### 16.3 Decision rule and proposal (not implemented)
+
+- Decision rule **A**: stop. svglite is **not** tried, because a different
+  device cannot fix nondeterminism in the plot content.
+- **Proposed fix (needs approval, since it changes package plotting code):**
+  in `plot.postexport_domain_check()`, give the two scales explicit guide
+  orders, for example
+  `scale_colour_manual(..., guide = ggplot2::guide_legend(order = 1))` and
+  `scale_shape_manual(..., guide = ggplot2::guide_legend(order = 2))`.
+  - It is display-only and matches class-1 order. The values, labels and
+    returned object type stay the same.
+  - It also makes the user-visible legend order deterministic.
+  - Then audit the other `plot()` methods for multiple separate guides with
+    default order, and re-run the vignette 11-build proof on the PNG device
+    (no device change needed).
+- Expected validation after the fix:
+  - the plot tests (`test-plot.R`) still pass;
+  - the text/grob probe gives 1 record and 1 PNG class;
+  - the 10/10 strict repeated-build proof;
+  - check B strict.
+
+### 16.4 Unchanged
+
+- `bioconductor-prep` and `devel` (`a8239a9` ← `b899ab3`) are unchanged
+  by this diagnostic.
+- Check B is not weakened; no package, plotting, dependency or scientific
+  change was made.
+- Watched Tags (pending) and `set.seed` (awaiting bioc-devel guidance)
+  remain separate pending items.
