@@ -1,9 +1,10 @@
 # Bioconductor readiness report (Phase 6C/6D)
 
-Status: **root cause of the check-B nondeterminism found (§16): it is
-upstream of rasterisation, in the ordering of the two legend guides of the
-operational-domain plot. Decision rule A: stopped; svglite not tried.
-NO-GO (§11).**
+Status: **check B RESOLVED (§17)**: explicit legend guide order in the
+operational-domain plot. The vignette is 10/10 byte-identical over repeated
+builds in the Bioconductor devel container, and B passes strictly.
+**Still NO-GO:** Watched Tags (maintainer) and the `set.seed` bioc-devel
+policy answer are open. Stopped for review.
 
 - The Contributions issue has not been opened, and nothing was submitted.
 - The GitHub default branch is unchanged (`main`).
@@ -899,3 +900,133 @@ unstable 7-px strip (rows 323–329) found in §14.3.
   change was made.
 - Watched Tags (pending) and `set.seed` (awaiting bioc-devel guidance)
   remain separate pending items.
+
+## 17. Guide-order fix and determinism proof (2026-09-26)
+
+### 17.1 Root cause (from §16)
+
+- `plot.postexport_domain_check()` maps `colour = match_type` and
+  `shape = criterion`.
+- Both scales have `name = NULL`, which gives two untitled legend guides at
+  ggplot2's default `order = 0`.
+- Their left-to-right order in the bottom legend was decided internally by
+  ggplot2 and was **not stable across R processes** in the Bioconductor
+  devel container. It swapped the two legend keys and changed one 7-px
+  strip of vignette figure #5.
+
+### 17.2 Code change (approved), commit `deccdde`
+
+- In `R/plot.R`, `plot.postexport_domain_check()`:
+  - `scale_colour_manual(..., name = NULL, guide = ggplot2::guide_legend(order = 1))`;
+  - `scale_shape_manual(..., name = NULL, guide = ggplot2::guide_legend(order = 2))`;
+  - plus a comment explaining why.
+- Unchanged: mapped variables, colours (`.PAL`), shapes (16/1), key labels,
+  `NULL` titles, `legend.position = "bottom"`, plot data and
+  interpretation. No numerical or inferential code changed, and no frozen
+  port was touched.
+- The resulting order (colour first, then shape) is the previously observed
+  class-1 order.
+
+### 17.3 Audit of the other plot methods
+
+Every `plot()` type was built and its legends counted:
+
+| Plot | Legends |
+|---|---|
+| fit, test "fit" | 1: colour and linetype are both mapped to `model` with identical names and labels, so they merge into one guide |
+| test "bootstrap" | 1 (fill) |
+| set "sigma_IR" / "sigma_q" / "IR_q" | 1 (shape) |
+| set and fit-set "status" / "boundary" / "score" | 0 |
+| simulation | 1 (linetype) |
+| **operational domain** | **2** (colour and shape): the only case with multiple guides |
+
+No other method has multiple independent guides, so no other change was
+made.
+
+### 17.4 Regression tests
+
+`test-plot.R` gains "operational-domain legend order is explicit and
+deterministic" (17 expectations). It asserts that:
+
+- the colour guide has `order = 1` and the shape guide `order = 2`;
+- in the rendered gtable (null PDF device) the bottom guide box holds 2
+  guides: "exact match" (colour) first, then "Wilson interval contains 0.05"
+  (shape);
+- the order is identical over repeated construction;
+- the title, x label and `NULL` scale names are unchanged;
+- the plot data columns and values are unchanged (point `x` = `type1`,
+  shape 16);
+- the input object is unmodified.
+
+**Mutation check:** swapping the orders (colour 2, shape 1) fails 4
+expectations.
+
+### 17.5 Repeated root-cause probe (fixed code)
+
+Bioconductor devel container, 15 fresh R processes (diagnostic branch
+`experiment/png-fonts` @ `cee6023`, the fix cherry-picked; run
+`36237809547`):
+
+- **1 text/grob diagnostic record** (`c0967612…`);
+- **1 PNG pixel class** (15 of 15);
+- 1 environment record.
+
+Before the fix there were 2 of each (§16).
+
+### 17.6 Vignette determinism proof (PNG device, unchanged vignette)
+
+Bioconductor devel container, the same source (`deccdde`) built 11 times,
+builds 2–11 compared strictly with build 1 (bioc-devel run `36237806452`,
+`vignette-determinism` job):
+
+- **10 of 10 repeated builds strictly IDENTICAL.** The surrounding HTML
+  and all 5 embedded PNG figures are byte-identical.
+- The controlled PNG exception was **not used**.
+- **Figure #5 is stable**, and no other figure had varied.
+
+### 17.7 Check B final status and package-only branch
+
+- **`devel` = `d099ac79d1bacc8edd24a5d9aa4f3ffaea67ee0f`**, "package-only
+  export of deccdde", **Source-Commit
+  `deccddef91a3cd9858244e280a4194e857299874`**, tree `5ccfbac…`.
+- Linear history: `ad31ab9` → `e3202a8` → `05ba5a8` → `75b2c5f` →
+  `a8239a9` → `d099ac7`.
+- **`verify_package_branch.sh devel`**, locally and in CI (bioc-devel run
+  `36237806452`, `package-branch` job):
+  - **A** PASS;
+  - **B** strict PASS (IDENTICAL, 90 files);
+  - **C** PASS;
+  - **D** BiocCheckGitClone 0/0/0;
+  - **E** PASS (0.99.0, 10 exports).
+- Check-B rule tests: 14 of 14.
+
+### 17.8 Gates (`deccdde`)
+
+| Gate | Result |
+|---|---|
+| testthat (local) | 17 files, **3,725 expectations** (3,708 + 17 new), 0 failures |
+| `R CMD check --as-cran` (local) | 0 ERRORs, 0 WARNINGs, 2 NOTEs |
+| `R CMD check` (Bioconductor 3.24 devel) | **Status: OK** |
+| full `tools/validate_against_manuscript.R` | **EQUIVALENT** |
+| linux-regression (scientific gate) `36237806434` | success |
+| platforms `36237806454` (macOS, Windows; R 4.6.1) | success |
+| r-compat `36237806447` (R 4.1.3 / Bioconductor 3.14; R 4.5.3) | success |
+| bioc-devel `36237806452` (`bioc-devel`, `vignette-determinism`, `package-branch`) | success |
+| BiocCheck (Bioconductor devel) | 1 ERROR `checkWatchedTag` (maintainer) / 1 WARNING `set.seed` / 9 NOTEs |
+| frozen ports, fixtures, `sysdata`, data | unchanged versus `v0.1.0` |
+| frozen repository | tag → `65c3b7368fb7686bfde3dab857f98c393bb534c5`, unchanged |
+
+### 17.9 Remaining before GO
+
+1. **Watched Tags:** the maintainer confirms completion. Then re-run the full
+   networked BiocCheck and require **0 ERRORs**.
+2. **`set.seed`:** **awaiting bioc-devel policy guidance**. No GO before an
+   answer; the checkbox stays unticked.
+3. Then:
+   - merge `bioconductor-prep` into `main` (`--no-ff`);
+   - re-export and verify `devel`;
+   - the maintainer switches the default branch (§8);
+   - explicit approval to open the Contributions issue (§9).
+
+The diagnostic branches `experiment/vignette-pdf` and `experiment/png-fonts`
+are records only and will not be merged.
