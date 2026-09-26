@@ -119,3 +119,48 @@ jobs:
           Rscript tools/release/test_compare_built_packages.R "$RUNNER_TEMP/verify/xd/postexportKinetics/inst/doc/postexportKinetics.html" > cmp_tests.log 2>&1 || { cat cmp_tests.log; echo "::error title=Check-B rule tests::$(grep -c '^\[FAIL\]' cmp_tests.log) failing expectation(s)"; exit 1; }
           cat cmp_tests.log
           echo "::notice title=Check-B rule tests::$(tail -2 cmp_tests.log | head -1)"
+
+  vignette-determinism:
+    # Documentation-build reproducibility: build the SAME source 1 + 10 times
+    # in the Bioconductor devel container and require every repeated build
+    # to be strictly IDENTICAL to the reference build (check-B rule,
+    # tools/release/compare_built_packages.R; the PNG-encoding exception is
+    # not accepted here).
+    runs-on: ubuntu-latest
+    container: bioconductor/bioconductor_docker:devel
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Mark workspace safe for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Install dependencies
+        run: |
+          Rscript -e '
+            BiocManager::install(c("remotes", "knitr", "rmarkdown", "png", "jsonlite"),
+                                 ask = FALSE, update = FALSE)
+            remotes::install_deps(dependencies = TRUE,
+                                  repos = BiocManager::repositories(),
+                                  upgrade = "never")'
+
+      - name: Repeated builds of the same source (1 reference + 10)
+        run: |
+          mkdir -p "$RUNNER_TEMP/rep" && cd "$RUNNER_TEMP/rep"
+          for k in $(seq 0 10); do
+            mkdir -p "b$k" "x$k"
+            ( cd "b$k" && R CMD build "$GITHUB_WORKSPACE" > build.log 2>&1 ) || { tail -20 "b$k/build.log"; echo "::error title=Vignette determinism::build $k failed"; exit 1; }
+            tar -xzf "b$k"/*.tar.gz -C "x$k"
+          done
+          H="x0/postexportKinetics/inst/doc/postexportKinetics.html"
+          DEV=$(grep -o 'dev = "[a-z]*"' "$GITHUB_WORKSPACE/vignettes/postexportKinetics.Rmd" | head -1)
+          FORMATS=$(grep -o 'data:image/[a-z+]*;base64' "$H" | sort | uniq -c | tr -s ' ' | tr '\n' ';')
+          echo "::notice title=Vignette figures::knitr $DEV; embedded figures:$FORMATS"
+          fails=0
+          for k in $(seq 1 10); do
+            OUT=$(Rscript "$GITHUB_WORKSPACE/tools/release/compare_built_packages.R" x0/postexportKinetics "x$k/postexportKinetics" 2>&1) || true
+            V=$(printf '%s\n' "$OUT" | tail -1 | tr -d ' ')
+            echo "build $k vs build 0: $V $(printf '%s\n' "$OUT" | sed '$d' | tr '\n' ' ')"
+            [ "$V" = "IDENTICAL" ] || { fails=$((fails + 1)); echo "::error title=Vignette determinism::build $k: $V $(printf '%s\n' "$OUT" | sed '$d' | tr '\n' ' ' | cut -c1-300)"; }
+          done
+          echo "::notice title=Vignette determinism::$((10 - fails)) of 10 repeated builds strictly IDENTICAL to the reference build (surrounding HTML and all figures byte-identical; PNG exception not used)"
+          [ "$fails" -eq 0 ]
