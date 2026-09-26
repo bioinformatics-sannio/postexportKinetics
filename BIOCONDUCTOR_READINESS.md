@@ -1,7 +1,7 @@
 # Bioconductor readiness report (Phase 6C/6D)
 
-Status: **final pre-submission resolutions applied (§12, 2026-09-26);
-stopped for review. NO-GO (§11).**
+Status: **deterministic-rendering attempt (§13) FAILED the repeated-build
+proof. Stopped before trying another device, as instructed. NO-GO (§11).**
 
 - The Contributions issue has not been opened, and nothing was submitted.
 - The GitHub default branch is unchanged (`main`).
@@ -576,3 +576,76 @@ the maintainer confirms Watched Tags.
 | Default-branch switch | pending |
 | ORCID / funder | optional |
 | `set.seed` policy question to bioc-devel | **awaiting guidance** |
+
+## 13. Deterministic vignette rendering: option (a), first device attempt (2026-09-26)
+
+### 13.1 Change
+
+- **Commit `9159c6d` (vignette only).** The setup chunk now sets
+  `knitr::opts_chunk$set(..., dev = "svg")`: base R `grDevices::svg()`
+  (cairo), with no new dependency.
+- No `plot()` method, data, inference or numerical output changed.
+- Local gates on `35a5112`:
+  - tests: 3,708 expectations, 0 failures;
+  - `R CMD check`: 2 NOTEs;
+  - BiocCheck: 1 ERROR `checkWatchedTag` / 1 WARNING `set.seed` / 10
+    NOTEs;
+  - full validation: EQUIVALENT.
+- **Commit `35a5112` (CI).** New `vignette-determinism` job in
+  `bioc-devel.yml`:
+  - builds the **same source 11 times** (reference and 10 repeats) in the
+    Bioconductor devel container;
+  - requires each repeat to be **strictly IDENTICAL** to the reference,
+    under the check-B rule, with no PNG exception.
+
+### 13.2 Results
+
+| Where | Device | Figure format | Result |
+|---|---|---|---|
+| local (macOS, R 4.6.0) | base `svg` | 5 × `data:image/svg+xml;base64` (no PNG) | 3 builds: **IDENTICAL** |
+| **CI, Bioconductor 3.24 devel container** (bioc-devel run `36223599204`, `vignette-determinism` job) | base `svg` | 5 × `data:image/svg+xml;base64` (no PNG) | **only 3 of 10 repeated builds IDENTICAL to the reference**. Builds 1, 3, 4, 5, 6, 7 and 9 differ: "vignette HTML differs outside the embedded PNG payloads", i.e. the embedded **SVG payloads differ between builds of identical source**. |
+| CI package-branch (same run) | base `svg` | — | A, C, D (BiocCheckGitClone 0/0/0) and E PASS; **B FAIL**. The same-source control also differs in the same way. |
+
+**Conclusion:** the base-R SVG device does **not** make the vignette
+reproducible in the Bioconductor devel container. It is less reproducible
+there than the PNG raster (PNG: 3 of 6 CI runs failed, one figure; SVG: 7 of
+10 repeated builds differ).
+
+- The comparator does not decode SVG, so whether the SVG differences are
+  **visual** or only structural could not be established. For example, cairo
+  SVG output embeds glyph and clip-path definitions whose identifiers or
+  ordering may vary.
+- **As instructed, no further device was tried.**
+
+### 13.3 Other CI on `35a5112`
+
+| Workflow | Result |
+|---|---|
+| linux-regression (`36223599210`) | **success** |
+| r-compat (`36223599219`) | **success** |
+| bioc-devel `bioc-devel` job | **success** (`R CMD check` OK; BiocCheck 1 ERROR `checkWatchedTag`, 1 WARNING, 9 NOTEs) |
+| **platforms** (`36223599209`) | **failure on both macOS and Windows, at `setup-r-dependencies`** (dependency installation), before any package step |
+
+The platforms failure happened on both OSes at the same step, and the two
+preceding runs (`f313fb9`, `6b0ef9e`) were green with unchanged
+dependencies. It looks like an ecosystem/transient installation failure,
+not a package problem. The annotations give no detail; the CI of the commit
+adding this section shows whether it recurs.
+
+### 13.4 Current state and options (for decision)
+
+- **Current state:**
+  - The development branch and `devel` (`75b2c5f` ← `35a5112`, tree
+    `b77c598…`) carry the SVG vignette.
+  - Local verification passes A–E. CI check B fails.
+  - The PNG controlled exception is not applicable to SVG and was not used.
+- **Options:**
+  1. **svglite** (the next escalation step): Suggests only, vignette-only
+     `dev = "svglite"`, then the same 10-build proof. svglite writes SVG
+     directly, without cairo, and is designed for reproducible output.
+  2. **Revert to the PNG device and localise the pixel differences** (the
+     comparator reports a bounding box), for example font or anti-aliasing
+     settings for figure #5.
+  3. Another policy for documentation-build reproducibility.
+- Until a decision is made: no merge, no default-branch switch, no
+  Contributions issue.
