@@ -632,6 +632,27 @@ dependencies. It looks like an ecosystem/transient installation failure,
 not a package problem. The annotations give no detail; the CI of the commit
 adding this section shows whether it recurs.
 
+### 13.3a Second run (`23f301b`, documentation-only commit)
+
+| Workflow | Result |
+|---|---|
+| bioc-devel `vignette-determinism` (`36224749049`) | **6 of 10** repeated builds IDENTICAL; builds 1, 2, 4 and 6 differ (SVG payloads). Still nondeterministic. |
+| bioc-devel `package-branch` | A–E PASS; B happened to be strict IDENTICAL this time |
+| platforms (`36224749020`) | Windows **success** (so the earlier Windows dependency failure was transient). **macOS failure** at `R CMD check`: "Vignette re-building failed … processing vignette 'postexportKinetics.Rmd' failed". |
+| linux-regression, r-compat | success |
+
+**Root cause of the macOS failure (confirmed locally):**
+
+- CRAN's macOS build of R links the cairo-based devices (`grDevices`
+  `cairo.so`, which backs `svg()`) against XQuartz: `otool -L` shows
+  `/opt/X11/lib/libXrender.1.dylib`, `libSM`, `libICE`.
+- The local machine has XQuartz, so the vignette built there.
+- The GitHub macOS runner has no XQuartz, so `svg()` cannot be used and the
+  vignette fails to build.
+- The base-R SVG device therefore adds a **platform requirement (XQuartz
+  on macOS)** in addition to being nondeterministic in the Bioconductor
+  container.
+
 ### 13.4 Current state and options (for decision)
 
 - **Current state:**
@@ -639,10 +660,18 @@ adding this section shows whether it recurs.
     `b77c598…`) carry the SVG vignette.
   - Local verification passes A–E. CI check B fails.
   - The PNG controlled exception is not applicable to SVG and was not used.
+- **Base `svg` is demonstrably unsuitable:** nondeterministic in the
+  Bioconductor devel container (3/10 and 6/10 identical), and the vignette
+  fails to build on macOS without XQuartz.
+- **Recommended immediate step (needs approval):** revert `9159c6d` (the
+  vignette device line), restoring the previous portable PNG vignette.
+  Until then the development branch and `devel` carry a vignette that does
+  not build on stock macOS.
 - **Options:**
   1. **svglite** (the next escalation step): Suggests only, vignette-only
-     `dev = "svglite"`, then the same 10-build proof. svglite writes SVG
-     directly, without cairo, and is designed for reproducible output.
+     `dev = "svglite"`, then the same 10-build proof and the macOS, Windows
+     and Linux checks. svglite writes SVG itself, without cairo or X11, and
+     aims at reproducible output.
   2. **Revert to the PNG device and localise the pixel differences** (the
      comparator reports a bounding box), for example font or anti-aliasing
      settings for figure #5.
